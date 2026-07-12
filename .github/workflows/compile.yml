@@ -53,6 +53,7 @@ jobs:
           "$PAWNCC_BIN" \
             -d3 \
             -O2 \
+            -Z \
             -i./pawno/include \
             -i./gamemodes \
             ./gamemodes/californierp.pwn \
