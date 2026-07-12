@@ -23,16 +23,29 @@ jobs:
           git clone --depth 1 https://github.com/pawn-lang/samp-stdlib.git /tmp/samp-stdlib
           cp /tmp/samp-stdlib/*.inc pawno/include/
 
-      - name: Télécharger le compilateur Pawn (pawn-lang/compiler)
+      - name: Télécharger le compilateur Pawn (dernière version Linux)
         run: |
-          curl -L -o compiler.tar.gz \
-            https://github.com/pawn-lang/compiler/releases/latest/download/pawnc-linux.tar.gz
+          set -e
+          API_URL="https://api.github.com/repos/pawn-lang/compiler/releases/latest"
+          DL_URL=$(curl -s "$API_URL" | grep "browser_download_url" | grep -i "linux" | cut -d '"' -f 4 | head -n1)
+          echo "Fichier trouvé : $DL_URL"
+          if [ -z "$DL_URL" ]; then
+            echo "Impossible de trouver l'archive Linux du compilateur." >&2
+            exit 1
+          fi
+          curl -L -o compiler.tar.gz "$DL_URL"
+          file compiler.tar.gz
           mkdir -p pawncc
           tar -xzf compiler.tar.gz -C pawncc --strip-components=1
+          chmod +x pawncc/bin/pawncc || chmod +x pawncc/pawncc || true
 
       - name: Compiler californierp.pwn
         run: |
-          ./pawncc/bin/pawncc \
+          set -e
+          export LD_LIBRARY_PATH="$PWD/pawncc/lib:$PWD/pawncc/bin:$LD_LIBRARY_PATH"
+          PAWNCC_BIN="./pawncc/bin/pawncc"
+          if [ ! -f "$PAWNCC_BIN" ]; then PAWNCC_BIN="./pawncc/pawncc"; fi
+          "$PAWNCC_BIN" \
             -d3 \
             -O2 \
             -i./pawno/include \
@@ -45,4 +58,3 @@ jobs:
         with:
           name: californierp-amx
           path: gamemodes/californierp.amx
-
