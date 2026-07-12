@@ -8,6 +8,9 @@
 
 #define FILTERSCRIPT
 
+main() {}
+
+
 // ------------------------------------------------------------
 //  Hash simple (Adler32-like) utilisé pour les mots de passe.
 //  Fonction standard couramment utilisée dans les gamemodes SA-MP.
