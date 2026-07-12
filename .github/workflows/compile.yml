@@ -39,6 +39,11 @@ jobs:
           tar -xzf compiler.tar.gz -C pawncc --strip-components=1
           chmod +x pawncc/bin/pawncc || chmod +x pawncc/pawncc || true
 
+      - name: Vérifier les fichiers présents (diagnostic)
+        run: |
+          echo "Contenu de gamemodes/ :"
+          ls -la gamemodes/ || echo "Le dossier gamemodes/ n'existe pas !"
+
       - name: Compiler californierp.pwn
         run: |
           set -e
