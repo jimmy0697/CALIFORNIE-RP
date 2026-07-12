@@ -128,7 +128,7 @@ public OnGameModeInit()
     SetGameModeText("Californie RP");
     ShowPlayerMarkers(PLAYER_MARKERS_MODE_GLOBAL);
     ShowNameTags(1);
-    SetNameTagANoseUnderVehicles(1);
+    // SetNameTagANoseUnderVehicles(1); // Native introuvable dans les includes standards SA-MP, désactivée
 
     UsePlayerPedAnims();
     EnableStuntBonusForAll(0);
@@ -1050,7 +1050,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "SETSKIN"))
     {
-        new skinid[8];
+        new skinid[64];
         tmp = strtok_(cmdtext, idx);
         skinid = strtok_(cmdtext, idx);
         targetid = strval(tmp);
@@ -1078,7 +1078,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "SETCASH"))
     {
-        new amount[16];
+        new amount[64];
         tmp = strtok_(cmdtext, idx);
         amount = strtok_(cmdtext, idx);
         targetid = strval(tmp);
@@ -1089,7 +1089,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "GIVECASH"))
     {
-        new amount[16];
+        new amount[64];
         tmp = strtok_(cmdtext, idx);
         amount = strtok_(cmdtext, idx);
         targetid = strval(tmp);
@@ -1099,7 +1099,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "SETVIP"))
     {
-        new days[8];
+        new days[64];
         tmp = strtok_(cmdtext, idx);
         days = strtok_(cmdtext, idx);
         targetid = strval(tmp);
@@ -1110,7 +1110,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "SETLEVEL"))
     {
-        new lvl[8];
+        new lvl[64];
         tmp = strtok_(cmdtext, idx);
         lvl = strtok_(cmdtext, idx);
         targetid = strval(tmp);
@@ -1122,7 +1122,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "SETADMIN"))
     {
-        new lvl[8];
+        new lvl[64];
         tmp = strtok_(cmdtext, idx);
         lvl = strtok_(cmdtext, idx);
         targetid = strval(tmp);
@@ -1143,7 +1143,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "SETTIME"))
     {
-        new hour[8];
+        new hour[64];
         hour = strtok_(cmdtext, idx);
         if(!strlen(hour)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /settime [heure]");
         SetWorldTime(strval(hour));
@@ -1151,7 +1151,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "SETWEATHER"))
     {
-        new wid[8];
+        new wid[64];
         wid = strtok_(cmdtext, idx);
         if(!strlen(wid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /setweather [id]");
         SetWeather(strval(wid));
@@ -1159,7 +1159,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "GIVEWEAPON"))
     {
-        new wid[8], ammo[8];
+        new wid[64], ammo[64];
         tmp = strtok_(cmdtext, idx);
         wid = strtok_(cmdtext, idx);
         ammo = strtok_(cmdtext, idx);
@@ -1170,7 +1170,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "GOTOXYZ"))
     {
-        new sx[16], sy[16], sz[16];
+        new sx[64], sy[64], sz[64];
         sx = strtok_(cmdtext, idx);
         sy = strtok_(cmdtext, idx);
         sz = strtok_(cmdtext, idx);
