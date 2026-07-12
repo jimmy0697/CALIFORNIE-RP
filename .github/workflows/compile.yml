@@ -1,0 +1,48 @@
+name: Compiler le gamemode
+
+on:
+  push:
+    paths:
+      - "gamemodes/**"
+      - ".github/workflows/compile.yml"
+  pull_request:
+    paths:
+      - "gamemodes/**"
+  workflow_dispatch:
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Récupérer les includes officiels SA-MP (a_samp.inc, etc.)
+        run: |
+          mkdir -p pawno/include
+          git clone --depth 1 https://github.com/pawn-lang/samp-stdlib.git /tmp/samp-stdlib
+          cp /tmp/samp-stdlib/*.inc pawno/include/
+
+      - name: Télécharger le compilateur Pawn (pawn-lang/compiler)
+        run: |
+          curl -L -o compiler.tar.gz \
+            https://github.com/pawn-lang/compiler/releases/latest/download/pawnc-linux.tar.gz
+          mkdir -p pawncc
+          tar -xzf compiler.tar.gz -C pawncc --strip-components=1
+
+      - name: Compiler californierp.pwn
+        run: |
+          ./pawncc/bin/pawncc \
+            -d3 \
+            -O2 \
+            -i./pawno/include \
+            -i./gamemodes \
+            ./gamemodes/californierp.pwn \
+            -o./gamemodes/californierp.amx
+
+      - name: Publier l'AMX compilé
+        uses: actions/upload-artifact@v4
+        with:
+          name: californierp-amx
+          path: gamemodes/californierp.amx
+
