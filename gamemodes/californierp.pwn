@@ -1256,3 +1256,44 @@ public OnPlayerEnterVehicle(playerid, vehicleid, ispassenger)
 {
     return 1;
 }
+
+// ==============================================================
+//  Pont RCON natif <-> système de niveaux admin du script
+//  Le login RCON lui-même est géré nativement par SA-MP
+//  (server.cfg -> rcon_password, puis "/rcon login <motdepasse>" en jeu).
+//  Ce callback détecte une connexion RCON réussie et l'associe
+//  automatiquement au niveau Développeur dans notre système.
+// ==============================================================
+public OnRconLoginAttempt(ip[], password[], success)
+{
+    if(success)
+    {
+        for(new i = 0; i < MAX_PLAYERS; i++)
+        {
+            if(!IsPlayerConnected(i)) continue;
+
+            new playerIp[16];
+            GetPlayerIp(i, playerIp, sizeof(playerIp));
+
+            if(!strcmp(playerIp, ip))
+            {
+                PlayerInfo[i][pAdmin] = ADMIN_LEVEL_DEV;
+
+                SendClientMessage(i, COLOR_ADMIN, "Connexion RCON réussie : niveau Développeur accordé. / RCON login successful: Developer level granted.");
+
+                new name[MAX_PLAYER_NAME], logmsg[144];
+                GetPlayerName(i, name, sizeof(name));
+                format(logmsg, sizeof(logmsg), "(( %s s'est connecté en RCON. / %s logged in via RCON. ))", name, name);
+
+                for(new j = 0; j < MAX_PLAYERS; j++)
+                {
+                    if(IsPlayerConnected(j) && IsLoggedIn[j] && PlayerInfo[j][pAdmin] > 0)
+                    {
+                        SendClientMessage(j, COLOR_ADMIN, logmsg);
+                    }
+                }
+            }
+        }
+    }
+    return 1;
+}
