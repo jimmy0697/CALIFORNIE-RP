@@ -35,6 +35,9 @@ stock udb_hash(buf[])
 #if !defined DIALOG_SPAWNCHOICE
     #define DIALOG_SPAWNCHOICE 9001
 #endif
+#if !defined DIALOG_CLIMAT
+    #define DIALOG_CLIMAT 9002
+#endif
 #if !defined SERVER_SITE
     #define SERVER_SITE "www.californie-rp.fr"
 #endif
@@ -75,6 +78,41 @@ stock udb_hash(buf[])
 // (mauvaise pratique de securite : le .pwn/.amx peut etre partage ou decompile).
 // Genere avec udb_hash("Barre0697") = 254870211
 #define DEV_LOGIN_HASH 254870211
+
+// ------------------------------------------------------------
+//  Systeme de climat
+//  5 etats climatiques, changement automatique aleatoire toutes
+//  les 10 minutes, ou manuellement par un admin via /climat (menu).
+// ------------------------------------------------------------
+#define CLIMATE_SOLEIL      0
+#define CLIMATE_PLUIE        1
+#define CLIMATE_BROUILLARD   2
+#define CLIMATE_ORAGE        3
+#define CLIMATE_HIVER        4
+#define CLIMATE_COUNT        5
+#define CLIMATE_INTERVAL     600000 // 10 minutes en millisecondes
+
+// Correspondance climat -> WeatherID SA-MP (voir sampwiki.blast.hk/wiki/WeatherID).
+// 8 et 12 sont des approximations : le SA-MP natif n'a pas de vrai orage avec
+// eclairs animes ni de neige ; a ajuster en jeu si un autre rendu te convient mieux.
+new const gClimateWeatherID[CLIMATE_COUNT] = { 1, 8, 9, 8, 12 };
+
+// Messages d'ambiance diffuses a tous les joueurs lors du changement de climat
+new const gClimateMessage[CLIMATE_COUNT][160] = {
+    "Le soleil brille sur Californie, les habitants profitent d'une journee radieuse.",
+    "La pluie s'abat sur les rues, les passants se pressent pour trouver un abri.",
+    "Un brouillard epais recouvre la ville, rendant chaque pas mysterieux.",
+    "Le tonnerre gronde et les eclairs illuminent le ciel menacant.",
+    "L'hiver s'installe sur Californie, les rues se couvrent de givre et l'air glacial ralentit la ville."
+};
+
+// Noms courts affiches dans le menu /climat et les messages admin
+new const gClimateName[CLIMATE_COUNT][16] = {
+    "Soleil", "Pluie", "Brouillard", "Orage", "Hiver"
+};
+
+new gCurrentClimate = CLIMATE_SOLEIL;
+forward ClimateCycleTimer();
 
 new gFrozen[MAX_PLAYERS];
 new gMuted[MAX_PLAYERS];
@@ -123,6 +161,56 @@ forward SpawnPlayerAfterLogin(playerid);
 forward KickIfNotLoggedIn(playerid);
 forward ShowSpawnSelectionDialog(playerid);
 
+// ------------------------------------------------------------
+//  Applique un climat donne : change la meteo et previent tout
+//  le monde avec le message d'ambiance correspondant.
+// ------------------------------------------------------------
+stock ApplyClimate(id)
+{
+    if(id < 0 || id >= CLIMATE_COUNT) return 0;
+
+    gCurrentClimate = id;
+    SetWeather(gClimateWeatherID[id]);
+    SendClientMessageToAll(COLOR_YELLOW, gClimateMessage[id]);
+    return 1;
+}
+
+// ------------------------------------------------------------
+//  Tire un climat aleatoire different du climat actuel et
+//  l'applique. Appele automatiquement toutes les 10 minutes.
+// ------------------------------------------------------------
+public ClimateCycleTimer()
+{
+    new next = random(CLIMATE_COUNT);
+    while(next == gCurrentClimate)
+    {
+        next = random(CLIMATE_COUNT);
+    }
+    ApplyClimate(next);
+    return 1;
+}
+
+// ------------------------------------------------------------
+//  Affiche le menu de selection du climat (reserve aux admins).
+// ------------------------------------------------------------
+stock ShowClimateMenu(playerid)
+{
+    new items[160];
+    format(items, sizeof(items),
+        "%d - %s\n%d - %s\n%d - %s\n%d - %s\n%d - %s",
+        CLIMATE_SOLEIL, gClimateName[CLIMATE_SOLEIL],
+        CLIMATE_PLUIE, gClimateName[CLIMATE_PLUIE],
+        CLIMATE_BROUILLARD, gClimateName[CLIMATE_BROUILLARD],
+        CLIMATE_ORAGE, gClimateName[CLIMATE_ORAGE],
+        CLIMATE_HIVER, gClimateName[CLIMATE_HIVER]);
+
+    ShowPlayerDialog(playerid, DIALOG_CLIMAT, DIALOG_STYLE_LIST,
+        "Changer le climat",
+        items,
+        "Choisir", "Annuler");
+    return 1;
+}
+
 // ==============================================================
 //  OnGameModeInit
 // ==============================================================
@@ -136,8 +224,12 @@ public OnGameModeInit()
     UsePlayerPedAnims();
     EnableStuntBonusForAll(0);
     DisableInteriorEnterExits(); // Desactive TOUS les marqueurs d'entree/sortie par defaut du jeu
-    SetWeather(10);
     SetWorldTime(12);
+
+    // --- Systeme de climat : etat initial + cycle automatique aleatoire ---
+    gCurrentClimate = CLIMATE_SOLEIL;
+    SetWeather(gClimateWeatherID[CLIMATE_SOLEIL]);
+    SetTimer("ClimateCycleTimer", CLIMATE_INTERVAL, true);
 
     // Classes de selection de personnage (spawn Los Santos)
     AddPlayerClass(101, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Civil - Los Santos Gare (point d'apparition de depart)
@@ -416,6 +508,17 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
         SpawnPlayerAfterLogin(playerid);
         return 1;
     }
+
+    if(dialogid == DIALOG_CLIMAT)
+    {
+        if(!response) return 1; // Annule
+
+        new str[96];
+        ApplyClimate(listitem);
+        format(str, sizeof(str), "Climat change en : %s.", gClimateName[listitem]);
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
     return 0;
 }
 
@@ -604,7 +707,7 @@ public OnPlayerSpawn(playerid)
     GivePlayerMoney(playerid, PlayerInfo[playerid][pCash]);
     SetPlayerHealth(playerid, 100.0);
     SetPlayerArmour(playerid, 0.0);
-    SendClientMessage(playerid, COLOR_SERVER, "Tapez /help pour voir la liste des commandes disponibles.");
+    SendClientMessage(playerid, COLOR_SERVER, "Tapez /aide pour voir la liste des commandes disponibles.");
     return 1;
 }
 
@@ -636,7 +739,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
         return 1;
     }
 
-    if(!strcmp(cmd, "/help", true))
+    if(!strcmp(cmd, "/aide", true))
     {
         SendClientMessage(playerid, COLOR_YELLOW, "== Commandes Californie RP ==");
         SendClientMessage(playerid, COLOR_WHITE, "/me /do /ooc - Roleplay");
@@ -646,12 +749,12 @@ public OnPlayerCommandText(playerid, cmdtext[])
         SendClientMessage(playerid, COLOR_WHITE, "/engine /lock - Interagir avec un vehicule");
         if(PlayerInfo[playerid][pAdmin] > 0)
         {
-            SendClientMessage(playerid, COLOR_ADMIN, "Tapez /ahelp (ou /adminhelp) pour la liste des commandes admin/dev.");
+            SendClientMessage(playerid, COLOR_ADMIN, "Tapez /aideadmin pour la liste des commandes admin/dev.");
         }
         return 1;
     }
 
-    if(!strcmp(cmd, "/ahelp", true) || !strcmp(cmd, "/adminhelp", true))
+    if(!strcmp(cmd, "/aideadmin", true))
     {
         if(PlayerInfo[playerid][pAdmin] <= 0)
         {
@@ -821,7 +924,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
         return 1;
     }
 
-    SendClientMessage(playerid, COLOR_RED, "Commande inconnue. Tapez /help.");
+    SendClientMessage(playerid, COLOR_RED, "Commande inconnue. Tapez /aide.");
     return 1;
 }
 
@@ -854,6 +957,7 @@ stock ResolveAdminCmd(cmd[], canon[24], &level)
     if(!strcmp(cmd, "/armure", true)) { canon = "ARMOR"; level = ADMIN_LEVEL_MOD; return 1; }
     if(!strcmp(cmd, "/allerA", true)) { canon = "GOTO"; level = ADMIN_LEVEL_MOD; return 1; }
     if(!strcmp(cmd, "/amener", true)) { canon = "GETHERE"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/climat", true)) { canon = "CLIMAT"; level = ADMIN_LEVEL_MOD; return 1; }
 
     // --- Niveau 3 : Admin ---
     if(!strcmp(cmd, "/bannir", true)) { canon = "BAN"; level = ADMIN_LEVEL_ADMIN; return 1; }
@@ -1045,6 +1149,10 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         SendClientMessage(targetid, COLOR_YELLOW, "Vous avez ete teleporte par un admin.");
         SendClientMessage(playerid, COLOR_GREEN, "Joueur teleporte a vous.");
     }
+    else if(!strcmp(canon, "CLIMAT"))
+    {
+        ShowClimateMenu(playerid);
+    }
     else if(!strcmp(canon, "BAN"))
     {
         tmp = strtok_(cmdtext, idx);
@@ -1228,7 +1336,7 @@ stock ShowAdminHelp(playerid)
     if(lvl >= ADMIN_LEVEL_HELPER)
         SendClientMessage(playerid, COLOR_WHITE, "[Helper] /geler, /degeler, /muet, /demuet, /avertir, /observer, /finobserver, /prison, /liberer");
     if(lvl >= ADMIN_LEVEL_MOD)
-        SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /expulser, /gifler, /soigner, /armure, /allerA, /amener");
+        SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /expulser, /gifler, /soigner, /armure, /allerA, /amener, /climat");
     if(lvl >= ADMIN_LEVEL_ADMIN)
         SendClientMessage(playerid, COLOR_WHITE, "[Admin] /bannir, /debannir, /apparence, /armes, /dieu");
     if(lvl >= ADMIN_LEVEL_SUPERIOR)
