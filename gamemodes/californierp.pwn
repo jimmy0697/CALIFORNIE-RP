@@ -878,6 +878,7 @@ stock ResolveAdminCmd(cmd[], canon[24], &level)
     if(!strcmp(cmd, "/giveweapon", true) || !strcmp(cmd, "/donnerarme", true)) { canon = "GIVEWEAPON"; level = ADMIN_LEVEL_DEV; return 1; }
     if(!strcmp(cmd, "/gotoxyz", true) || !strcmp(cmd, "/allercoord", true)) { canon = "GOTOXYZ"; level = ADMIN_LEVEL_DEV; return 1; }
     if(!strcmp(cmd, "/gmx", true) || !strcmp(cmd, "/redemarrer", true)) { canon = "GMX"; level = ADMIN_LEVEL_DEV; return 1; }
+    if(!strcmp(cmd, "/rconcmd", true) || !strcmp(cmd, "/cmdrcon", true)) { canon = "RCONCMD"; level = ADMIN_LEVEL_DEV; return 1; }
 
     return 0;
 }
@@ -1194,6 +1195,28 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         SendClientMessageToAll(COLOR_ADMIN, "(( Redémarrage du gamemode en cours... / Gamemode restarting... ))");
         SendRconCommand("gmx");
     }
+    else if(!strcmp(canon, "RCONCMD"))
+    {
+        if(cmdtext[idx] == '\0')
+        {
+            SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /rconcmd <commande> (ex: /rconcmd banip 1.2.3.4)");
+            SendClientMessage(playerid, COLOR_WHITE, "Commandes disponibles / Available: echo, exec, cmdlist, varlist, exit, kick, ban, gmx, changemode, say, reloadbans, reloadlog, players, banip, unbanip, gravity, weather, loadfs, unloadfs, reloadfs");
+            return 1;
+        }
+        SendRconCommand(cmdtext[idx]);
+
+        new name[MAX_PLAYER_NAME], logmsg[192];
+        GetPlayerName(playerid, name, sizeof(name));
+        format(logmsg, sizeof(logmsg), "(( %s a exécuté la commande RCON: %s / %s executed RCON command: %s ))", name, cmdtext[idx], name, cmdtext[idx]);
+        for(new j = 0; j < MAX_PLAYERS; j++)
+        {
+            if(IsPlayerConnected(j) && IsLoggedIn[j] && PlayerInfo[j][pAdmin] >= ADMIN_LEVEL_SUPERVISOR)
+            {
+                SendClientMessage(j, COLOR_ADMIN, logmsg);
+            }
+        }
+        SendClientMessage(playerid, COLOR_GREEN, "Commande RCON envoyée. / RCON command sent.");
+    }
     return 1;
 }
 
@@ -1213,7 +1236,7 @@ stock ShowAdminHelp(playerid)
     if(lvl >= ADMIN_LEVEL_SUPERVISOR)
         SendClientMessage(playerid, COLOR_WHITE, "[Superviseur/Supervisor] /setadmin /definiradmin, /announce /annonce");
     if(lvl >= ADMIN_LEVEL_DEV)
-        SendClientMessage(playerid, COLOR_ADMIN, "[Développeur/Developer] /settime /heure, /setweather /meteo, /giveweapon /donnerarme, /gotoxyz /allercoord, /gmx /redemarrer");
+        SendClientMessage(playerid, COLOR_ADMIN, "[Développeur/Developer] /settime /heure, /setweather /meteo, /giveweapon /donnerarme, /gotoxyz /allercoord, /gmx /redemarrer, /rconcmd (accès complet RCON)");
     return 1;
 }
 
