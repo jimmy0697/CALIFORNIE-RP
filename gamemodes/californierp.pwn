@@ -12,8 +12,8 @@ main() {}
 
 
 // ------------------------------------------------------------
-//  Hash simple (Adler32-like) utilisé pour les mots de passe.
-//  Fonction standard couramment utilisée dans les gamemodes SA-MP.
+//  Hash simple (Adler32-like) utilise pour les mots de passe.
+//  Fonction standard couramment utilisee dans les gamemodes SA-MP.
 // ------------------------------------------------------------
 stock udb_hash(buf[])
 {
@@ -30,7 +30,7 @@ stock udb_hash(buf[])
 }
 
 // ------------------------------------------------------------
-//  Constantes ajoutées (auth / spawn) - définies ici si absentes de californie.inc
+//  Constantes ajoutees (auth / spawn) - definies ici si absentes de californie.inc
 // ------------------------------------------------------------
 #if !defined DIALOG_SPAWNCHOICE
     #define DIALOG_SPAWNCHOICE 9001
@@ -45,8 +45,8 @@ stock udb_hash(buf[])
 
 // ------------------------------------------------------------
 //  Niveaux Admin / Dev
-//  1 Helper | 2 Modérateur | 3 Admin | 10 Admin Supérieur
-//  20 Admin Superviseur | 5885 Développeur
+//  1 Helper | 2 Moderateur | 3 Admin | 10 Admin Superieur
+//  20 Admin Superviseur | 5885 Developpeur
 // ------------------------------------------------------------
 #if !defined ADMIN_LEVEL_HELPER
     #define ADMIN_LEVEL_HELPER    1
@@ -70,10 +70,10 @@ stock udb_hash(buf[])
     #define ADMIN_LEVEL_DEV       5885
 #endif
 
-// Hash (udb_hash) du mot de passe de connexion développeur.
-// Le mot de passe en clair n'est JAMAIS stocké dans le code source
-// (mauvaise pratique de sécurité : le .pwn/.amx peut être partagé ou décompilé).
-// Généré avec udb_hash("Barre0697") = 254870211
+// Hash (udb_hash) du mot de passe de connexion developpeur.
+// Le mot de passe en clair n'est JAMAIS stocke dans le code source
+// (mauvaise pratique de securite : le .pwn/.amx peut etre partage ou decompile).
+// Genere avec udb_hash("Barre0697") = 254870211
 #define DEV_LOGIN_HASH 254870211
 
 new gFrozen[MAX_PLAYERS];
@@ -81,12 +81,12 @@ new gMuted[MAX_PLAYERS];
 new gJailed[MAX_PLAYERS];
 
 // ------------------------------------------------------------
-//  Données joueur
+//  Donnees joueur
 // ------------------------------------------------------------
 enum pInfo
 {
     pPass[MAX_PASS_LENGTH],
-    Float:pPosX,       // Dernière position connue (déconnexion)
+    Float:pPosX,       // Derniere position connue (deconnexion)
     Float:pPosY,
     Float:pPosZ,
     Float:pPosA,
@@ -96,7 +96,7 @@ enum pInfo
     pAdmin,
     pSkin,
 
-    // Propriété / maison
+    // Propriete / maison
     pHomeSet,
     Float:pHomeX,
     Float:pHomeY,
@@ -131,21 +131,21 @@ public OnGameModeInit()
     SetGameModeText("Californie RP");
     ShowPlayerMarkers(PLAYER_MARKERS_MODE_GLOBAL);
     ShowNameTags(1);
-    // SetNameTagANoseUnderVehicles(1); // Native introuvable dans les includes standards SA-MP, désactivée
+    // SetNameTagANoseUnderVehicles(1); // Native introuvable dans les includes standards SA-MP, desactivee
 
     UsePlayerPedAnims();
     EnableStuntBonusForAll(0);
-    DisableInteriorEnterExits(); // Désactive TOUS les marqueurs d'entrée/sortie par défaut du jeu
+    DisableInteriorEnterExits(); // Desactive TOUS les marqueurs d'entree/sortie par defaut du jeu
     SetWeather(10);
     SetWorldTime(12);
 
-    // Classes de sélection de personnage (spawn Los Santos)
-    AddPlayerClass(101, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Civil - Los Santos Gare (point d'apparition de départ)
-    AddPlayerClass(280, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Police (skin par défaut, à changer via faction)
+    // Classes de selection de personnage (spawn Los Santos)
+    AddPlayerClass(101, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Civil - Los Santos Gare (point d'apparition de depart)
+    AddPlayerClass(280, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Police (skin par defaut, a changer via faction)
     AddPlayerClass(274, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // EMS
 
     print("==============================================");
-    print("   CALIFORNIE RP - Gamemode chargé avec succès  ");
+    print("   CALIFORNIE RP - Gamemode charge avec succes  ");
     print("==============================================");
     return 1;
 }
@@ -170,7 +170,7 @@ public OnPlayerConnect(playerid)
     IsLoggedIn[playerid] = 0;
     gPlayerTriedPass[playerid] = 0;
 
-    // --- Sécurité anti-cheat : kick si non connecté après 60 secondes ---
+    // --- Securite anti-cheat : kick si non connecte apres 60 secondes ---
     gLoginTimer[playerid] = SetTimerEx("KickIfNotLoggedIn", LOGIN_TIMEOUT, false, "d", playerid);
 
     new name[MAX_PLAYER_NAME];
@@ -181,7 +181,7 @@ public OnPlayerConnect(playerid)
         new msg[400];
         format(msg, sizeof(msg),
             "{FFFFFF}Bienvenue %s sur Californie RP.\n\
-{00FF00}Votre compte est enregistré.\n\
+{00FF00}Votre compte est enregistre.\n\
 {FFFFFF}Site : {FFFF00}%s{FFFFFF} | Forum : {FFFF00}%s\n\n\
 {FFFFFF}Veuillez entrer votre mot de passe pour vous connecter :",
             name, SERVER_SITE, SERVER_FORUM);
@@ -198,7 +198,7 @@ public OnPlayerConnect(playerid)
             "{FFFFFF}Bienvenue %s sur Californie RP.\n\
 {FF0000}Ce compte n'existe pas encore.\n\
 {FFFFFF}Site : {FFFF00}%s{FFFFFF} | Forum : {FFFF00}%s\n\n\
-{FFFFFF}Choisissez un mot de passe pour créer votre compte :",
+{FFFFFF}Choisissez un mot de passe pour creer votre compte :",
             name, SERVER_SITE, SERVER_FORUM);
 
         ShowPlayerDialog(playerid, DIALOG_REGISTER, DIALOG_STYLE_PASSWORD,
@@ -225,13 +225,13 @@ public OnPlayerDisconnect(playerid, reason)
     return 1;
 }
 
-// Kické automatiquement si le joueur n'est pas connecté 60s après OnPlayerConnect
+// Kicke automatiquement si le joueur n'est pas connecte 60s apres OnPlayerConnect
 public KickIfNotLoggedIn(playerid)
 {
     gLoginTimer[playerid] = 0;
     if(IsPlayerConnected(playerid) && !IsLoggedIn[playerid])
     {
-        SendClientMessage(playerid, COLOR_RED, "Vous avez mis trop de temps à vous connecter. Vous êtes expulsé.");
+        SendClientMessage(playerid, COLOR_RED, "Vous avez mis trop de temps a vous connecter. Vous etes expulse.");
         Kick(playerid);
     }
     return 1;
@@ -259,7 +259,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
         {
             ShowPlayerDialog(playerid, DIALOG_REGISTER, DIALOG_STYLE_PASSWORD,
                 "Inscription - Californie RP",
-                "{FF0000}Votre mot de passe doit contenir au moins 4 caractères !\n{FFFFFF}Choisissez un mot de passe pour créer votre compte :",
+                "{FF0000}Votre mot de passe doit contenir au moins 4 caracteres !\n{FFFFFF}Choisissez un mot de passe pour creer votre compte :",
                 "Inscription", "Quitter");
             return 1;
         }
@@ -308,7 +308,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             fclose(f);
         }
 
-        SendClientMessage(playerid, COLOR_GREEN, "Votre compte a été créé avec succès ! Vous êtes maintenant connecté.");
+        SendClientMessage(playerid, COLOR_GREEN, "Votre compte a ete cree avec succes ! Vous etes maintenant connecte.");
         if(gLoginTimer[playerid] != 0) { KillTimer(gLoginTimer[playerid]); gLoginTimer[playerid] = 0; }
         IsLoggedIn[playerid] = 1;
         LoadUserData(playerid);
@@ -346,7 +346,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 
         if(udb_hash(inputtext) == storedHash)
         {
-            SendClientMessage(playerid, COLOR_GREEN, "Connexion réussie ! Bienvenue sur Californie RP.");
+            SendClientMessage(playerid, COLOR_GREEN, "Connexion reussie ! Bienvenue sur Californie RP.");
             if(gLoginTimer[playerid] != 0) { KillTimer(gLoginTimer[playerid]); gLoginTimer[playerid] = 0; }
             IsLoggedIn[playerid] = 1;
             LoadUserData(playerid);
@@ -358,7 +358,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             gPlayerTriedPass[playerid]++;
             if(gPlayerTriedPass[playerid] >= 3)
             {
-                SendClientMessage(playerid, COLOR_RED, "Trop de tentatives échouées. Vous êtes expulsé.");
+                SendClientMessage(playerid, COLOR_RED, "Trop de tentatives echouees. Vous etes expulse.");
                 Kick(playerid);
                 return 1;
             }
@@ -379,14 +379,14 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
     {
         if(!response)
         {
-            // Le joueur doit choisir : on réaffiche le menu
+            // Le joueur doit choisir : on reaffiche le menu
             ShowSpawnSelectionDialog(playerid);
             return 1;
         }
 
         switch(listitem)
         {
-            case 0: // Spawn à ma maison
+            case 0: // Spawn a ma maison
             {
                 if(PlayerInfo[playerid][pHomeSet])
                 {
@@ -399,15 +399,15 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
                 }
                 else
                 {
-                    SendClientMessage(playerid, COLOR_RED, "Vous ne possédez aucune propriété enregistrée. Spawn par défaut utilisé.");
+                    SendClientMessage(playerid, COLOR_RED, "Vous ne possedez aucune propriete enregistree. Spawn par defaut utilise.");
                     SetDefaultSpawnPos(playerid);
                 }
             }
-            case 1: // Dernière position (déjà chargée dans PlayerInfo via LoadUserData)
+            case 1: // Derniere position (deja chargee dans PlayerInfo via LoadUserData)
             {
-                // Rien à faire : pPosX/Y/Z/A/Int/World contiennent déjà la dernière position sauvegardée
+                // Rien a faire : pPosX/Y/Z/A/Int/World contiennent deja la derniere position sauvegardee
             }
-            case 2: // Spawn par défaut
+            case 2: // Spawn par defaut
             {
                 SetDefaultSpawnPos(playerid);
             }
@@ -424,7 +424,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 // ==============================================================
 stock FinalizeLogin(playerid)
 {
-    // --- Log admin : notifie les administrateurs connectés ---
+    // --- Log admin : notifie les administrateurs connectes ---
     if(PlayerInfo[playerid][pAdmin] > 0)
     {
         new name[MAX_PLAYER_NAME], logmsg[144];
@@ -440,14 +440,14 @@ stock FinalizeLogin(playerid)
         }
     }
 
-    // --- Vérification de l'abonnement VIP ---
+    // --- Verification de l'abonnement VIP ---
     if(PlayerInfo[playerid][pVipExpire] > 0 && PlayerInfo[playerid][pVipExpire] < gettime())
     {
-        SendClientMessage(playerid, COLOR_YELLOW, "Votre abonnement donateur a expiré. Vous n'êtes plus VIP.");
+        SendClientMessage(playerid, COLOR_YELLOW, "Votre abonnement donateur a expire. Vous n'etes plus VIP.");
         PlayerInfo[playerid][pVipExpire] = 0;
     }
 
-    // --- Sélection du point d'apparition ---
+    // --- Selection du point d'apparition ---
     ShowSpawnSelectionDialog(playerid);
     return 1;
 }
@@ -456,19 +456,19 @@ public ShowSpawnSelectionDialog(playerid)
 {
     new items[256];
     format(items, sizeof(items),
-        "Spawn à ma maison%s\n\
-Dernière position\n\
-Spawn par défaut",
-        PlayerInfo[playerid][pHomeSet] ? "" : " {888888}(aucune propriété){FFFFFF}");
+        "Spawn a ma maison%s\n\
+Derniere position\n\
+Spawn par defaut",
+        PlayerInfo[playerid][pHomeSet] ? "" : " {888888}(aucune propriete){FFFFFF}");
 
     ShowPlayerDialog(playerid, DIALOG_SPAWNCHOICE, DIALOG_STYLE_LIST,
-        "Où voulez-vous spawn ?",
+        "Ou voulez-vous spawn ?",
         items,
         "Choisir", "");
     return 1;
 }
 
-// Coordonnées de spawn par défaut du serveur (ex : Aéroport / Gare Californie RP)
+// Coordonnees de spawn par defaut du serveur (ex : Aeroport / Gare Californie RP)
 stock SetDefaultSpawnPos(playerid)
 {
     PlayerInfo[playerid][pPosX] = 1569.2711;
@@ -480,14 +480,14 @@ stock SetDefaultSpawnPos(playerid)
     return 1;
 }
 
-// Petit parseur "clé=valeur" fait maison (pas de dépendance externe type sscanf)
+// Petit parseur "cle=valeur" fait maison (pas de dependance externe type sscanf)
 stock sscanf_simple(line[], key[], val[])
 {
     new pos = strfind(line, "=", false);
     if(pos == -1) return 0;
     strmid(key, line, 0, pos);
     strmid(val, line, pos + 1, strlen(line));
-    // Retirer les retours à la ligne éventuels
+    // Retirer les retours a la ligne eventuels
     new len = strlen(val);
     while(len > 0 && (val[len-1] == '\r' || val[len-1] == '\n'))
     {
@@ -498,7 +498,7 @@ stock sscanf_simple(line[], key[], val[])
 }
 
 // ==============================================================
-//  Sauvegarde / Chargement des données
+//  Sauvegarde / Chargement des donnees
 // ==============================================================
 public LoadUserData(playerid)
 {
@@ -622,8 +622,8 @@ public OnPlayerCommandText(playerid, cmdtext[])
     new idx = 0;
     cmd = strtok_(cmdtext, idx);
 
-    // Laisser SA-MP gérer nativement /rcon (login, commandes admin console).
-    // Sans ce return 0, notre script intercepterait la commande et empêcherait
+    // Laisser SA-MP gerer nativement /rcon (login, commandes admin console).
+    // Sans ce return 0, notre script intercepterait la commande et empecherait
     // le serveur de la traiter, provoquant un faux "Commande inconnue".
     if(!strcmp(cmd, "/rcon", true))
     {
@@ -632,7 +632,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 
     if(!IsLoggedIn[playerid])
     {
-        SendClientMessage(playerid, COLOR_RED, "Vous devez être connecté pour utiliser des commandes.");
+        SendClientMessage(playerid, COLOR_RED, "Vous devez etre connecte pour utiliser des commandes.");
         return 1;
     }
 
@@ -642,8 +642,8 @@ public OnPlayerCommandText(playerid, cmdtext[])
         SendClientMessage(playerid, COLOR_WHITE, "/me /do /ooc - Roleplay");
         SendClientMessage(playerid, COLOR_WHITE, "/stats /cash - Informations personnelles");
         SendClientMessage(playerid, COLOR_WHITE, "/sethome - Enregistrer votre position comme domicile");
-        SendClientMessage(playerid, COLOR_WHITE, "/car - Faire apparaître un véhicule");
-        SendClientMessage(playerid, COLOR_WHITE, "/engine /lock - Interagir avec un véhicule");
+        SendClientMessage(playerid, COLOR_WHITE, "/car - Faire apparaitre un vehicule");
+        SendClientMessage(playerid, COLOR_WHITE, "/engine /lock - Interagir avec un vehicule");
         if(PlayerInfo[playerid][pAdmin] > 0)
         {
             SendClientMessage(playerid, COLOR_ADMIN, "Tapez /ahelp (ou /adminhelp) pour la liste des commandes admin/dev.");
@@ -655,7 +655,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
     {
         if(PlayerInfo[playerid][pAdmin] <= 0)
         {
-            SendClientMessage(playerid, COLOR_RED, "Cette commande est réservée aux administrateurs. / This command is reserved for admins.");
+            SendClientMessage(playerid, COLOR_RED, "Cette commande est reservee aux administrateurs.");
             return 1;
         }
         ShowAdminHelp(playerid);
@@ -674,13 +674,13 @@ public OnPlayerCommandText(playerid, cmdtext[])
         PlayerInfo[playerid][pHomeA] = a;
         PlayerInfo[playerid][pHomeInt] = GetPlayerInterior(playerid);
         PlayerInfo[playerid][pHomeWorld] = GetPlayerVirtualWorld(playerid);
-        SendClientMessage(playerid, COLOR_GREEN, "Votre position actuelle a été enregistrée comme domicile.");
+        SendClientMessage(playerid, COLOR_GREEN, "Votre position actuelle a ete enregistree comme domicile.");
         return 1;
     }
 
     if(!strcmp(cmd, "/me", true))
     {
-        if(gMuted[playerid]) return SendClientMessage(playerid, COLOR_RED, "Vous êtes muet. / You are muted.");
+        if(gMuted[playerid]) return SendClientMessage(playerid, COLOR_RED, "Vous etes muet.");
         tmp = strtok_(cmdtext, idx);
         if(!strlen(tmp))
         {
@@ -696,7 +696,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 
     if(!strcmp(cmd, "/do", true))
     {
-        if(gMuted[playerid]) return SendClientMessage(playerid, COLOR_RED, "Vous êtes muet. / You are muted.");
+        if(gMuted[playerid]) return SendClientMessage(playerid, COLOR_RED, "Vous etes muet.");
         tmp = strtok_(cmdtext, idx);
         if(!strlen(tmp))
         {
@@ -711,7 +711,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 
     if(!strcmp(cmd, "/ooc", true))
     {
-        if(gMuted[playerid]) return SendClientMessage(playerid, COLOR_RED, "Vous êtes muet. / You are muted.");
+        if(gMuted[playerid]) return SendClientMessage(playerid, COLOR_RED, "Vous etes muet.");
         tmp = strtok_(cmdtext, idx);
         if(!strlen(tmp))
         {
@@ -736,7 +736,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
     if(!strcmp(cmd, "/cash", true))
     {
         new str[64];
-        format(str, sizeof(str), "Vous possédez $%d", GetPlayerMoney(playerid));
+        format(str, sizeof(str), "Vous possedez $%d", GetPlayerMoney(playerid));
         SendClientMessage(playerid, COLOR_GREEN, str);
         return 1;
     }
@@ -747,7 +747,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
         GetPlayerPos(playerid, x, y, z);
         GetPlayerFacingAngle(playerid, a);
         CreateVehicle(411, x + 2.0, y, z, a, -1, -1, -1, false);
-        SendClientMessage(playerid, COLOR_GREEN, "Un véhicule est apparu près de vous.");
+        SendClientMessage(playerid, COLOR_GREEN, "Un vehicule est apparu pres de vous.");
         return 1;
     }
 
@@ -760,11 +760,11 @@ public OnPlayerCommandText(playerid, cmdtext[])
             GetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
             engine = !engine;
             SetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
-            SendClientMessage(playerid, COLOR_GREEN, engine ? "Vous démarrez le moteur." : "Vous coupez le moteur.");
+            SendClientMessage(playerid, COLOR_GREEN, engine ? "Vous demarrez le moteur." : "Vous coupez le moteur.");
         }
         else
         {
-            SendClientMessage(playerid, COLOR_RED, "Vous n'êtes pas dans un véhicule.");
+            SendClientMessage(playerid, COLOR_RED, "Vous n'etes pas dans un vehicule.");
         }
         return 1;
     }
@@ -778,43 +778,43 @@ public OnPlayerCommandText(playerid, cmdtext[])
             GetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
             doors = !doors;
             SetVehicleParamsEx(vehicleid, engine, lights, alarm, doors, bonnet, boot, objective);
-            SendClientMessage(playerid, COLOR_GREEN, doors ? "Véhicule verrouillé." : "Véhicule déverrouillé.");
+            SendClientMessage(playerid, COLOR_GREEN, doors ? "Vehicule verrouille." : "Vehicule deverrouille.");
         }
         else
         {
-            SendClientMessage(playerid, COLOR_RED, "Vous n'êtes pas dans un véhicule.");
+            SendClientMessage(playerid, COLOR_RED, "Vous n'etes pas dans un vehicule.");
         }
         return 1;
     }
 
-    // --- Connexion développeur (élévation en jeu, distincte du RCON natif SA-MP) ---
-    if(!strcmp(cmd, "/devlogin", true) || !strcmp(cmd, "/connexiondev", true))
+    // --- Connexion developpeur (elevation en jeu, distincte du RCON natif SA-MP) ---
+    if(!strcmp(cmd, "/connexiondev", true))
     {
         tmp = strtok_(cmdtext, idx);
         if(!strlen(tmp))
         {
-            SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /devlogin [mot de passe / password]");
+            SendClientMessage(playerid, COLOR_RED, "Utilisation : /connexiondev [mot de passe]");
             return 1;
         }
         if(udb_hash(tmp) == DEV_LOGIN_HASH)
         {
             PlayerInfo[playerid][pAdmin] = ADMIN_LEVEL_DEV;
-            SendClientMessage(playerid, COLOR_ADMIN, "Connexion développeur réussie. / Developer login successful.");
+            SendClientMessage(playerid, COLOR_ADMIN, "Connexion developpeur reussie.");
         }
         else
         {
-            SendClientMessage(playerid, COLOR_RED, "Mot de passe incorrect. / Incorrect password.");
+            SendClientMessage(playerid, COLOR_RED, "Mot de passe incorrect.");
         }
         return 1;
     }
 
-    // --- Commandes Admin / Dev (bilingue FR/EN) ---
+    // --- Commandes Admin / Dev ---
     new adminCanon[24], adminLevel;
     if(ResolveAdminCmd(cmd, adminCanon, adminLevel))
     {
         if(PlayerInfo[playerid][pAdmin] < adminLevel)
         {
-            SendClientMessage(playerid, COLOR_RED, "Vous n'êtes pas autorisé à utiliser cette commande. / You are not authorized to use this command.");
+            SendClientMessage(playerid, COLOR_RED, "Vous n'etes pas autorise a utiliser cette commande.");
             return 1;
         }
         ExecuteAdminCmd(playerid, adminCanon, cmdtext, idx);
@@ -826,64 +826,64 @@ public OnPlayerCommandText(playerid, cmdtext[])
 }
 
 // ==============================================================
-//  Système Admin / Dev - bilingue FR / EN
-//  Niveaux : 1 Helper, 2 Modérateur/Moderator, 3 Admin,
-//            10 Admin Supérieur/Senior Admin, 20 Admin Superviseur/Supervisor,
-//            5885 Développeur/Developer
+//  Systeme Admin / Dev
+//  Niveaux : 1 Helper, 2 Moderateur, 3 Admin,
+//            10 Admin Superieur, 20 Admin Superviseur,
+//            5885 Developpeur
 // ==============================================================
 
-// Fait correspondre un alias FR ou EN à un identifiant canonique + niveau requis.
-// Retourne 1 si trouvé, 0 sinon.
+// Fait correspondre une commande FR a un identifiant canonique + niveau requis.
+// Retourne 1 si trouve, 0 sinon.
 stock ResolveAdminCmd(cmd[], canon[24], &level)
 {
     // --- Niveau 1 : Helper ---
-    if(!strcmp(cmd, "/freeze", true) || !strcmp(cmd, "/geler", true)) { canon = "FREEZE"; level = ADMIN_LEVEL_HELPER; return 1; }
-    if(!strcmp(cmd, "/unfreeze", true) || !strcmp(cmd, "/degeler", true)) { canon = "UNFREEZE"; level = ADMIN_LEVEL_HELPER; return 1; }
-    if(!strcmp(cmd, "/mute", true) || !strcmp(cmd, "/muet", true)) { canon = "MUTE"; level = ADMIN_LEVEL_HELPER; return 1; }
-    if(!strcmp(cmd, "/unmute", true) || !strcmp(cmd, "/demuet", true)) { canon = "UNMUTE"; level = ADMIN_LEVEL_HELPER; return 1; }
-    if(!strcmp(cmd, "/warn", true) || !strcmp(cmd, "/avertir", true)) { canon = "WARN"; level = ADMIN_LEVEL_HELPER; return 1; }
-    if(!strcmp(cmd, "/spec", true) || !strcmp(cmd, "/observer", true)) { canon = "SPEC"; level = ADMIN_LEVEL_HELPER; return 1; }
-    if(!strcmp(cmd, "/specoff", true) || !strcmp(cmd, "/finobserver", true)) { canon = "SPECOFF"; level = ADMIN_LEVEL_HELPER; return 1; }
-    if(!strcmp(cmd, "/jail", true) || !strcmp(cmd, "/prison", true)) { canon = "JAIL"; level = ADMIN_LEVEL_HELPER; return 1; }
-    if(!strcmp(cmd, "/unjail", true) || !strcmp(cmd, "/liberer", true)) { canon = "UNJAIL"; level = ADMIN_LEVEL_HELPER; return 1; }
+    if(!strcmp(cmd, "/geler", true)) { canon = "FREEZE"; level = ADMIN_LEVEL_HELPER; return 1; }
+    if(!strcmp(cmd, "/degeler", true)) { canon = "UNFREEZE"; level = ADMIN_LEVEL_HELPER; return 1; }
+    if(!strcmp(cmd, "/muet", true)) { canon = "MUTE"; level = ADMIN_LEVEL_HELPER; return 1; }
+    if(!strcmp(cmd, "/demuet", true)) { canon = "UNMUTE"; level = ADMIN_LEVEL_HELPER; return 1; }
+    if(!strcmp(cmd, "/avertir", true)) { canon = "WARN"; level = ADMIN_LEVEL_HELPER; return 1; }
+    if(!strcmp(cmd, "/observer", true)) { canon = "SPEC"; level = ADMIN_LEVEL_HELPER; return 1; }
+    if(!strcmp(cmd, "/finobserver", true)) { canon = "SPECOFF"; level = ADMIN_LEVEL_HELPER; return 1; }
+    if(!strcmp(cmd, "/prison", true)) { canon = "JAIL"; level = ADMIN_LEVEL_HELPER; return 1; }
+    if(!strcmp(cmd, "/liberer", true)) { canon = "UNJAIL"; level = ADMIN_LEVEL_HELPER; return 1; }
 
-    // --- Niveau 2 : Modérateur / Moderator ---
-    if(!strcmp(cmd, "/kick", true) || !strcmp(cmd, "/expulser", true)) { canon = "KICK"; level = ADMIN_LEVEL_MOD; return 1; }
-    if(!strcmp(cmd, "/slap", true) || !strcmp(cmd, "/gifler", true)) { canon = "SLAP"; level = ADMIN_LEVEL_MOD; return 1; }
-    if(!strcmp(cmd, "/heal", true) || !strcmp(cmd, "/soigner", true)) { canon = "HEAL"; level = ADMIN_LEVEL_MOD; return 1; }
-    if(!strcmp(cmd, "/armor", true) || !strcmp(cmd, "/armure", true)) { canon = "ARMOR"; level = ADMIN_LEVEL_MOD; return 1; }
-    if(!strcmp(cmd, "/goto", true) || !strcmp(cmd, "/allerA", true)) { canon = "GOTO"; level = ADMIN_LEVEL_MOD; return 1; }
-    if(!strcmp(cmd, "/gethere", true) || !strcmp(cmd, "/amener", true)) { canon = "GETHERE"; level = ADMIN_LEVEL_MOD; return 1; }
+    // --- Niveau 2 : Moderateur ---
+    if(!strcmp(cmd, "/expulser", true)) { canon = "KICK"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/gifler", true)) { canon = "SLAP"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/soigner", true)) { canon = "HEAL"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/armure", true)) { canon = "ARMOR"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/allerA", true)) { canon = "GOTO"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/amener", true)) { canon = "GETHERE"; level = ADMIN_LEVEL_MOD; return 1; }
 
     // --- Niveau 3 : Admin ---
-    if(!strcmp(cmd, "/ban", true) || !strcmp(cmd, "/bannir", true)) { canon = "BAN"; level = ADMIN_LEVEL_ADMIN; return 1; }
-    if(!strcmp(cmd, "/unban", true) || !strcmp(cmd, "/debannir", true)) { canon = "UNBAN"; level = ADMIN_LEVEL_ADMIN; return 1; }
-    if(!strcmp(cmd, "/setskin", true) || !strcmp(cmd, "/apparence", true)) { canon = "SETSKIN"; level = ADMIN_LEVEL_ADMIN; return 1; }
-    if(!strcmp(cmd, "/weapons", true) || !strcmp(cmd, "/armes", true)) { canon = "WEAPONS"; level = ADMIN_LEVEL_ADMIN; return 1; }
-    if(!strcmp(cmd, "/god", true) || !strcmp(cmd, "/dieu", true)) { canon = "GOD"; level = ADMIN_LEVEL_ADMIN; return 1; }
+    if(!strcmp(cmd, "/bannir", true)) { canon = "BAN"; level = ADMIN_LEVEL_ADMIN; return 1; }
+    if(!strcmp(cmd, "/debannir", true)) { canon = "UNBAN"; level = ADMIN_LEVEL_ADMIN; return 1; }
+    if(!strcmp(cmd, "/apparence", true)) { canon = "SETSKIN"; level = ADMIN_LEVEL_ADMIN; return 1; }
+    if(!strcmp(cmd, "/armes", true)) { canon = "WEAPONS"; level = ADMIN_LEVEL_ADMIN; return 1; }
+    if(!strcmp(cmd, "/dieu", true)) { canon = "GOD"; level = ADMIN_LEVEL_ADMIN; return 1; }
 
-    // --- Niveau 10 : Admin Supérieur / Senior Admin ---
-    if(!strcmp(cmd, "/setcash", true) || !strcmp(cmd, "/argent", true)) { canon = "SETCASH"; level = ADMIN_LEVEL_SUPERIOR; return 1; }
-    if(!strcmp(cmd, "/givecash", true) || !strcmp(cmd, "/donnerargent", true)) { canon = "GIVECASH"; level = ADMIN_LEVEL_SUPERIOR; return 1; }
-    if(!strcmp(cmd, "/setvip", true) || !strcmp(cmd, "/vip", true)) { canon = "SETVIP"; level = ADMIN_LEVEL_SUPERIOR; return 1; }
-    if(!strcmp(cmd, "/setlevel", true) || !strcmp(cmd, "/niveau", true)) { canon = "SETLEVEL"; level = ADMIN_LEVEL_SUPERIOR; return 1; }
+    // --- Niveau 10 : Admin Superieur ---
+    if(!strcmp(cmd, "/argent", true)) { canon = "SETCASH"; level = ADMIN_LEVEL_SUPERIOR; return 1; }
+    if(!strcmp(cmd, "/donnerargent", true)) { canon = "GIVECASH"; level = ADMIN_LEVEL_SUPERIOR; return 1; }
+    if(!strcmp(cmd, "/vip", true)) { canon = "SETVIP"; level = ADMIN_LEVEL_SUPERIOR; return 1; }
+    if(!strcmp(cmd, "/niveau", true)) { canon = "SETLEVEL"; level = ADMIN_LEVEL_SUPERIOR; return 1; }
 
-    // --- Niveau 20 : Admin Superviseur / Supervisor ---
-    if(!strcmp(cmd, "/setadmin", true) || !strcmp(cmd, "/definiradmin", true)) { canon = "SETADMIN"; level = ADMIN_LEVEL_SUPERVISOR; return 1; }
-    if(!strcmp(cmd, "/announce", true) || !strcmp(cmd, "/annonce", true)) { canon = "ANNOUNCE"; level = ADMIN_LEVEL_SUPERVISOR; return 1; }
+    // --- Niveau 20 : Admin Superviseur ---
+    if(!strcmp(cmd, "/definiradmin", true)) { canon = "SETADMIN"; level = ADMIN_LEVEL_SUPERVISOR; return 1; }
+    if(!strcmp(cmd, "/annonce", true)) { canon = "ANNOUNCE"; level = ADMIN_LEVEL_SUPERVISOR; return 1; }
 
-    // --- Niveau 5885 : Développeur / Developer ---
-    if(!strcmp(cmd, "/settime", true) || !strcmp(cmd, "/heure", true)) { canon = "SETTIME"; level = ADMIN_LEVEL_DEV; return 1; }
-    if(!strcmp(cmd, "/setweather", true) || !strcmp(cmd, "/meteo", true)) { canon = "SETWEATHER"; level = ADMIN_LEVEL_DEV; return 1; }
-    if(!strcmp(cmd, "/giveweapon", true) || !strcmp(cmd, "/donnerarme", true)) { canon = "GIVEWEAPON"; level = ADMIN_LEVEL_DEV; return 1; }
-    if(!strcmp(cmd, "/gotoxyz", true) || !strcmp(cmd, "/allercoord", true)) { canon = "GOTOXYZ"; level = ADMIN_LEVEL_DEV; return 1; }
-    if(!strcmp(cmd, "/gmx", true) || !strcmp(cmd, "/redemarrer", true)) { canon = "GMX"; level = ADMIN_LEVEL_DEV; return 1; }
-    if(!strcmp(cmd, "/rconcmd", true) || !strcmp(cmd, "/cmdrcon", true)) { canon = "RCONCMD"; level = ADMIN_LEVEL_DEV; return 1; }
+    // --- Niveau 5885 : Developpeur ---
+    if(!strcmp(cmd, "/heure", true)) { canon = "SETTIME"; level = ADMIN_LEVEL_DEV; return 1; }
+    if(!strcmp(cmd, "/meteo", true)) { canon = "SETWEATHER"; level = ADMIN_LEVEL_DEV; return 1; }
+    if(!strcmp(cmd, "/donnerarme", true)) { canon = "GIVEWEAPON"; level = ADMIN_LEVEL_DEV; return 1; }
+    if(!strcmp(cmd, "/allercoord", true)) { canon = "GOTOXYZ"; level = ADMIN_LEVEL_DEV; return 1; }
+    if(!strcmp(cmd, "/redemarrer", true)) { canon = "GMX"; level = ADMIN_LEVEL_DEV; return 1; }
+    if(!strcmp(cmd, "/cmdrcon", true)) { canon = "RCONCMD"; level = ADMIN_LEVEL_DEV; return 1; }
 
     return 0;
 }
 
-// Exécute la commande admin/dev canonique déjà validée (niveau vérifié en amont).
+// Execute la commande admin/dev canonique deja validee (niveau verifie en amont).
 stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
 {
     new tmp[64], tmp2[64], targetid, str[144], name[MAX_PLAYER_NAME], tname[MAX_PLAYER_NAME];
@@ -893,101 +893,101 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /freeze [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /geler [id]");
         gFrozen[targetid] = 1;
         TogglePlayerControllable(targetid, false);
-        SendClientMessage(targetid, COLOR_RED, "Vous avez été gelé par un admin. / You have been frozen by an admin.");
-        SendClientMessage(playerid, COLOR_GREEN, "Joueur gelé. / Player frozen.");
+        SendClientMessage(targetid, COLOR_RED, "Vous avez ete gele par un admin.");
+        SendClientMessage(playerid, COLOR_GREEN, "Joueur gele.");
     }
     else if(!strcmp(canon, "UNFREEZE"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /unfreeze [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /degeler [id]");
         gFrozen[targetid] = 0;
         TogglePlayerControllable(targetid, true);
-        SendClientMessage(targetid, COLOR_GREEN, "Vous avez été dégelé. / You have been unfrozen.");
-        SendClientMessage(playerid, COLOR_GREEN, "Joueur dégelé. / Player unfrozen.");
+        SendClientMessage(targetid, COLOR_GREEN, "Vous avez ete degele.");
+        SendClientMessage(playerid, COLOR_GREEN, "Joueur degele.");
     }
     else if(!strcmp(canon, "MUTE"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /mute [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /muet [id]");
         gMuted[targetid] = 1;
-        SendClientMessage(targetid, COLOR_RED, "Vous avez été réduit au silence. / You have been muted.");
-        SendClientMessage(playerid, COLOR_GREEN, "Joueur muet. / Player muted.");
+        SendClientMessage(targetid, COLOR_RED, "Vous avez ete reduit au silence.");
+        SendClientMessage(playerid, COLOR_GREEN, "Joueur muet.");
     }
     else if(!strcmp(canon, "UNMUTE"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /unmute [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /demuet [id]");
         gMuted[targetid] = 0;
-        SendClientMessage(targetid, COLOR_GREEN, "Vous pouvez de nouveau parler. / You can talk again.");
-        SendClientMessage(playerid, COLOR_GREEN, "Joueur démuté. / Player unmuted.");
+        SendClientMessage(targetid, COLOR_GREEN, "Vous pouvez de nouveau parler.");
+        SendClientMessage(playerid, COLOR_GREEN, "Joueur demute.");
     }
     else if(!strcmp(canon, "WARN"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
         tmp2 = strtok_(cmdtext, idx);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /warn [id] [raison]");
-        format(str, sizeof(str), "Vous avez reçu un avertissement : %s / You received a warning: %s", tmp2, tmp2);
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /avertir [id] [raison]");
+        format(str, sizeof(str), "Vous avez recu un avertissement : %s", tmp2);
         SendClientMessage(targetid, COLOR_RED, str);
-        SendClientMessage(playerid, COLOR_GREEN, "Avertissement envoyé. / Warning sent.");
+        SendClientMessage(playerid, COLOR_GREEN, "Avertissement envoye.");
     }
     else if(!strcmp(canon, "SPEC"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /spec [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /observer [id]");
         new Float:x, Float:y, Float:z;
         GetPlayerPos(targetid, x, y, z);
         SetPlayerInterior(playerid, GetPlayerInterior(targetid));
         SetPlayerVirtualWorld(playerid, GetPlayerVirtualWorld(targetid));
         SetPlayerPos(playerid, x, y, z + 2.0);
-        SendClientMessage(playerid, COLOR_GREEN, "Mode observateur activé. / Spectate mode enabled.");
+        SendClientMessage(playerid, COLOR_GREEN, "Mode observateur active.");
     }
     else if(!strcmp(canon, "SPECOFF"))
     {
         SetPlayerInterior(playerid, PlayerInfo[playerid][pInt]);
         SetPlayerVirtualWorld(playerid, PlayerInfo[playerid][pWorld]);
         SetPlayerPos(playerid, PlayerInfo[playerid][pPosX], PlayerInfo[playerid][pPosY], PlayerInfo[playerid][pPosZ]);
-        SendClientMessage(playerid, COLOR_GREEN, "Mode observateur désactivé. / Spectate mode disabled.");
+        SendClientMessage(playerid, COLOR_GREEN, "Mode observateur desactive.");
     }
     else if(!strcmp(canon, "JAIL"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /jail [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /prison [id]");
         gJailed[targetid] = 1;
         SetPlayerPos(targetid, 264.6, 77.4, 1001.0);
         SetPlayerInterior(targetid, 6);
         SetPlayerVirtualWorld(targetid, 0);
-        SendClientMessage(targetid, COLOR_RED, "Vous avez été emprisonné. / You have been jailed.");
-        SendClientMessage(playerid, COLOR_GREEN, "Joueur emprisonné. / Player jailed.");
+        SendClientMessage(targetid, COLOR_RED, "Vous avez ete emprisonne.");
+        SendClientMessage(playerid, COLOR_GREEN, "Joueur emprisonne.");
     }
     else if(!strcmp(canon, "UNJAIL"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /unjail [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /liberer [id]");
         gJailed[targetid] = 0;
         SetDefaultSpawnPos(targetid);
         SetPlayerPos(targetid, PlayerInfo[targetid][pPosX], PlayerInfo[targetid][pPosY], PlayerInfo[targetid][pPosZ]);
         SetPlayerInterior(targetid, PlayerInfo[targetid][pInt]);
         SetPlayerVirtualWorld(targetid, PlayerInfo[targetid][pWorld]);
-        SendClientMessage(targetid, COLOR_GREEN, "Vous avez été libéré. / You have been released.");
-        SendClientMessage(playerid, COLOR_GREEN, "Joueur libéré. / Player released.");
+        SendClientMessage(targetid, COLOR_GREEN, "Vous avez ete libere.");
+        SendClientMessage(playerid, COLOR_GREEN, "Joueur libere.");
     }
     else if(!strcmp(canon, "KICK"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /kick [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /expulser [id]");
         GetPlayerName(targetid, tname, sizeof(tname));
-        format(str, sizeof(str), "%s a expulsé %s du serveur. / %s kicked %s from the server.", name, tname, name, tname);
+        format(str, sizeof(str), "%s a expulse %s du serveur.", name, tname);
         SendClientMessageToAll(COLOR_ADMIN, str);
         Kick(targetid);
     }
@@ -995,70 +995,70 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /slap [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /gifler [id]");
         new Float:x, Float:y, Float:z;
         GetPlayerPos(targetid, x, y, z);
         SetPlayerPos(targetid, x, y, z + 5.0);
-        SendClientMessage(targetid, COLOR_RED, "Vous avez été giflé par un admin. / You were slapped by an admin.");
-        SendClientMessage(playerid, COLOR_GREEN, "Joueur giflé. / Player slapped.");
+        SendClientMessage(targetid, COLOR_RED, "Vous avez ete gifle par un admin.");
+        SendClientMessage(playerid, COLOR_GREEN, "Joueur gifle.");
     }
     else if(!strcmp(canon, "HEAL"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strlen(tmp) ? strval(tmp) : playerid;
-        if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Joueur introuvable. / Player not found.");
+        if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Joueur introuvable.");
         SetPlayerHealth(targetid, 100.0);
-        SendClientMessage(targetid, COLOR_GREEN, "Vous avez été soigné. / You have been healed.");
-        SendClientMessage(playerid, COLOR_GREEN, "Soin appliqué. / Heal applied.");
+        SendClientMessage(targetid, COLOR_GREEN, "Vous avez ete soigne.");
+        SendClientMessage(playerid, COLOR_GREEN, "Soin applique.");
     }
     else if(!strcmp(canon, "ARMOR"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strlen(tmp) ? strval(tmp) : playerid;
-        if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Joueur introuvable. / Player not found.");
+        if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Joueur introuvable.");
         SetPlayerArmour(targetid, 100.0);
-        SendClientMessage(targetid, COLOR_GREEN, "Vous avez reçu un gilet pare-balles. / You received body armor.");
-        SendClientMessage(playerid, COLOR_GREEN, "Gilet donné. / Armor given.");
+        SendClientMessage(targetid, COLOR_GREEN, "Vous avez recu un gilet pare-balles.");
+        SendClientMessage(playerid, COLOR_GREEN, "Gilet donne.");
     }
     else if(!strcmp(canon, "GOTO"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /goto [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /allerA [id]");
         new Float:x, Float:y, Float:z;
         GetPlayerPos(targetid, x, y, z);
         SetPlayerInterior(playerid, GetPlayerInterior(targetid));
         SetPlayerVirtualWorld(playerid, GetPlayerVirtualWorld(targetid));
         SetPlayerPos(playerid, x, y, z);
-        SendClientMessage(playerid, COLOR_GREEN, "Téléportation effectuée. / Teleported.");
+        SendClientMessage(playerid, COLOR_GREEN, "Teleportation effectuee.");
     }
     else if(!strcmp(canon, "GETHERE"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /gethere [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /amener [id]");
         new Float:x, Float:y, Float:z;
         GetPlayerPos(playerid, x, y, z);
         SetPlayerInterior(targetid, GetPlayerInterior(playerid));
         SetPlayerVirtualWorld(targetid, GetPlayerVirtualWorld(playerid));
         SetPlayerPos(targetid, x, y, z);
-        SendClientMessage(targetid, COLOR_YELLOW, "Vous avez été téléporté par un admin. / You were teleported by an admin.");
-        SendClientMessage(playerid, COLOR_GREEN, "Joueur téléporté à vous. / Player teleported to you.");
+        SendClientMessage(targetid, COLOR_YELLOW, "Vous avez ete teleporte par un admin.");
+        SendClientMessage(playerid, COLOR_GREEN, "Joueur teleporte a vous.");
     }
     else if(!strcmp(canon, "BAN"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /ban [id]");
+        if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /bannir [id]");
         GetPlayerName(targetid, tname, sizeof(tname));
-        format(str, sizeof(str), "%s a banni %s du serveur. / %s banned %s from the server.", name, tname, name, tname);
+        format(str, sizeof(str), "%s a banni %s du serveur.", name, tname);
         SendClientMessageToAll(COLOR_ADMIN, str);
         Ban(targetid);
     }
     else if(!strcmp(canon, "UNBAN"))
     {
-        // Le déban se fait via le fichier samp.ban ou une commande RCON native ("rcon unbanip <ip>").
-        SendClientMessage(playerid, COLOR_YELLOW, "Utilisez la console RCON : rcon unbanip <ip> / Use RCON console: rcon unbanip <ip>");
+        // Le deban se fait via le fichier samp.ban ou une commande RCON native ("rcon unbanip <ip>").
+        SendClientMessage(playerid, COLOR_YELLOW, "Utilisez la console RCON : rcon unbanip <ip>");
     }
     else if(!strcmp(canon, "SETSKIN"))
     {
@@ -1066,27 +1066,27 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         tmp = strtok_(cmdtext, idx);
         skinid = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !strlen(skinid) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /setskin [id] [skinid]");
+        if(!strlen(tmp) || !strlen(skinid) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /apparence [id] [skinid]");
         SetPlayerSkin(targetid, strval(skinid));
-        SendClientMessage(playerid, COLOR_GREEN, "Apparence modifiée. / Skin changed.");
+        SendClientMessage(playerid, COLOR_GREEN, "Apparence modifiee.");
     }
     else if(!strcmp(canon, "WEAPONS"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strlen(tmp) ? strval(tmp) : playerid;
-        if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Joueur introuvable. / Player not found.");
+        if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Joueur introuvable.");
         GivePlayerWeapon(targetid, 24, 250); // Deagle
         GivePlayerWeapon(targetid, 31, 500); // M4
-        SendClientMessage(targetid, COLOR_GREEN, "Vous avez reçu des armes. / You received weapons.");
-        SendClientMessage(playerid, COLOR_GREEN, "Armes données. / Weapons given.");
+        SendClientMessage(targetid, COLOR_GREEN, "Vous avez recu des armes.");
+        SendClientMessage(playerid, COLOR_GREEN, "Armes donnees.");
     }
     else if(!strcmp(canon, "GOD"))
     {
         tmp = strtok_(cmdtext, idx);
         targetid = strlen(tmp) ? strval(tmp) : playerid;
-        if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Joueur introuvable. / Player not found.");
+        if(!IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Joueur introuvable.");
         SetPlayerHealth(targetid, 99999.0);
-        SendClientMessage(targetid, COLOR_GREEN, "Mode invincible activé. / God mode enabled.");
+        SendClientMessage(targetid, COLOR_GREEN, "Mode invincible active.");
     }
     else if(!strcmp(canon, "SETCASH"))
     {
@@ -1094,10 +1094,10 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         tmp = strtok_(cmdtext, idx);
         amount = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !strlen(amount) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /setcash [id] [montant]");
+        if(!strlen(tmp) || !strlen(amount) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /argent [id] [montant]");
         ResetPlayerMoney(targetid);
         GivePlayerMoney(targetid, strval(amount));
-        SendClientMessage(playerid, COLOR_GREEN, "Argent défini. / Cash set.");
+        SendClientMessage(playerid, COLOR_GREEN, "Argent defini.");
     }
     else if(!strcmp(canon, "GIVECASH"))
     {
@@ -1105,9 +1105,9 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         tmp = strtok_(cmdtext, idx);
         amount = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !strlen(amount) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /givecash [id] [montant]");
+        if(!strlen(tmp) || !strlen(amount) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /donnerargent [id] [montant]");
         GivePlayerMoney(targetid, strval(amount));
-        SendClientMessage(playerid, COLOR_GREEN, "Argent donné. / Cash given.");
+        SendClientMessage(playerid, COLOR_GREEN, "Argent donne.");
     }
     else if(!strcmp(canon, "SETVIP"))
     {
@@ -1115,10 +1115,10 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         tmp = strtok_(cmdtext, idx);
         days = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !strlen(days) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /setvip [id] [jours]");
+        if(!strlen(tmp) || !strlen(days) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /vip [id] [jours]");
         PlayerInfo[targetid][pVipExpire] = gettime() + (strval(days) * 86400);
-        SendClientMessage(targetid, COLOR_YELLOW, "Vous êtes maintenant VIP ! / You are now VIP!");
-        SendClientMessage(playerid, COLOR_GREEN, "Statut VIP mis à jour. / VIP status updated.");
+        SendClientMessage(targetid, COLOR_YELLOW, "Vous etes maintenant VIP !");
+        SendClientMessage(playerid, COLOR_GREEN, "Statut VIP mis a jour.");
     }
     else if(!strcmp(canon, "SETLEVEL"))
     {
@@ -1126,11 +1126,11 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         tmp = strtok_(cmdtext, idx);
         lvl = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !strlen(lvl) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /setlevel [id] [niveau]");
-        if(strval(lvl) >= PlayerInfo[playerid][pAdmin]) return SendClientMessage(playerid, COLOR_RED, "Vous ne pouvez pas attribuer un niveau égal ou supérieur au vôtre. / You cannot assign a level equal to or higher than your own.");
+        if(!strlen(tmp) || !strlen(lvl) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /niveau [id] [niveau]");
+        if(strval(lvl) >= PlayerInfo[playerid][pAdmin]) return SendClientMessage(playerid, COLOR_RED, "Vous ne pouvez pas attribuer un niveau egal ou superieur au votre.");
         PlayerInfo[targetid][pAdmin] = strval(lvl);
-        SendClientMessage(targetid, COLOR_ADMIN, "Votre niveau admin a été modifié. / Your admin level was changed.");
-        SendClientMessage(playerid, COLOR_GREEN, "Niveau mis à jour. / Level updated.");
+        SendClientMessage(targetid, COLOR_ADMIN, "Votre niveau admin a ete modifie.");
+        SendClientMessage(playerid, COLOR_GREEN, "Niveau mis a jour.");
     }
     else if(!strcmp(canon, "SETADMIN"))
     {
@@ -1138,11 +1138,11 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         tmp = strtok_(cmdtext, idx);
         lvl = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !strlen(lvl) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /setadmin [id] [niveau]");
-        if(strval(lvl) >= PlayerInfo[playerid][pAdmin]) return SendClientMessage(playerid, COLOR_RED, "Vous ne pouvez pas attribuer un niveau égal ou supérieur au vôtre. / You cannot assign a level equal to or higher than your own.");
+        if(!strlen(tmp) || !strlen(lvl) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /definiradmin [id] [niveau]");
+        if(strval(lvl) >= PlayerInfo[playerid][pAdmin]) return SendClientMessage(playerid, COLOR_RED, "Vous ne pouvez pas attribuer un niveau egal ou superieur au votre.");
         PlayerInfo[targetid][pAdmin] = strval(lvl);
-        SendClientMessage(targetid, COLOR_ADMIN, "Votre niveau admin a été modifié. / Your admin level was changed.");
-        SendClientMessage(playerid, COLOR_GREEN, "Niveau admin mis à jour. / Admin level updated.");
+        SendClientMessage(targetid, COLOR_ADMIN, "Votre niveau admin a ete modifie.");
+        SendClientMessage(playerid, COLOR_GREEN, "Niveau admin mis a jour.");
     }
     else if(!strcmp(canon, "ANNOUNCE"))
     {
@@ -1150,24 +1150,24 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         tmp = strtok_(cmdtext, idx); // consomme /announce
         new msg[144];
         format(msg, sizeof(msg), "%s", cmdtext[idx]);
-        format(str, sizeof(str), "[ANNONCE / ANNOUNCE] %s", msg);
+        format(str, sizeof(str), "[ANNONCE] %s", msg);
         SendClientMessageToAll(COLOR_YELLOW, str);
     }
     else if(!strcmp(canon, "SETTIME"))
     {
         new hour[64];
         hour = strtok_(cmdtext, idx);
-        if(!strlen(hour)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /settime [heure]");
+        if(!strlen(hour)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /heure [heure]");
         SetWorldTime(strval(hour));
-        SendClientMessage(playerid, COLOR_GREEN, "Heure du serveur modifiée. / Server time changed.");
+        SendClientMessage(playerid, COLOR_GREEN, "Heure du serveur modifiee.");
     }
     else if(!strcmp(canon, "SETWEATHER"))
     {
         new wid[64];
         wid = strtok_(cmdtext, idx);
-        if(!strlen(wid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /setweather [id]");
+        if(!strlen(wid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /meteo [id]");
         SetWeather(strval(wid));
-        SendClientMessage(playerid, COLOR_GREEN, "Météo du serveur modifiée. / Server weather changed.");
+        SendClientMessage(playerid, COLOR_GREEN, "Meteo du serveur modifiee.");
     }
     else if(!strcmp(canon, "GIVEWEAPON"))
     {
@@ -1176,9 +1176,9 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         wid = strtok_(cmdtext, idx);
         ammo = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        if(!strlen(tmp) || !strlen(wid) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /giveweapon [id] [armeid] [munitions]");
+        if(!strlen(tmp) || !strlen(wid) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /donnerarme [id] [armeid] [munitions]");
         GivePlayerWeapon(targetid, strval(wid), strlen(ammo) ? strval(ammo) : 100);
-        SendClientMessage(playerid, COLOR_GREEN, "Arme donnée. / Weapon given.");
+        SendClientMessage(playerid, COLOR_GREEN, "Arme donnee.");
     }
     else if(!strcmp(canon, "GOTOXYZ"))
     {
@@ -1186,28 +1186,28 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         sx = strtok_(cmdtext, idx);
         sy = strtok_(cmdtext, idx);
         sz = strtok_(cmdtext, idx);
-        if(!strlen(sx) || !strlen(sy) || !strlen(sz)) return SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /gotoxyz [x] [y] [z]");
+        if(!strlen(sx) || !strlen(sy) || !strlen(sz)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /allercoord [x] [y] [z]");
         SetPlayerPos(playerid, floatstr(sx), floatstr(sy), floatstr(sz));
-        SendClientMessage(playerid, COLOR_GREEN, "Téléportation effectuée. / Teleported.");
+        SendClientMessage(playerid, COLOR_GREEN, "Teleportation effectuee.");
     }
     else if(!strcmp(canon, "GMX"))
     {
-        SendClientMessageToAll(COLOR_ADMIN, "(( Redémarrage du gamemode en cours... / Gamemode restarting... ))");
+        SendClientMessageToAll(COLOR_ADMIN, "(( Redemarrage du gamemode en cours... ))");
         SendRconCommand("gmx");
     }
     else if(!strcmp(canon, "RCONCMD"))
     {
         if(cmdtext[idx] == '\0')
         {
-            SendClientMessage(playerid, COLOR_RED, "Utilisation / Usage: /rconcmd <commande> (ex: /rconcmd banip 1.2.3.4)");
-            SendClientMessage(playerid, COLOR_WHITE, "Commandes disponibles / Available: echo, exec, cmdlist, varlist, exit, kick, ban, gmx, changemode, say, reloadbans, reloadlog, players, banip, unbanip, gravity, weather, loadfs, unloadfs, reloadfs");
+            SendClientMessage(playerid, COLOR_RED, "Utilisation : /cmdrcon <commande> (ex: /cmdrcon banip 1.2.3.4)");
+            SendClientMessage(playerid, COLOR_WHITE, "Commandes disponibles : echo, exec, cmdlist, varlist, exit, kick, ban, gmx, changemode, say, reloadbans, reloadlog, players, banip, unbanip, gravity, weather, loadfs, unloadfs, reloadfs");
             return 1;
         }
         SendRconCommand(cmdtext[idx]);
 
         new name[MAX_PLAYER_NAME], logmsg[192];
         GetPlayerName(playerid, name, sizeof(name));
-        format(logmsg, sizeof(logmsg), "(( %s a exécuté la commande RCON: %s / %s executed RCON command: %s ))", name, cmdtext[idx], name, cmdtext[idx]);
+        format(logmsg, sizeof(logmsg), "(( %s a execute la commande RCON: %s ))", name, cmdtext[idx]);
         for(new j = 0; j < MAX_PLAYERS; j++)
         {
             if(IsPlayerConnected(j) && IsLoggedIn[j] && PlayerInfo[j][pAdmin] >= ADMIN_LEVEL_SUPERVISOR)
@@ -1215,32 +1215,32 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
                 SendClientMessage(j, COLOR_ADMIN, logmsg);
             }
         }
-        SendClientMessage(playerid, COLOR_GREEN, "Commande RCON envoyée. / RCON command sent.");
+        SendClientMessage(playerid, COLOR_GREEN, "Commande RCON envoyee.");
     }
     return 1;
 }
 
-// Affiche la liste des commandes admin/dev disponibles selon le niveau du joueur (FR/EN)
+// Affiche la liste des commandes admin/dev disponibles selon le niveau du joueur
 stock ShowAdminHelp(playerid)
 {
     new lvl = PlayerInfo[playerid][pAdmin];
-    SendClientMessage(playerid, COLOR_YELLOW, "== Commandes Admin / Admin Commands ==");
+    SendClientMessage(playerid, COLOR_YELLOW, "== Commandes Admin ==");
     if(lvl >= ADMIN_LEVEL_HELPER)
-        SendClientMessage(playerid, COLOR_WHITE, "[Helper] /freeze /geler, /unfreeze /degeler, /mute /muet, /unmute /demuet, /warn /avertir, /spec /observer, /specoff /finobserver, /jail /prison, /unjail /liberer");
+        SendClientMessage(playerid, COLOR_WHITE, "[Helper] /geler, /degeler, /muet, /demuet, /avertir, /observer, /finobserver, /prison, /liberer");
     if(lvl >= ADMIN_LEVEL_MOD)
-        SendClientMessage(playerid, COLOR_WHITE, "[Modérateur/Moderator] /kick /expulser, /slap /gifler, /heal /soigner, /armor /armure, /goto /allerA, /gethere /amener");
+        SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /expulser, /gifler, /soigner, /armure, /allerA, /amener");
     if(lvl >= ADMIN_LEVEL_ADMIN)
-        SendClientMessage(playerid, COLOR_WHITE, "[Admin] /ban /bannir, /unban /debannir, /setskin /apparence, /weapons /armes, /god /dieu");
+        SendClientMessage(playerid, COLOR_WHITE, "[Admin] /bannir, /debannir, /apparence, /armes, /dieu");
     if(lvl >= ADMIN_LEVEL_SUPERIOR)
-        SendClientMessage(playerid, COLOR_WHITE, "[Admin Sup./Senior] /setcash /argent, /givecash /donnerargent, /setvip /vip, /setlevel /niveau");
+        SendClientMessage(playerid, COLOR_WHITE, "[Admin Sup.] /argent, /donnerargent, /vip, /niveau");
     if(lvl >= ADMIN_LEVEL_SUPERVISOR)
-        SendClientMessage(playerid, COLOR_WHITE, "[Superviseur/Supervisor] /setadmin /definiradmin, /announce /annonce");
+        SendClientMessage(playerid, COLOR_WHITE, "[Superviseur] /definiradmin, /annonce");
     if(lvl >= ADMIN_LEVEL_DEV)
-        SendClientMessage(playerid, COLOR_ADMIN, "[Développeur/Developer] /settime /heure, /setweather /meteo, /giveweapon /donnerarme, /gotoxyz /allercoord, /gmx /redemarrer, /rconcmd (accès complet RCON)");
+        SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /heure, /meteo, /donnerarme, /allercoord, /redemarrer, /cmdrcon (acces complet RCON)");
     return 1;
 }
 
-// Petit tokenizer maison (évite une dépendance externe)
+// Petit tokenizer maison (evite une dependance externe)
 stock strtok_(const string[], &index)
 {
     new length = strlen(string);
@@ -1258,7 +1258,7 @@ stock strtok_(const string[], &index)
 }
 
 // ==============================================================
-//  Autres callbacks nécessaires
+//  Autres callbacks necessaires
 // ==============================================================
 public OnPlayerRequestClass(playerid, classid)
 {
@@ -1272,7 +1272,7 @@ public OnPlayerText(playerid, text[])
 {
     if(gMuted[playerid])
     {
-        SendClientMessage(playerid, COLOR_RED, "Vous êtes muet et ne pouvez pas parler. / You are muted and cannot talk.");
+        SendClientMessage(playerid, COLOR_RED, "Vous etes muet et ne pouvez pas parler.");
         return 0;
     }
     return 1;
@@ -1289,11 +1289,11 @@ public OnPlayerEnterVehicle(playerid, vehicleid, ispassenger)
 }
 
 // ==============================================================
-//  Pont RCON natif <-> système de niveaux admin du script
-//  Le login RCON lui-même est géré nativement par SA-MP
+//  Pont RCON natif <-> systeme de niveaux admin du script
+//  Le login RCON lui-meme est gere nativement par SA-MP
 //  (server.cfg -> rcon_password, puis "/rcon login <motdepasse>" en jeu).
-//  Ce callback détecte une connexion RCON réussie et l'associe
-//  automatiquement au niveau Développeur dans notre système.
+//  Ce callback detecte une connexion RCON reussie et l'associe
+//  automatiquement au niveau Developpeur dans notre systeme.
 // ==============================================================
 public OnRconLoginAttempt(ip[], password[], success)
 {
@@ -1310,11 +1310,11 @@ public OnRconLoginAttempt(ip[], password[], success)
             {
                 PlayerInfo[i][pAdmin] = ADMIN_LEVEL_DEV;
 
-                SendClientMessage(i, COLOR_ADMIN, "Connexion RCON réussie : niveau Développeur accordé. / RCON login successful: Developer level granted.");
+                SendClientMessage(i, COLOR_ADMIN, "Connexion RCON reussie : niveau Developpeur accorde.");
 
                 new name[MAX_PLAYER_NAME], logmsg[144];
                 GetPlayerName(i, name, sizeof(name));
-                format(logmsg, sizeof(logmsg), "(( %s s'est connecté en RCON. / %s logged in via RCON. ))", name, name);
+                format(logmsg, sizeof(logmsg), "(( %s s'est connecte en RCON. ))", name);
 
                 for(new j = 0; j < MAX_PLAYERS; j++)
                 {
