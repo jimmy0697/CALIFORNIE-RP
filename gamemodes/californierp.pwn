@@ -9,6 +9,24 @@
 #define FILTERSCRIPT
 
 // ------------------------------------------------------------
+//  Hash simple (Adler32-like) utilisé pour les mots de passe.
+//  Fonction standard couramment utilisée dans les gamemodes SA-MP.
+// ------------------------------------------------------------
+stock udb_hash(buf[])
+{
+    new length = strlen(buf);
+    new s1 = 1;
+    new s2 = 0;
+    new n;
+    for (n = 0; n < length; n++)
+    {
+        s1 = (s1 + buf[n]) % 65521;
+        s2 = (s2 + s1) % 65521;
+    }
+    return (s2 << 16) + s1;
+}
+
+// ------------------------------------------------------------
 //  Constantes ajoutées (auth / spawn) - définies ici si absentes de californie.inc
 // ------------------------------------------------------------
 #if !defined DIALOG_SPAWNCHOICE
@@ -805,7 +823,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 
 // Fait correspondre un alias FR ou EN à un identifiant canonique + niveau requis.
 // Retourne 1 si trouvé, 0 sinon.
-stock ResolveAdminCmd(cmd[], canon[], &level)
+stock ResolveAdminCmd(cmd[], canon[24], &level)
 {
     // --- Niveau 1 : Helper ---
     if(!strcmp(cmd, "/freeze", true) || !strcmp(cmd, "/geler", true)) { canon = "FREEZE"; level = ADMIN_LEVEL_HELPER; return 1; }
