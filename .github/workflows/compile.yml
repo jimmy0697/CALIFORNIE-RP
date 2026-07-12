@@ -52,7 +52,7 @@ jobs:
           if [ ! -f "$PAWNCC_BIN" ]; then PAWNCC_BIN="./pawncc/pawncc"; fi
           "$PAWNCC_BIN" \
             -d3 \
-            -O2 \
+            -O0 \
             -Z \
             -i./pawno/include \
             -i./gamemodes \
