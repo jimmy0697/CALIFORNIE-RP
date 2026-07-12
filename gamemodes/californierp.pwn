@@ -622,6 +622,14 @@ public OnPlayerCommandText(playerid, cmdtext[])
     new idx = 0;
     cmd = strtok_(cmdtext, idx);
 
+    // Laisser SA-MP gérer nativement /rcon (login, commandes admin console).
+    // Sans ce return 0, notre script intercepterait la commande et empêcherait
+    // le serveur de la traiter, provoquant un faux "Commande inconnue".
+    if(!strcmp(cmd, "/rcon", true))
+    {
+        return 0;
+    }
+
     if(!IsLoggedIn[playerid])
     {
         SendClientMessage(playerid, COLOR_RED, "Vous devez être connecté pour utiliser des commandes.");
