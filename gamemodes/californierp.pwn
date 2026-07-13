@@ -125,7 +125,11 @@ new gMuted[MAX_PLAYERS];
 new gJailed[MAX_PLAYERS];
 
 // --- Affichage TextDraw des documents (carte d'identite, permis, port d'armes) ---
-#define MAX_CARD_TD 9
+#define MAX_CARD_FIELDS 9
+#define CARD_TD_BOTTOM (8 + (MAX_CARD_FIELDS * 2))
+#define CARD_TD_CLOSE_BOX (CARD_TD_BOTTOM + 1)
+#define CARD_TD_CLOSE_CROSS (CARD_TD_BOTTOM + 2)
+#define MAX_CARD_TD (CARD_TD_CLOSE_CROSS + 1)
 new PlayerText:gCardTD[MAX_PLAYERS][MAX_CARD_TD];
 new bool:gCardTDShown[MAX_PLAYERS];
 
@@ -169,8 +173,30 @@ enum pInfo
     // Papiers / documents
     pIDNum,              // Numero de carte d'identite (attribue a l'inscription)
     pDateNaissance[11],  // Date de naissance JJ/MM/AAAA
-    pPermisConduire,     // 0 = non possede, 1 = possede
-    pPortArme            // 0 = non possede, 1 = possede
+    pPermisConduire,     // Permis vehicule : 0 = non possede, 1 = possede
+    pPortArme,           // 0 = non possede, 1 = possede
+
+    // Informations personnelles (carte d'identite)
+    pSexe[2],            // "H" ou "F"
+    pAge,                // Age du personnage
+    pLieuNaissance[32],  // Lieu de naissance
+    pDateDelivID[11],    // Date de delivrance de la carte d'identite
+
+    // Permis de conduire par categorie
+    pPermisPL,           // Poids lourd : 0/1
+    pPermisAvion,        // 0/1
+    pPermisBateau,       // 0/1
+    pPermisMoto,         // 0/1
+    pDatePermisVehicule[11],
+    pDatePermisPL[11],
+    pDatePermisAvion[11],
+    pDatePermisBateau[11],
+    pDatePermisMoto[11],
+
+    // Port d'armes
+    pProfession[32],
+    pTypeArme[32],
+    pNomArme[32]
 };
 new PlayerInfo[MAX_PLAYERS][pInfo];
 new IsLoggedIn[MAX_PLAYERS];
@@ -499,6 +525,24 @@ stock ShowPapiersMenu(playerid)
 }
 
 // ------------------------------------------------------------
+//  Transforme un pseudo au format SA-MP "Prenom_Nom" en
+//  "Prenom Nom" lisible, pour l'affichage sur les cartes.
+// ------------------------------------------------------------
+stock FormatFullName(dest[], destSize, const src[])
+{
+    new len = strlen(src);
+    if(len >= destSize) len = destSize - 1;
+
+    for(new i = 0; i < len; i++)
+    {
+        if(src[i] == '_') dest[i] = ' ';
+        else dest[i] = src[i];
+    }
+    dest[len] = EOS;
+    return 1;
+}
+
+// ------------------------------------------------------------
 //  Detruit la carte TextDraw actuellement affichee pour un joueur,
 //  s'il y en a une. A appeler avant d'en afficher une nouvelle,
 //  a la deconnexion, et quand le joueur clique sur "Fermer".
@@ -524,9 +568,15 @@ stock DestroyCardTD(playerid)
 //  sous forme de carte TextDraw stylee, avec l'apparence du joueur
 //  en apercu (comme une photo) et un bouton de fermeture cliquable.
 //
+//  accentColor  = couleur propre a ce type de carte (bandeau, logo, libelles)
+//  cardNumber   = numero a 3 chiffres, unique par carte et par joueur (haut droite)
+//  fieldLabels  = libelles des informations (affiches dans accentColor)
+//  fieldValues  = valeurs correspondantes (affichees en blanc, sauf couleur forcee)
+//  fieldColors  = couleur de chaque valeur (0xFFFFFFFF par defaut, vert si "valide")
+//  fieldCount   = nombre de lignes reellement utilisees (<= MAX_CARD_FIELDS)
 //  previewmodel = skin du joueur a afficher en "photo" (-1 pour aucun)
 // ------------------------------------------------------------
-stock ShowDocumentCard(playerid, const cardTitle[], const cardLine1[], const cardLine2[], const cardLine3[], const cardLine4[], previewmodel)
+stock ShowDocumentCard(playerid, const cardTitle[], accentColor, cardNumber, const fieldLabels[][24], const fieldValues[][48], const fieldColors[], fieldCount, previewmodel)
 {
     DestroyCardTD(playerid); // Evite les doublons si une carte est deja affichee
 
@@ -535,75 +585,118 @@ stock ShowDocumentCard(playerid, const cardTitle[], const cardLine1[], const car
 
     // 0: fond principal de la carte
     gCardTD[playerid][0] = CreatePlayerTextDraw(playerid, bx, by, "_");
-    PlayerTextDrawTextSize(playerid, gCardTD[playerid][0], bx + 280.0, by + 200.0);
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][0], bx + 280.0, by + 240.0);
     PlayerTextDrawUseBox(playerid, gCardTD[playerid][0], 1);
     PlayerTextDrawBoxColor(playerid, gCardTD[playerid][0], 0x1B1B1BE6);
     PlayerTextDrawColor(playerid, gCardTD[playerid][0], 0x00000000);
 
-    // 1: bandeau superieur (accent dore, style carte officielle)
+    // 1: bandeau superieur, dans la couleur propre a ce type de carte
     gCardTD[playerid][1] = CreatePlayerTextDraw(playerid, bx, by, "_");
-    PlayerTextDrawTextSize(playerid, gCardTD[playerid][1], bx + 280.0, by + 22.0);
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][1], bx + 280.0, by + 24.0);
     PlayerTextDrawUseBox(playerid, gCardTD[playerid][1], 1);
-    PlayerTextDrawBoxColor(playerid, gCardTD[playerid][1], 0xC8A951FF);
+    PlayerTextDrawBoxColor(playerid, gCardTD[playerid][1], accentColor);
     PlayerTextDrawColor(playerid, gCardTD[playerid][1], 0x00000000);
 
-    // 2: titre du document
-    gCardTD[playerid][2] = CreatePlayerTextDraw(playerid, bx + 10.0, by + 5.0, cardTitle);
+    // 2: titre du document (gros, blanc avec ombre : bien visible sur toutes les couleurs)
+    gCardTD[playerid][2] = CreatePlayerTextDraw(playerid, bx + 34.0, by + 5.0, cardTitle);
     PlayerTextDrawFont(playerid, gCardTD[playerid][2], 2);
-    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][2], 0.28, 1.2);
-    PlayerTextDrawColor(playerid, gCardTD[playerid][2], 0x000000FF);
-    PlayerTextDrawSetShadow(playerid, gCardTD[playerid][2], 0);
+    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][2], 0.26, 1.3);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][2], 0xFFFFFFFF);
+    PlayerTextDrawSetShadow(playerid, gCardTD[playerid][2], 1);
 
-    // 3: cadre de la "photo" (apparence du joueur)
-    gCardTD[playerid][3] = CreatePlayerTextDraw(playerid, bx + 10.0, by + 32.0, "_");
-    PlayerTextDrawTextSize(playerid, gCardTD[playerid][3], bx + 100.0, by + 190.0);
+    // 3: logo (en haut a gauche)
+    gCardTD[playerid][3] = CreatePlayerTextDraw(playerid, bx + 4.0, by + 3.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][3], bx + 28.0, by + 21.0);
     PlayerTextDrawUseBox(playerid, gCardTD[playerid][3], 1);
     PlayerTextDrawBoxColor(playerid, gCardTD[playerid][3], 0x00000090);
     PlayerTextDrawColor(playerid, gCardTD[playerid][3], 0x00000000);
 
-    // 4: apercu 3D de l'apparence du joueur (fait office de photo)
-    gCardTD[playerid][4] = CreatePlayerTextDraw(playerid, bx + 10.0, by + 32.0, "_");
-    PlayerTextDrawTextSize(playerid, gCardTD[playerid][4], bx + 100.0, by + 190.0);
+    // 4: texte du logo ("CA" = Californie)
+    gCardTD[playerid][4] = CreatePlayerTextDraw(playerid, bx + 7.0, by + 6.0, "CA");
+    PlayerTextDrawFont(playerid, gCardTD[playerid][4], 2);
+    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][4], 0.22, 1.1);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][4], 0xFFFFFFFF);
+
+    // 5: numero unique de la carte (en haut a droite)
+    new numStr[16];
+    format(numStr, sizeof(numStr), "#%03d", cardNumber);
+    gCardTD[playerid][5] = CreatePlayerTextDraw(playerid, bx + 232.0, by + 6.0, numStr);
+    PlayerTextDrawFont(playerid, gCardTD[playerid][5], 2);
+    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][5], 0.22, 1.1);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][5], 0xFFFFFFFF);
+    PlayerTextDrawSetShadow(playerid, gCardTD[playerid][5], 1);
+
+    // 6: cadre de la "photo" (apparence du joueur)
+    gCardTD[playerid][6] = CreatePlayerTextDraw(playerid, bx + 10.0, by + 28.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][6], bx + 100.0, by + 208.0);
+    PlayerTextDrawUseBox(playerid, gCardTD[playerid][6], 1);
+    PlayerTextDrawBoxColor(playerid, gCardTD[playerid][6], 0x00000090);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][6], 0x00000000);
+
+    // 7: apercu 3D de l'apparence du joueur (fait office de photo)
+    gCardTD[playerid][7] = CreatePlayerTextDraw(playerid, bx + 10.0, by + 28.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][7], bx + 100.0, by + 208.0);
     if(previewmodel != -1)
     {
-        PlayerTextDrawFont(playerid, gCardTD[playerid][4], 5);
-        PlayerTextDrawSetPreviewModel(playerid, gCardTD[playerid][4], previewmodel);
-        PlayerTextDrawSetPreviewRot(playerid, gCardTD[playerid][4], gPreviewRotX, gPreviewRotY, gPreviewRotZ, gPreviewZoom);
+        PlayerTextDrawFont(playerid, gCardTD[playerid][7], 5);
+        PlayerTextDrawSetPreviewModel(playerid, gCardTD[playerid][7], previewmodel);
+        PlayerTextDrawSetPreviewRot(playerid, gCardTD[playerid][7], gPreviewRotX, gPreviewRotY, gPreviewRotZ, gPreviewZoom);
     }
 
-    // 5: bloc des informations (nom, numero, date, statut)
-    new fields[256];
-    format(fields, sizeof(fields), "%s~n~~n~%s~n~~n~%s~n~~n~%s", cardLine1, cardLine2, cardLine3, cardLine4);
-    gCardTD[playerid][5] = CreatePlayerTextDraw(playerid, bx + 120.0, by + 35.0, fields);
-    PlayerTextDrawFont(playerid, gCardTD[playerid][5], 1);
-    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][5], 0.22, 1.3);
-    PlayerTextDrawColor(playerid, gCardTD[playerid][5], 0xFFFFFFFF);
-    PlayerTextDrawSetShadow(playerid, gCardTD[playerid][5], 0);
+    // 8+: champs d'information. Libelle dans la couleur de la carte, valeur en blanc
+    // (ou dans la couleur forcee par l'appelant, ex: vert pour "Valide").
+    new fCount = fieldCount;
+    if(fCount > MAX_CARD_FIELDS) fCount = MAX_CARD_FIELDS;
 
-    // 6: mention en bas de carte
-    gCardTD[playerid][6] = CreatePlayerTextDraw(playerid, bx + 10.0, by + 175.0, "Californie RP - Document officiel");
-    PlayerTextDrawFont(playerid, gCardTD[playerid][6], 1);
-    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][6], 0.15, 0.8);
-    PlayerTextDrawColor(playerid, gCardTD[playerid][6], 0x888888FF);
+    new Float:rowY;
+    new labelIdx, valueIdx;
 
-    // 7: bouton de fermeture (cadre rouge cliquable)
-    gCardTD[playerid][7] = CreatePlayerTextDraw(playerid, bx + 255.0, by + 5.0, "_");
-    PlayerTextDrawTextSize(playerid, gCardTD[playerid][7], bx + 280.0, by + 22.0);
-    PlayerTextDrawUseBox(playerid, gCardTD[playerid][7], 1);
-    PlayerTextDrawBoxColor(playerid, gCardTD[playerid][7], 0xAA0000FF);
-    PlayerTextDrawColor(playerid, gCardTD[playerid][7], 0x00000000);
-    PlayerTextDrawSetSelectable(playerid, gCardTD[playerid][7], 1);
+    for(new i = 0; i < fCount; i++)
+    {
+        rowY = by + 30.0 + (i * 20.0);
+        labelIdx = 8 + (i * 2);
+        valueIdx = labelIdx + 1;
 
-    // 8: croix du bouton de fermeture
-    gCardTD[playerid][8] = CreatePlayerTextDraw(playerid, bx + 260.0, by + 8.0, "X");
-    PlayerTextDrawFont(playerid, gCardTD[playerid][8], 1);
-    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][8], 0.3, 1.2);
-    PlayerTextDrawColor(playerid, gCardTD[playerid][8], 0xFFFFFFFF);
-    PlayerTextDrawSetSelectable(playerid, gCardTD[playerid][8], 1);
+        gCardTD[playerid][labelIdx] = CreatePlayerTextDraw(playerid, bx + 110.0, rowY, fieldLabels[i]);
+        PlayerTextDrawFont(playerid, gCardTD[playerid][labelIdx], 1);
+        PlayerTextDrawLetterSize(playerid, gCardTD[playerid][labelIdx], 0.17, 0.9);
+        PlayerTextDrawColor(playerid, gCardTD[playerid][labelIdx], accentColor);
+        PlayerTextDrawSetShadow(playerid, gCardTD[playerid][labelIdx], 0);
+
+        gCardTD[playerid][valueIdx] = CreatePlayerTextDraw(playerid, bx + 190.0, rowY, fieldValues[i]);
+        PlayerTextDrawFont(playerid, gCardTD[playerid][valueIdx], 1);
+        PlayerTextDrawLetterSize(playerid, gCardTD[playerid][valueIdx], 0.17, 0.9);
+        PlayerTextDrawColor(playerid, gCardTD[playerid][valueIdx], fieldColors[i]);
+        PlayerTextDrawSetShadow(playerid, gCardTD[playerid][valueIdx], 0);
+    }
+
+    // Mention de bas de carte
+    gCardTD[playerid][CARD_TD_BOTTOM] = CreatePlayerTextDraw(playerid, bx + 10.0, by + 216.0, "ETAT DE LA CALIFORNIE");
+    PlayerTextDrawFont(playerid, gCardTD[playerid][CARD_TD_BOTTOM], 1);
+    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][CARD_TD_BOTTOM], 0.19, 1.0);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][CARD_TD_BOTTOM], 0xAAAAAAFF);
+
+    // Bouton de fermeture (cadre rouge cliquable)
+    gCardTD[playerid][CARD_TD_CLOSE_BOX] = CreatePlayerTextDraw(playerid, bx + 255.0, by + 3.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][CARD_TD_CLOSE_BOX], bx + 276.0, by + 21.0);
+    PlayerTextDrawUseBox(playerid, gCardTD[playerid][CARD_TD_CLOSE_BOX], 1);
+    PlayerTextDrawBoxColor(playerid, gCardTD[playerid][CARD_TD_CLOSE_BOX], 0xAA0000FF);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][CARD_TD_CLOSE_BOX], 0x00000000);
+    PlayerTextDrawSetSelectable(playerid, gCardTD[playerid][CARD_TD_CLOSE_BOX], 1);
+
+    // Croix du bouton de fermeture
+    gCardTD[playerid][CARD_TD_CLOSE_CROSS] = CreatePlayerTextDraw(playerid, bx + 260.0, by + 6.0, "X");
+    PlayerTextDrawFont(playerid, gCardTD[playerid][CARD_TD_CLOSE_CROSS], 1);
+    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][CARD_TD_CLOSE_CROSS], 0.3, 1.2);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][CARD_TD_CLOSE_CROSS], 0xFFFFFFFF);
+    PlayerTextDrawSetSelectable(playerid, gCardTD[playerid][CARD_TD_CLOSE_CROSS], 1);
 
     for(new i = 0; i < MAX_CARD_TD; i++)
     {
-        PlayerTextDrawShow(playerid, gCardTD[playerid][i]);
+        if(gCardTD[playerid][i] != PlayerText:INVALID_TEXT_DRAW)
+        {
+            PlayerTextDrawShow(playerid, gCardTD[playerid][i]);
+        }
     }
     gCardTDShown[playerid] = true;
 
@@ -619,7 +712,7 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid)
 {
     if(!gCardTDShown[playerid]) return 0;
 
-    if(playertextid == gCardTD[playerid][7] || playertextid == gCardTD[playerid][8] || playertextid == PlayerText:INVALID_TEXT_DRAW)
+    if(playertextid == gCardTD[playerid][CARD_TD_CLOSE_BOX] || playertextid == gCardTD[playerid][CARD_TD_CLOSE_CROSS] || playertextid == PlayerText:INVALID_TEXT_DRAW)
     {
         CancelSelectTextDraw(playerid);
         DestroyCardTD(playerid);
@@ -693,6 +786,41 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             format(line, sizeof(line), "PermisConduire=0\r\n");
             fwrite(f, line);
             format(line, sizeof(line), "PortArme=0\r\n");
+            fwrite(f, line);
+
+            new regY, regM, regD;
+            getdate(regY, regM, regD);
+            format(line, sizeof(line), "Sexe=H\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "Age=18\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "LieuNaissance=Los Santos\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "DateDelivID=%02d/%02d/%04d\r\n", regD, regM, regY);
+            fwrite(f, line);
+            format(line, sizeof(line), "PermisPL=0\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "PermisAvion=0\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "PermisBateau=0\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "PermisMoto=0\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "DatePermisVehicule=--/--/----\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "DatePermisPL=--/--/----\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "DatePermisAvion=--/--/----\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "DatePermisBateau=--/--/----\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "DatePermisMoto=--/--/----\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "Profession=Sans emploi\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "TypeArme=Aucun\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "NomArme=Aucun\r\n");
             fwrite(f, line);
             fclose(f);
         }
@@ -821,50 +949,102 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
     {
         if(!response) return 1; // Ferme
 
-        new name[MAX_PLAYER_NAME];
+        new name[MAX_PLAYER_NAME], fullName[MAX_PLAYER_NAME];
         GetPlayerName(playerid, name, sizeof(name));
+        FormatFullName(fullName, sizeof(fullName), name);
 
         if(listitem == 0) // Carte d'identite
         {
-            new l1[64], l2[64], l3[64], l4[64];
-            format(l1, sizeof(l1), "Nom : %s", name);
-            format(l2, sizeof(l2), "Numero : %d", PlayerInfo[playerid][pIDNum]);
-            format(l3, sizeof(l3), "Naissance : %s", PlayerInfo[playerid][pDateNaissance]);
-            format(l4, sizeof(l4), "Statut : Valide");
-            ShowDocumentCard(playerid, "Carte d'identite", l1, l2, l3, l4, GetPlayerSkin(playerid));
+            new labels[MAX_CARD_FIELDS][24], values[MAX_CARD_FIELDS][48], colors[MAX_CARD_FIELDS];
+            new numCarte = 100 + (PlayerInfo[playerid][pIDNum] % 900);
+
+            format(labels[0], 24, "NOM ET PRENOM");
+            format(values[0], 48, "%s", fullName);
+            colors[0] = 0xFFFFFFFF;
+
+            format(labels[1], 24, "SEXE");
+            format(values[1], 48, "%s", (!strcmp(PlayerInfo[playerid][pSexe], "F")) ? ("Femme") : ("Homme"));
+            colors[1] = 0xFFFFFFFF;
+
+            format(labels[2], 24, "AGE");
+            format(values[2], 48, "%d ans", PlayerInfo[playerid][pAge]);
+            colors[2] = 0xFFFFFFFF;
+
+            format(labels[3], 24, "DATE DE NAISSANCE");
+            format(values[3], 48, "%s", PlayerInfo[playerid][pDateNaissance]);
+            colors[3] = 0xFFFFFFFF;
+
+            format(labels[4], 24, "LIEU DE NAISSANCE");
+            format(values[4], 48, "%s", PlayerInfo[playerid][pLieuNaissance]);
+            colors[4] = 0xFFFFFFFF;
+
+            format(labels[5], 24, "DATE DE DELIVRANCE");
+            format(values[5], 48, "%s", PlayerInfo[playerid][pDateDelivID]);
+            colors[5] = 0xFFFFFFFF;
+
+            ShowDocumentCard(playerid, "CARTE D'IDENTITE", 0x1A3E8CFF, numCarte, labels, values, colors, 6, GetPlayerSkin(playerid));
         }
         else if(listitem == 1) // Permis de conduire
         {
-            new l1[64], l2[64], l3[64], l4[64];
-            format(l1, sizeof(l1), "Titulaire : %s", name);
-            if(PlayerInfo[playerid][pPermisConduire])
-            {
-                format(l2, sizeof(l2), "Categorie : B");
-                format(l3, sizeof(l3), "Statut : Valide");
-            }
-            else
-            {
-                format(l2, sizeof(l2), "Statut : NON POSSEDE");
-                format(l3, sizeof(l3), "");
-            }
-            format(l4, sizeof(l4), "");
-            ShowDocumentCard(playerid, "Permis de conduire", l1, l2, l3, l4, GetPlayerSkin(playerid));
+            new labels[MAX_CARD_FIELDS][24], values[MAX_CARD_FIELDS][48], colors[MAX_CARD_FIELDS];
+            new numPermis = 100 + ((PlayerInfo[playerid][pIDNum] + 300) % 900);
+
+            format(labels[0], 24, "NOM ET PRENOM");
+            format(values[0], 48, "%s", fullName);
+            colors[0] = 0xFFFFFFFF;
+
+            format(labels[1], 24, "SEXE");
+            format(values[1], 48, "%s", (!strcmp(PlayerInfo[playerid][pSexe], "F")) ? ("Femme") : ("Homme"));
+            colors[1] = 0xFFFFFFFF;
+
+            format(labels[2], 24, "AGE");
+            format(values[2], 48, "%d ans", PlayerInfo[playerid][pAge]);
+            colors[2] = 0xFFFFFFFF;
+
+            format(labels[3], 24, "VEHICULE");
+            if(PlayerInfo[playerid][pPermisConduire]) { format(values[3], 48, "Valide - %s", PlayerInfo[playerid][pDatePermisVehicule]); colors[3] = 0x33CC33FF; }
+            else { format(values[3], 48, "Non obtenu"); colors[3] = 0xFFFFFFFF; }
+
+            format(labels[4], 24, "POIDS LOURD");
+            if(PlayerInfo[playerid][pPermisPL]) { format(values[4], 48, "Valide - %s", PlayerInfo[playerid][pDatePermisPL]); colors[4] = 0x33CC33FF; }
+            else { format(values[4], 48, "Non obtenu"); colors[4] = 0xFFFFFFFF; }
+
+            format(labels[5], 24, "AVION");
+            if(PlayerInfo[playerid][pPermisAvion]) { format(values[5], 48, "Valide - %s", PlayerInfo[playerid][pDatePermisAvion]); colors[5] = 0x33CC33FF; }
+            else { format(values[5], 48, "Non obtenu"); colors[5] = 0xFFFFFFFF; }
+
+            format(labels[6], 24, "BATEAU");
+            if(PlayerInfo[playerid][pPermisBateau]) { format(values[6], 48, "Valide - %s", PlayerInfo[playerid][pDatePermisBateau]); colors[6] = 0x33CC33FF; }
+            else { format(values[6], 48, "Non obtenu"); colors[6] = 0xFFFFFFFF; }
+
+            format(labels[7], 24, "MOTO");
+            if(PlayerInfo[playerid][pPermisMoto]) { format(values[7], 48, "Valide - %s", PlayerInfo[playerid][pDatePermisMoto]); colors[7] = 0x33CC33FF; }
+            else { format(values[7], 48, "Non obtenu"); colors[7] = 0xFFFFFFFF; }
+
+            ShowDocumentCard(playerid, "PERMIS DE CONDUIRE", 0xC97A1EFF, numPermis, labels, values, colors, 8, GetPlayerSkin(playerid));
         }
         else if(listitem == 2) // Port d'armes
         {
-            new l1[64], l2[64], l3[64], l4[64];
-            format(l1, sizeof(l1), "Titulaire : %s", name);
-            if(PlayerInfo[playerid][pPortArme])
-            {
-                format(l2, sizeof(l2), "Statut : Valide");
-            }
-            else
-            {
-                format(l2, sizeof(l2), "Statut : NON POSSEDE");
-            }
-            format(l3, sizeof(l3), "");
-            format(l4, sizeof(l4), "");
-            ShowDocumentCard(playerid, "Port d'armes", l1, l2, l3, l4, GetPlayerSkin(playerid));
+            new labels[MAX_CARD_FIELDS][24], values[MAX_CARD_FIELDS][48], colors[MAX_CARD_FIELDS];
+            new numPort = 100 + ((PlayerInfo[playerid][pIDNum] + 600) % 900);
+
+            format(labels[0], 24, "NOM ET PRENOM");
+            format(values[0], 48, "%s", fullName);
+            colors[0] = 0xFFFFFFFF;
+
+            format(labels[1], 24, "PROFESSION");
+            format(values[1], 48, "%s", PlayerInfo[playerid][pProfession]);
+            colors[1] = 0xFFFFFFFF;
+
+            format(labels[2], 24, "TYPE D'ARME");
+            format(values[2], 48, "%s", PlayerInfo[playerid][pTypeArme]);
+            colors[2] = 0xFFFFFFFF;
+
+            format(labels[3], 24, "NOM DE L'ARME");
+            format(values[3], 48, "%s", PlayerInfo[playerid][pNomArme]);
+            colors[3] = 0xFFFFFFFF;
+
+            ShowDocumentCard(playerid, "PORT D'ARMES", 0x8C1A1AFF, numPort, labels, values, colors, 4, GetPlayerSkin(playerid));
         }
         else if(listitem == 3) // Recus de paiement
         {
@@ -993,6 +1173,22 @@ public LoadUserData(playerid)
             else if(!strcmp(key, "DateNaissance")) format(PlayerInfo[playerid][pDateNaissance], 11, "%s", val);
             else if(!strcmp(key, "PermisConduire")) PlayerInfo[playerid][pPermisConduire] = strval(val);
             else if(!strcmp(key, "PortArme")) PlayerInfo[playerid][pPortArme] = strval(val);
+            else if(!strcmp(key, "Sexe")) format(PlayerInfo[playerid][pSexe], 2, "%s", val);
+            else if(!strcmp(key, "Age")) PlayerInfo[playerid][pAge] = strval(val);
+            else if(!strcmp(key, "LieuNaissance")) format(PlayerInfo[playerid][pLieuNaissance], 32, "%s", val);
+            else if(!strcmp(key, "DateDelivID")) format(PlayerInfo[playerid][pDateDelivID], 11, "%s", val);
+            else if(!strcmp(key, "PermisPL")) PlayerInfo[playerid][pPermisPL] = strval(val);
+            else if(!strcmp(key, "PermisAvion")) PlayerInfo[playerid][pPermisAvion] = strval(val);
+            else if(!strcmp(key, "PermisBateau")) PlayerInfo[playerid][pPermisBateau] = strval(val);
+            else if(!strcmp(key, "PermisMoto")) PlayerInfo[playerid][pPermisMoto] = strval(val);
+            else if(!strcmp(key, "DatePermisVehicule")) format(PlayerInfo[playerid][pDatePermisVehicule], 11, "%s", val);
+            else if(!strcmp(key, "DatePermisPL")) format(PlayerInfo[playerid][pDatePermisPL], 11, "%s", val);
+            else if(!strcmp(key, "DatePermisAvion")) format(PlayerInfo[playerid][pDatePermisAvion], 11, "%s", val);
+            else if(!strcmp(key, "DatePermisBateau")) format(PlayerInfo[playerid][pDatePermisBateau], 11, "%s", val);
+            else if(!strcmp(key, "DatePermisMoto")) format(PlayerInfo[playerid][pDatePermisMoto], 11, "%s", val);
+            else if(!strcmp(key, "Profession")) format(PlayerInfo[playerid][pProfession], 32, "%s", val);
+            else if(!strcmp(key, "TypeArme")) format(PlayerInfo[playerid][pTypeArme], 32, "%s", val);
+            else if(!strcmp(key, "NomArme")) format(PlayerInfo[playerid][pNomArme], 32, "%s", val);
         }
     }
     fclose(f);
@@ -1047,6 +1243,22 @@ public SaveUserData(playerid)
         format(outLine, sizeof(outLine), "DateNaissance=%s\r\n", PlayerInfo[playerid][pDateNaissance]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "PermisConduire=%d\r\n", PlayerInfo[playerid][pPermisConduire]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "PortArme=%d\r\n", PlayerInfo[playerid][pPortArme]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Sexe=%s\r\n", PlayerInfo[playerid][pSexe]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Age=%d\r\n", PlayerInfo[playerid][pAge]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "LieuNaissance=%s\r\n", PlayerInfo[playerid][pLieuNaissance]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "DateDelivID=%s\r\n", PlayerInfo[playerid][pDateDelivID]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "PermisPL=%d\r\n", PlayerInfo[playerid][pPermisPL]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "PermisAvion=%d\r\n", PlayerInfo[playerid][pPermisAvion]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "PermisBateau=%d\r\n", PlayerInfo[playerid][pPermisBateau]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "PermisMoto=%d\r\n", PlayerInfo[playerid][pPermisMoto]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "DatePermisVehicule=%s\r\n", PlayerInfo[playerid][pDatePermisVehicule]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "DatePermisPL=%s\r\n", PlayerInfo[playerid][pDatePermisPL]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "DatePermisAvion=%s\r\n", PlayerInfo[playerid][pDatePermisAvion]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "DatePermisBateau=%s\r\n", PlayerInfo[playerid][pDatePermisBateau]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "DatePermisMoto=%s\r\n", PlayerInfo[playerid][pDatePermisMoto]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Profession=%s\r\n", PlayerInfo[playerid][pProfession]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "TypeArme=%s\r\n", PlayerInfo[playerid][pTypeArme]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "NomArme=%s\r\n", PlayerInfo[playerid][pNomArme]); fwrite(fw, outLine);
         fclose(fw);
     }
     return 1;
@@ -1333,6 +1545,11 @@ stock ResolveAdminCmd(cmd[], canon[24], &level)
     if(!strcmp(cmd, "/climat", true)) { canon = "CLIMAT"; level = ADMIN_LEVEL_MOD; return 1; }
     if(!strcmp(cmd, "/definirpermis", true)) { canon = "DEFPERMIS"; level = ADMIN_LEVEL_MOD; return 1; }
     if(!strcmp(cmd, "/definirport", true)) { canon = "DEFPORT"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/definirsexe", true)) { canon = "DEFSEXE"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/definirage", true)) { canon = "DEFAGE"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/definirnaissance", true)) { canon = "DEFNAISSANCE"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/definirprofession", true)) { canon = "DEFPROFESSION"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/definirarme", true)) { canon = "DEFARME"; level = ADMIN_LEVEL_MOD; return 1; }
     if(!strcmp(cmd, "/amende", true)) { canon = "AMENDE"; level = ADMIN_LEVEL_MOD; return 1; }
     if(!strcmp(cmd, "/fourriere", true)) { canon = "FOURRIERE"; level = ADMIN_LEVEL_MOD; return 1; }
 
@@ -1533,21 +1750,136 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "DEFPERMIS"))
     {
+        new tmpType[64], tmpVal[64], today[11], regY, regM, regD;
         tmp = strtok_(cmdtext, idx);
         targetid = strval(tmp);
-        tmp2 = strtok_(cmdtext, idx);
-        if(!strlen(tmp) || !strlen(tmp2) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /definirpermis [id] [0/1]");
-        PlayerInfo[targetid][pPermisConduire] = strval(tmp2);
-        if(PlayerInfo[targetid][pPermisConduire])
+        tmpType = strtok_(cmdtext, idx);
+        tmpVal = strtok_(cmdtext, idx);
+
+        if(!strlen(tmp) || !strlen(tmpType) || !strlen(tmpVal) || !IsPlayerConnected(targetid))
+            return SendClientMessage(playerid, COLOR_RED, "Utilisation : /definirpermis [id] [vehicule/pl/avion/bateau/moto] [0/1]");
+
+        new value = strval(tmpVal);
+        getdate(regY, regM, regD);
+        format(today, sizeof(today), "%02d/%02d/%04d", regD, regM, regY);
+
+        new permisLabel[24];
+        new bool:handled = true;
+
+        if(!strcmp(tmpType, "vehicule", true))
         {
-            SendClientMessage(targetid, COLOR_GREEN, "Vous avez obtenu votre permis de conduire.");
-            SendClientMessage(playerid, COLOR_GREEN, "Permis de conduire accorde.");
+            PlayerInfo[targetid][pPermisConduire] = value;
+            format(PlayerInfo[targetid][pDatePermisVehicule], 11, "%s", (value) ? (today) : ("--/--/----"));
+            format(permisLabel, 24, "vehicule");
+        }
+        else if(!strcmp(tmpType, "pl", true))
+        {
+            PlayerInfo[targetid][pPermisPL] = value;
+            format(PlayerInfo[targetid][pDatePermisPL], 11, "%s", (value) ? (today) : ("--/--/----"));
+            format(permisLabel, 24, "poids lourd");
+        }
+        else if(!strcmp(tmpType, "avion", true))
+        {
+            PlayerInfo[targetid][pPermisAvion] = value;
+            format(PlayerInfo[targetid][pDatePermisAvion], 11, "%s", (value) ? (today) : ("--/--/----"));
+            format(permisLabel, 24, "avion");
+        }
+        else if(!strcmp(tmpType, "bateau", true))
+        {
+            PlayerInfo[targetid][pPermisBateau] = value;
+            format(PlayerInfo[targetid][pDatePermisBateau], 11, "%s", (value) ? (today) : ("--/--/----"));
+            format(permisLabel, 24, "bateau");
+        }
+        else if(!strcmp(tmpType, "moto", true))
+        {
+            PlayerInfo[targetid][pPermisMoto] = value;
+            format(PlayerInfo[targetid][pDatePermisMoto], 11, "%s", (value) ? (today) : ("--/--/----"));
+            format(permisLabel, 24, "moto");
         }
         else
         {
-            SendClientMessage(targetid, COLOR_RED, "Votre permis de conduire vous a ete retire.");
-            SendClientMessage(playerid, COLOR_GREEN, "Permis de conduire retire.");
+            handled = false;
+            SendClientMessage(playerid, COLOR_RED, "Type invalide. Utilisez : vehicule, pl, avion, bateau ou moto.");
         }
+
+        if(handled)
+        {
+            new msg[128];
+            if(value)
+            {
+                format(msg, sizeof(msg), "Vous avez obtenu votre permis (%s).", permisLabel);
+                SendClientMessage(targetid, COLOR_GREEN, msg);
+                SendClientMessage(playerid, COLOR_GREEN, "Permis accorde.");
+            }
+            else
+            {
+                format(msg, sizeof(msg), "Votre permis (%s) vous a ete retire.", permisLabel);
+                SendClientMessage(targetid, COLOR_RED, msg);
+                SendClientMessage(playerid, COLOR_GREEN, "Permis retire.");
+            }
+        }
+    }
+    else if(!strcmp(canon, "DEFSEXE"))
+    {
+        tmp = strtok_(cmdtext, idx);
+        targetid = strval(tmp);
+        tmp2 = strtok_(cmdtext, idx);
+        if(!strlen(tmp) || !strlen(tmp2) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /definirsexe [id] [H/F]");
+        if(strcmp(tmp2, "H", true) && strcmp(tmp2, "F", true)) return SendClientMessage(playerid, COLOR_RED, "Sexe invalide. Utilisez H ou F.");
+        format(PlayerInfo[targetid][pSexe], 2, "%s", (!strcmp(tmp2, "F", true)) ? ("F") : ("H"));
+        SendClientMessage(playerid, COLOR_GREEN, "Sexe mis a jour.");
+    }
+    else if(!strcmp(canon, "DEFAGE"))
+    {
+        tmp = strtok_(cmdtext, idx);
+        targetid = strval(tmp);
+        tmp2 = strtok_(cmdtext, idx);
+        if(!strlen(tmp) || !strlen(tmp2) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /definirage [id] [age]");
+        PlayerInfo[targetid][pAge] = strval(tmp2);
+        SendClientMessage(playerid, COLOR_GREEN, "Age mis a jour.");
+    }
+    else if(!strcmp(canon, "DEFNAISSANCE"))
+    {
+        new lieu[32];
+        tmp = strtok_(cmdtext, idx);
+        targetid = strval(tmp);
+        tmp2 = strtok_(cmdtext, idx); // date JJ/MM/AAAA
+
+        while(idx < strlen(cmdtext) && cmdtext[idx] <= ' ') idx++;
+        format(lieu, sizeof(lieu), "%s", cmdtext[idx]);
+
+        if(!strlen(tmp) || !strlen(tmp2) || !strlen(lieu) || !IsPlayerConnected(targetid))
+            return SendClientMessage(playerid, COLOR_RED, "Utilisation : /definirnaissance [id] [JJ/MM/AAAA] [lieu]");
+
+        format(PlayerInfo[targetid][pDateNaissance], 11, "%s", tmp2);
+        format(PlayerInfo[targetid][pLieuNaissance], 32, "%s", lieu);
+        SendClientMessage(playerid, COLOR_GREEN, "Date et lieu de naissance mis a jour.");
+    }
+    else if(!strcmp(canon, "DEFPROFESSION"))
+    {
+        tmp = strtok_(cmdtext, idx);
+        targetid = strval(tmp);
+        while(idx < strlen(cmdtext) && cmdtext[idx] <= ' ') idx++;
+
+        if(!strlen(tmp) || !IsPlayerConnected(targetid) || idx >= strlen(cmdtext))
+            return SendClientMessage(playerid, COLOR_RED, "Utilisation : /definirprofession [id] [profession]");
+
+        format(PlayerInfo[targetid][pProfession], 32, "%s", cmdtext[idx]);
+        SendClientMessage(playerid, COLOR_GREEN, "Profession mise a jour.");
+    }
+    else if(!strcmp(canon, "DEFARME"))
+    {
+        tmp = strtok_(cmdtext, idx);
+        targetid = strval(tmp);
+        tmp2 = strtok_(cmdtext, idx); // type d'arme (un seul mot)
+        while(idx < strlen(cmdtext) && cmdtext[idx] <= ' ') idx++;
+
+        if(!strlen(tmp) || !strlen(tmp2) || !IsPlayerConnected(targetid) || idx >= strlen(cmdtext))
+            return SendClientMessage(playerid, COLOR_RED, "Utilisation : /definirarme [id] [type] [nom]");
+
+        format(PlayerInfo[targetid][pTypeArme], 32, "%s", tmp2);
+        format(PlayerInfo[targetid][pNomArme], 32, "%s", cmdtext[idx]);
+        SendClientMessage(playerid, COLOR_GREEN, "Arme mise a jour.");
     }
     else if(!strcmp(canon, "DEFPORT"))
     {
@@ -1797,7 +2129,14 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         gPreviewRotZ = floatstr(p5);
         gPreviewZoom = floatstr(p6);
 
-        ShowDocumentCard(playerid, "Carte d'identite (TEST)", "Nom : Test", "Numero : 000000", "Naissance : 01/01/1990", "Statut : Test", GetPlayerSkin(playerid));
+        new testLabels[MAX_CARD_FIELDS][24], testValues[MAX_CARD_FIELDS][48], testColors[MAX_CARD_FIELDS];
+        format(testLabels[0], 24, "NOM ET PRENOM"); format(testValues[0], 48, "Jean Test"); testColors[0] = 0xFFFFFFFF;
+        format(testLabels[1], 24, "SEXE"); format(testValues[1], 48, "Homme"); testColors[1] = 0xFFFFFFFF;
+        format(testLabels[2], 24, "AGE"); format(testValues[2], 48, "25 ans"); testColors[2] = 0xFFFFFFFF;
+        format(testLabels[3], 24, "DATE DE NAISSANCE"); format(testValues[3], 48, "01/01/1990"); testColors[3] = 0xFFFFFFFF;
+        format(testLabels[4], 24, "LIEU DE NAISSANCE"); format(testValues[4], 48, "Los Santos"); testColors[4] = 0xFFFFFFFF;
+        format(testLabels[5], 24, "DATE DE DELIVRANCE"); format(testValues[5], 48, "13/07/2026"); testColors[5] = 0xFFFFFFFF;
+        ShowDocumentCard(playerid, "CARTE D'IDENTITE (TEST)", 0x1A3E8CFF, 123, testLabels, testValues, testColors, 6, GetPlayerSkin(playerid));
         SendClientMessage(playerid, COLOR_GREEN, "Carte rechargee avec les nouveaux reglages. Relance /devcarte avec d'autres valeurs pour ajuster.");
     }
     return 1;
@@ -1812,6 +2151,7 @@ stock ShowAdminHelp(playerid)
         SendClientMessage(playerid, COLOR_WHITE, "[Helper] /geler, /degeler, /muet, /demuet, /avertir, /observer, /finobserver, /prison, /liberer");
     if(lvl >= ADMIN_LEVEL_MOD)
         SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /expulser, /gifler, /soigner, /armure, /allerA, /amener, /climat, /definirpermis, /definirport, /amende, /fourriere");
+        SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /definirsexe, /definirage, /definirnaissance, /definirprofession, /definirarme");
     if(lvl >= ADMIN_LEVEL_ADMIN)
         SendClientMessage(playerid, COLOR_WHITE, "[Admin] /bannir, /debannir, /apparence, /armes, /dieu");
     if(lvl >= ADMIN_LEVEL_SUPERIOR)
