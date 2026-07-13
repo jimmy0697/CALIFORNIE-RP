@@ -302,7 +302,10 @@ public NeedsUpdateTimer()
 {
     for(new playerid = 0; playerid < MAX_PLAYERS; playerid++)
     {
-        if(!IsPlayerConnected(playerid) || !IsLoggedIn[playerid] || !IsPlayerSpawned(playerid)) continue;
+        if(!IsPlayerConnected(playerid) || !IsLoggedIn[playerid]) continue;
+
+        new state = GetPlayerState(playerid);
+        if(state == PLAYER_STATE_NONE || state == PLAYER_STATE_WASTED || state == PLAYER_STATE_SPECTATING) continue;
 
         // --- Faim / Soif / Fatigue ---
         PlayerInfo[playerid][pFaim] = ClampNeed(PlayerInfo[playerid][pFaim] - NEEDS_FAIM_DECAY);
