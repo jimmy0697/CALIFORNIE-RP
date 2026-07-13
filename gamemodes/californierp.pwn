@@ -38,6 +38,12 @@ stock udb_hash(buf[])
 #if !defined DIALOG_CLIMAT
     #define DIALOG_CLIMAT 9002
 #endif
+#if !defined DIALOG_PAPIERS
+    #define DIALOG_PAPIERS 9003
+#endif
+#if !defined DIALOG_PAPIERS_RECUS
+    #define DIALOG_PAPIERS_RECUS 9005
+#endif
 #if !defined SERVER_SITE
     #define SERVER_SITE "www.californie-rp.fr"
 #endif
@@ -118,6 +124,11 @@ new gFrozen[MAX_PLAYERS];
 new gMuted[MAX_PLAYERS];
 new gJailed[MAX_PLAYERS];
 
+// --- Affichage TextDraw des documents (carte d'identite, permis, port d'armes) ---
+#define MAX_CARD_TD 9
+new PlayerText:gCardTD[MAX_PLAYERS][MAX_CARD_TD];
+new bool:gCardTDShown[MAX_PLAYERS];
+
 // ------------------------------------------------------------
 //  Donnees joueur
 // ------------------------------------------------------------
@@ -144,7 +155,13 @@ enum pInfo
     pHomeWorld,
 
     // Abonnement VIP
-    pVipExpire          // Timestamp UNIX d'expiration (0 = pas de VIP)
+    pVipExpire,          // Timestamp UNIX d'expiration (0 = pas de VIP)
+
+    // Papiers / documents
+    pIDNum,              // Numero de carte d'identite (attribue a l'inscription)
+    pDateNaissance[11],  // Date de naissance JJ/MM/AAAA
+    pPermisConduire,     // 0 = non possede, 1 = possede
+    pPortArme            // 0 = non possede, 1 = possede
 };
 new PlayerInfo[MAX_PLAYERS][pInfo];
 new IsLoggedIn[MAX_PLAYERS];
@@ -261,6 +278,8 @@ public OnPlayerConnect(playerid)
 {
     IsLoggedIn[playerid] = 0;
     gPlayerTriedPass[playerid] = 0;
+    gCardTDShown[playerid] = false;
+    for(new i = 0; i < MAX_CARD_TD; i++) gCardTD[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
 
     // --- Securite anti-cheat : kick si non connecte apres 60 secondes ---
     gLoginTimer[playerid] = SetTimerEx("KickIfNotLoggedIn", LOGIN_TIMEOUT, false, "d", playerid);
@@ -305,6 +324,7 @@ public OnPlayerConnect(playerid)
 
 public OnPlayerDisconnect(playerid, reason)
 {
+    DestroyCardTD(playerid);
     if(gLoginTimer[playerid] != 0)
     {
         KillTimer(gLoginTimer[playerid]);
@@ -336,6 +356,262 @@ stock UserPathStr(playerid)
     GetPlayerName(playerid, name, sizeof(name));
     format(path, sizeof(path), "/Accounts/%s.ini", name);
     return path;
+}
+
+// Chemin du fichier de recus de paiement du joueur
+stock ReceiptPathStr(playerid)
+{
+    new path[64], name[MAX_PLAYER_NAME];
+    GetPlayerName(playerid, name, sizeof(name));
+    format(path, sizeof(path), "/Recus/%s.ini", name);
+    return path;
+}
+
+// ------------------------------------------------------------
+//  Ajoute un recu de paiement au dossier du joueur (vehicule,
+//  amende/PV, fourriere, etc). A appeler depuis n'importe quel
+//  systeme qui prend de l'argent a un joueur.
+//  Exemple : AddReceipt(playerid, "Amende", 250, "Exces de vitesse");
+// ------------------------------------------------------------
+stock AddReceipt(playerid, const type[], montant, const description[])
+{
+    new file:f = fopen(ReceiptPathStr(playerid), io_append);
+    if(!f) return 0;
+
+    new y, m, d, h, mi, s;
+    getdate(y, m, d);
+    gettime(h, mi, s);
+
+    new line[160];
+    format(line, sizeof(line), "%s|%d|%02d/%02d/%d %02d:%02d|%s\r\n", type, montant, d, m, y, h, mi, description);
+    fwrite(f, line);
+    fclose(f);
+    return 1;
+}
+
+// ------------------------------------------------------------
+//  Affiche les 15 derniers recus de paiement du joueur.
+// ------------------------------------------------------------
+stock ShowReceipts(playerid)
+{
+    new file:f = fopen(ReceiptPathStr(playerid), io_read);
+    if(!f)
+    {
+        ShowPlayerDialog(playerid, DIALOG_PAPIERS_RECUS, DIALOG_STYLE_MSGBOX,
+            "Recus de paiement",
+            "Vous n'avez aucun recu de paiement pour le moment.",
+            "OK", "");
+        return 1;
+    }
+
+    new lines[15][160];
+    new count = 0;
+    new line[160];
+    while(fread(f, line))
+    {
+        if(count < 15)
+        {
+            format(lines[count], 160, "%s", line);
+            count++;
+        }
+        else
+        {
+            // Decale le buffer pour ne garder que les 15 plus recents
+            for(new i = 0; i < 14; i++) format(lines[i], 160, "%s", lines[i + 1]);
+            format(lines[14], 160, "%s", line);
+        }
+    }
+    fclose(f);
+
+    if(count == 0)
+    {
+        ShowPlayerDialog(playerid, DIALOG_PAPIERS_RECUS, DIALOG_STYLE_MSGBOX,
+            "Recus de paiement",
+            "Vous n'avez aucun recu de paiement pour le moment.",
+            "OK", "");
+        return 1;
+    }
+
+    new msg[1200];
+    msg[0] = 0;
+    for(new i = 0; i < count; i++)
+    {
+        new type[32], montant[16], date[24], desc[64];
+        sscanf_receipt(lines[i], type, montant, date, desc);
+        new entry[160];
+        format(entry, sizeof(entry), "{FFFF00}%s{FFFFFF} - %s$ - %s\n{888888}%s{FFFFFF}\n", type, montant, date, desc);
+        strcat(msg, entry, sizeof(msg));
+    }
+
+    ShowPlayerDialog(playerid, DIALOG_PAPIERS_RECUS, DIALOG_STYLE_MSGBOX,
+        "Recus de paiement (15 derniers)",
+        msg,
+        "OK", "");
+    return 1;
+}
+
+// Decoupe une ligne de recu "Type|Montant|Date|Description" en 4 champs
+stock sscanf_receipt(const line[], type[], montant[], date[], desc[])
+{
+    new parts[4][64];
+    new idx = 0, partIdx = 0, len = strlen(line);
+    for(new i = 0; i < len; i++)
+    {
+        if(line[i] == '|' && partIdx < 3)
+        {
+            parts[partIdx][idx] = 0;
+            partIdx++;
+            idx = 0;
+        }
+        else
+        {
+            if(idx < 63) { parts[partIdx][idx] = line[i]; idx++; }
+        }
+    }
+    parts[partIdx][idx] = 0;
+
+    format(type, 32, "%s", parts[0]);
+    format(montant, 16, "%s", parts[1]);
+    format(date, 24, "%s", parts[2]);
+    format(desc, 64, "%s", parts[3]);
+    return 1;
+}
+
+// ------------------------------------------------------------
+//  Affiche le menu principal des papiers / documents du joueur.
+// ------------------------------------------------------------
+stock ShowPapiersMenu(playerid)
+{
+    ShowPlayerDialog(playerid, DIALOG_PAPIERS, DIALOG_STYLE_LIST,
+        "Mes papiers",
+        "Carte d'identite\nPermis de conduire\nPort d'armes\nRecus de paiement",
+        "Choisir", "Fermer");
+    return 1;
+}
+
+// ------------------------------------------------------------
+//  Detruit la carte TextDraw actuellement affichee pour un joueur,
+//  s'il y en a une. A appeler avant d'en afficher une nouvelle,
+//  a la deconnexion, et quand le joueur clique sur "Fermer".
+// ------------------------------------------------------------
+stock DestroyCardTD(playerid)
+{
+    if(!gCardTDShown[playerid]) return 0;
+
+    for(new i = 0; i < MAX_CARD_TD; i++)
+    {
+        if(gCardTD[playerid][i] != PlayerText:INVALID_TEXT_DRAW)
+        {
+            PlayerTextDrawDestroy(playerid, gCardTD[playerid][i]);
+            gCardTD[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
+        }
+    }
+    gCardTDShown[playerid] = false;
+    return 1;
+}
+
+// ------------------------------------------------------------
+//  Affiche un document (carte d'identite / permis / port d'armes)
+//  sous forme de carte TextDraw stylee, avec l'apparence du joueur
+//  en apercu (comme une photo) et un bouton de fermeture cliquable.
+//
+//  previewmodel = skin du joueur a afficher en "photo" (-1 pour aucun)
+// ------------------------------------------------------------
+stock ShowDocumentCard(playerid, const cardTitle[], const cardLine1[], const cardLine2[], const cardLine3[], const cardLine4[], previewmodel)
+{
+    DestroyCardTD(playerid); // Evite les doublons si une carte est deja affichee
+
+    // 0: fond principal de la carte
+    gCardTD[playerid][0] = CreatePlayerTextDraw(playerid, 180.0, 140.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][0], 460.0, 340.0);
+    PlayerTextDrawUseBox(playerid, gCardTD[playerid][0], 1);
+    PlayerTextDrawBoxColor(playerid, gCardTD[playerid][0], 0x1B1B1BE6);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][0], 0x00000000);
+
+    // 1: bandeau superieur (accent dore, style carte officielle)
+    gCardTD[playerid][1] = CreatePlayerTextDraw(playerid, 180.0, 140.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][1], 460.0, 162.0);
+    PlayerTextDrawUseBox(playerid, gCardTD[playerid][1], 1);
+    PlayerTextDrawBoxColor(playerid, gCardTD[playerid][1], 0xC8A951FF);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][1], 0x00000000);
+
+    // 2: titre du document
+    gCardTD[playerid][2] = CreatePlayerTextDraw(playerid, 190.0, 145.0, cardTitle);
+    PlayerTextDrawFont(playerid, gCardTD[playerid][2], 2);
+    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][2], 0.28, 1.2);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][2], 0x000000FF);
+    PlayerTextDrawSetShadow(playerid, gCardTD[playerid][2], 0);
+
+    // 3: cadre de la "photo" (apparence du joueur)
+    gCardTD[playerid][3] = CreatePlayerTextDraw(playerid, 190.0, 172.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][3], 270.0, 300.0);
+    PlayerTextDrawUseBox(playerid, gCardTD[playerid][3], 1);
+    PlayerTextDrawBoxColor(playerid, gCardTD[playerid][3], 0x00000090);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][3], 0x00000000);
+
+    // 4: apercu 3D de l'apparence du joueur (fait office de photo)
+    gCardTD[playerid][4] = CreatePlayerTextDraw(playerid, 190.0, 172.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][4], 270.0, 300.0);
+    if(previewmodel != -1)
+    {
+        PlayerTextDrawSetPreviewModel(playerid, gCardTD[playerid][4], previewmodel);
+        PlayerTextDrawSetPreviewRot(playerid, gCardTD[playerid][4], 0.0, 0.0, 0.0, 1.0);
+    }
+
+    // 5: bloc des informations (nom, numero, date, statut)
+    new fields[256];
+    format(fields, sizeof(fields), "%s~n~~n~%s~n~~n~%s~n~~n~%s", cardLine1, cardLine2, cardLine3, cardLine4);
+    gCardTD[playerid][5] = CreatePlayerTextDraw(playerid, 300.0, 175.0, fields);
+    PlayerTextDrawFont(playerid, gCardTD[playerid][5], 1);
+    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][5], 0.22, 1.3);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][5], 0xFFFFFFFF);
+    PlayerTextDrawSetShadow(playerid, gCardTD[playerid][5], 0);
+
+    // 6: mention en bas de carte
+    gCardTD[playerid][6] = CreatePlayerTextDraw(playerid, 190.0, 455.0, "Californie RP - Document officiel");
+    PlayerTextDrawFont(playerid, gCardTD[playerid][6], 1);
+    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][6], 0.15, 0.8);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][6], 0x888888FF);
+
+    // 7: bouton de fermeture (cadre rouge cliquable)
+    gCardTD[playerid][7] = CreatePlayerTextDraw(playerid, 615.0, 145.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][7], 640.0, 162.0);
+    PlayerTextDrawUseBox(playerid, gCardTD[playerid][7], 1);
+    PlayerTextDrawBoxColor(playerid, gCardTD[playerid][7], 0xAA0000FF);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][7], 0x00000000);
+    PlayerTextDrawSetSelectable(playerid, gCardTD[playerid][7], 1);
+
+    // 8: croix du bouton de fermeture
+    gCardTD[playerid][8] = CreatePlayerTextDraw(playerid, 620.0, 148.0, "X");
+    PlayerTextDrawFont(playerid, gCardTD[playerid][8], 1);
+    PlayerTextDrawLetterSize(playerid, gCardTD[playerid][8], 0.3, 1.2);
+    PlayerTextDrawColor(playerid, gCardTD[playerid][8], 0xFFFFFFFF);
+    PlayerTextDrawSetSelectable(playerid, gCardTD[playerid][8], 1);
+
+    for(new i = 0; i < MAX_CARD_TD; i++)
+    {
+        PlayerTextDrawShow(playerid, gCardTD[playerid][i]);
+    }
+    gCardTDShown[playerid] = true;
+
+    SelectTextDraw(playerid, 0xFFFFFFAA);
+    return 1;
+}
+
+// ------------------------------------------------------------
+//  Gere le clic sur le bouton "Fermer" (ou la touche ECHAP) de
+//  la carte de document affichee.
+// ------------------------------------------------------------
+public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid)
+{
+    if(!gCardTDShown[playerid]) return 0;
+
+    if(playertextid == gCardTD[playerid][7] || playertextid == gCardTD[playerid][8] || playertextid == PlayerText:INVALID_TEXT_DRAW)
+    {
+        CancelSelectTextDraw(playerid);
+        DestroyCardTD(playerid);
+    }
+    return 1;
 }
 
 public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
@@ -396,6 +672,14 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             format(line, sizeof(line), "HomeWorld=0\r\n");
             fwrite(f, line);
             format(line, sizeof(line), "VipExpire=0\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "IDNum=%d\r\n", 100000 + random(900000));
+            fwrite(f, line);
+            format(line, sizeof(line), "DateNaissance=01/01/1990\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "PermisConduire=0\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "PortArme=0\r\n");
             fwrite(f, line);
             fclose(f);
         }
@@ -519,6 +803,67 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
         SendClientMessage(playerid, COLOR_GREEN, str);
         return 1;
     }
+
+    if(dialogid == DIALOG_PAPIERS)
+    {
+        if(!response) return 1; // Ferme
+
+        new name[MAX_PLAYER_NAME];
+        GetPlayerName(playerid, name, sizeof(name));
+
+        if(listitem == 0) // Carte d'identite
+        {
+            new l1[64], l2[64], l3[64], l4[64];
+            format(l1, sizeof(l1), "Nom : %s", name);
+            format(l2, sizeof(l2), "Numero : %d", PlayerInfo[playerid][pIDNum]);
+            format(l3, sizeof(l3), "Naissance : %s", PlayerInfo[playerid][pDateNaissance]);
+            format(l4, sizeof(l4), "Statut : Valide");
+            ShowDocumentCard(playerid, "Carte d'identite", l1, l2, l3, l4, GetPlayerSkin(playerid));
+        }
+        else if(listitem == 1) // Permis de conduire
+        {
+            new l1[64], l2[64], l3[64], l4[64];
+            format(l1, sizeof(l1), "Titulaire : %s", name);
+            if(PlayerInfo[playerid][pPermisConduire])
+            {
+                format(l2, sizeof(l2), "Categorie : B");
+                format(l3, sizeof(l3), "Statut : Valide");
+            }
+            else
+            {
+                format(l2, sizeof(l2), "Statut : NON POSSEDE");
+                format(l3, sizeof(l3), "");
+            }
+            format(l4, sizeof(l4), "");
+            ShowDocumentCard(playerid, "Permis de conduire", l1, l2, l3, l4, GetPlayerSkin(playerid));
+        }
+        else if(listitem == 2) // Port d'armes
+        {
+            new l1[64], l2[64], l3[64], l4[64];
+            format(l1, sizeof(l1), "Titulaire : %s", name);
+            if(PlayerInfo[playerid][pPortArme])
+            {
+                format(l2, sizeof(l2), "Statut : Valide");
+            }
+            else
+            {
+                format(l2, sizeof(l2), "Statut : NON POSSEDE");
+            }
+            format(l3, sizeof(l3), "");
+            format(l4, sizeof(l4), "");
+            ShowDocumentCard(playerid, "Port d'armes", l1, l2, l3, l4, GetPlayerSkin(playerid));
+        }
+        else if(listitem == 3) // Recus de paiement
+        {
+            ShowReceipts(playerid);
+        }
+        return 1;
+    }
+
+    if(dialogid == DIALOG_PAPIERS_RECUS)
+    {
+        return 1;
+    }
     return 0;
 }
 
@@ -631,6 +976,10 @@ public LoadUserData(playerid)
             else if(!strcmp(key, "HomeInt")) PlayerInfo[playerid][pHomeInt] = strval(val);
             else if(!strcmp(key, "HomeWorld")) PlayerInfo[playerid][pHomeWorld] = strval(val);
             else if(!strcmp(key, "VipExpire")) PlayerInfo[playerid][pVipExpire] = strval(val);
+            else if(!strcmp(key, "IDNum")) PlayerInfo[playerid][pIDNum] = strval(val);
+            else if(!strcmp(key, "DateNaissance")) format(PlayerInfo[playerid][pDateNaissance], 11, "%s", val);
+            else if(!strcmp(key, "PermisConduire")) PlayerInfo[playerid][pPermisConduire] = strval(val);
+            else if(!strcmp(key, "PortArme")) PlayerInfo[playerid][pPortArme] = strval(val);
         }
     }
     fclose(f);
@@ -681,6 +1030,10 @@ public SaveUserData(playerid)
         format(outLine, sizeof(outLine), "HomeInt=%d\r\n", PlayerInfo[playerid][pHomeInt]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "HomeWorld=%d\r\n", PlayerInfo[playerid][pHomeWorld]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "VipExpire=%d\r\n", PlayerInfo[playerid][pVipExpire]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "IDNum=%d\r\n", PlayerInfo[playerid][pIDNum]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "DateNaissance=%s\r\n", PlayerInfo[playerid][pDateNaissance]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "PermisConduire=%d\r\n", PlayerInfo[playerid][pPermisConduire]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "PortArme=%d\r\n", PlayerInfo[playerid][pPortArme]); fwrite(fw, outLine);
         fclose(fw);
     }
     return 1;
@@ -747,6 +1100,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
         SendClientMessage(playerid, COLOR_WHITE, "/sethome - Enregistrer votre position comme domicile");
         SendClientMessage(playerid, COLOR_WHITE, "/car - Faire apparaitre un vehicule");
         SendClientMessage(playerid, COLOR_WHITE, "/engine /lock - Interagir avec un vehicule");
+        SendClientMessage(playerid, COLOR_WHITE, "/papiers - Voir votre carte d'identite, permis, port d'armes et recus");
         if(PlayerInfo[playerid][pAdmin] > 0)
         {
             SendClientMessage(playerid, COLOR_ADMIN, "Tapez /aideadmin pour la liste des commandes admin/dev.");
@@ -854,6 +1208,12 @@ public OnPlayerCommandText(playerid, cmdtext[])
         return 1;
     }
 
+    if(!strcmp(cmd, "/papiers", true))
+    {
+        ShowPapiersMenu(playerid);
+        return 1;
+    }
+
     if(!strcmp(cmd, "/engine", true))
     {
         if(IsPlayerInAnyVehicle(playerid))
@@ -958,6 +1318,10 @@ stock ResolveAdminCmd(cmd[], canon[24], &level)
     if(!strcmp(cmd, "/allerA", true)) { canon = "GOTO"; level = ADMIN_LEVEL_MOD; return 1; }
     if(!strcmp(cmd, "/amener", true)) { canon = "GETHERE"; level = ADMIN_LEVEL_MOD; return 1; }
     if(!strcmp(cmd, "/climat", true)) { canon = "CLIMAT"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/definirpermis", true)) { canon = "DEFPERMIS"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/definirport", true)) { canon = "DEFPORT"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/amende", true)) { canon = "AMENDE"; level = ADMIN_LEVEL_MOD; return 1; }
+    if(!strcmp(cmd, "/fourriere", true)) { canon = "FOURRIERE"; level = ADMIN_LEVEL_MOD; return 1; }
 
     // --- Niveau 3 : Admin ---
     if(!strcmp(cmd, "/bannir", true)) { canon = "BAN"; level = ADMIN_LEVEL_ADMIN; return 1; }
@@ -1153,6 +1517,74 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     {
         ShowClimateMenu(playerid);
     }
+    else if(!strcmp(canon, "DEFPERMIS"))
+    {
+        tmp = strtok_(cmdtext, idx);
+        targetid = strval(tmp);
+        tmp2 = strtok_(cmdtext, idx);
+        if(!strlen(tmp) || !strlen(tmp2) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /definirpermis [id] [0/1]");
+        PlayerInfo[targetid][pPermisConduire] = strval(tmp2);
+        if(PlayerInfo[targetid][pPermisConduire])
+        {
+            SendClientMessage(targetid, COLOR_GREEN, "Vous avez obtenu votre permis de conduire.");
+            SendClientMessage(playerid, COLOR_GREEN, "Permis de conduire accorde.");
+        }
+        else
+        {
+            SendClientMessage(targetid, COLOR_RED, "Votre permis de conduire vous a ete retire.");
+            SendClientMessage(playerid, COLOR_GREEN, "Permis de conduire retire.");
+        }
+    }
+    else if(!strcmp(canon, "DEFPORT"))
+    {
+        tmp = strtok_(cmdtext, idx);
+        targetid = strval(tmp);
+        tmp2 = strtok_(cmdtext, idx);
+        if(!strlen(tmp) || !strlen(tmp2) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /definirport [id] [0/1]");
+        PlayerInfo[targetid][pPortArme] = strval(tmp2);
+        if(PlayerInfo[targetid][pPortArme])
+        {
+            SendClientMessage(targetid, COLOR_GREEN, "Vous avez obtenu votre port d'armes.");
+            SendClientMessage(playerid, COLOR_GREEN, "Port d'armes accorde.");
+        }
+        else
+        {
+            SendClientMessage(targetid, COLOR_RED, "Votre port d'armes vous a ete retire.");
+            SendClientMessage(playerid, COLOR_GREEN, "Port d'armes retire.");
+        }
+    }
+    else if(!strcmp(canon, "AMENDE"))
+    {
+        new tmp3[64];
+        tmp = strtok_(cmdtext, idx);
+        targetid = strval(tmp);
+        tmp2 = strtok_(cmdtext, idx);
+        tmp3 = strtok_(cmdtext, idx);
+        if(!strlen(tmp) || !strlen(tmp2) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /amende [id] [montant] [raison]");
+        if(!strlen(tmp3)) format(tmp3, sizeof(tmp3), "Non precisee");
+
+        GivePlayerMoney(targetid, -strval(tmp2));
+        AddReceipt(targetid, "Amende (PV)", strval(tmp2), tmp3);
+
+        format(str, sizeof(str), "Vous avez recu une amende de %d$ : %s", strval(tmp2), tmp3);
+        SendClientMessage(targetid, COLOR_RED, str);
+        format(str, sizeof(str), "Amende de %d$ infligee. Recu ajoute au dossier du joueur.", strval(tmp2));
+        SendClientMessage(playerid, COLOR_GREEN, str);
+    }
+    else if(!strcmp(canon, "FOURRIERE"))
+    {
+        tmp = strtok_(cmdtext, idx);
+        targetid = strval(tmp);
+        tmp2 = strtok_(cmdtext, idx);
+        if(!strlen(tmp) || !strlen(tmp2) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /fourriere [id] [montant]");
+
+        GivePlayerMoney(targetid, -strval(tmp2));
+        AddReceipt(targetid, "Fourriere", strval(tmp2), "Recuperation du vehicule en fourriere");
+
+        format(str, sizeof(str), "Vous avez recupere votre vehicule en fourriere pour %d$.", strval(tmp2));
+        SendClientMessage(targetid, COLOR_YELLOW, str);
+        SendClientMessage(playerid, COLOR_GREEN, "Frais de fourriere prelevees. Recu ajoute au dossier du joueur.");
+    }
     else if(!strcmp(canon, "BAN"))
     {
         tmp = strtok_(cmdtext, idx);
@@ -1336,7 +1768,7 @@ stock ShowAdminHelp(playerid)
     if(lvl >= ADMIN_LEVEL_HELPER)
         SendClientMessage(playerid, COLOR_WHITE, "[Helper] /geler, /degeler, /muet, /demuet, /avertir, /observer, /finobserver, /prison, /liberer");
     if(lvl >= ADMIN_LEVEL_MOD)
-        SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /expulser, /gifler, /soigner, /armure, /allerA, /amener, /climat");
+        SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /expulser, /gifler, /soigner, /armure, /allerA, /amener, /climat, /definirpermis, /definirport, /amende, /fourriere");
     if(lvl >= ADMIN_LEVEL_ADMIN)
         SendClientMessage(playerid, COLOR_WHITE, "[Admin] /bannir, /debannir, /apparence, /armes, /dieu");
     if(lvl >= ADMIN_LEVEL_SUPERIOR)
