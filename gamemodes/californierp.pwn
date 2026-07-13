@@ -566,6 +566,7 @@ stock ShowDocumentCard(playerid, const cardTitle[], const cardLine1[], const car
     PlayerTextDrawTextSize(playerid, gCardTD[playerid][4], bx + 100.0, by + 190.0);
     if(previewmodel != -1)
     {
+        PlayerTextDrawFont(playerid, gCardTD[playerid][4], 5);
         PlayerTextDrawSetPreviewModel(playerid, gCardTD[playerid][4], previewmodel);
         PlayerTextDrawSetPreviewRot(playerid, gCardTD[playerid][4], gPreviewRotX, gPreviewRotY, gPreviewRotZ, gPreviewZoom);
     }
