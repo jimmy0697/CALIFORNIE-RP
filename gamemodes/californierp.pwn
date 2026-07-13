@@ -129,6 +129,15 @@ new gJailed[MAX_PLAYERS];
 new PlayerText:gCardTD[MAX_PLAYERS][MAX_CARD_TD];
 new bool:gCardTDShown[MAX_PLAYERS];
 
+// Reglages ajustables en direct via /devcarte (developpeur uniquement),
+// sans avoir besoin de recompiler pour chaque essai.
+new Float:gCardBaseX = 180.0;
+new Float:gCardBaseY = 140.0;
+new Float:gPreviewRotX = 0.0;
+new Float:gPreviewRotY = 0.0;
+new Float:gPreviewRotZ = 0.0;
+new Float:gPreviewZoom = 1.0;
+
 // ------------------------------------------------------------
 //  Donnees joueur
 // ------------------------------------------------------------
@@ -521,68 +530,71 @@ stock ShowDocumentCard(playerid, const cardTitle[], const cardLine1[], const car
 {
     DestroyCardTD(playerid); // Evite les doublons si une carte est deja affichee
 
+    new Float:bx = gCardBaseX;
+    new Float:by = gCardBaseY;
+
     // 0: fond principal de la carte
-    gCardTD[playerid][0] = CreatePlayerTextDraw(playerid, 180.0, 140.0, "_");
-    PlayerTextDrawTextSize(playerid, gCardTD[playerid][0], 460.0, 340.0);
+    gCardTD[playerid][0] = CreatePlayerTextDraw(playerid, bx, by, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][0], bx + 280.0, by + 200.0);
     PlayerTextDrawUseBox(playerid, gCardTD[playerid][0], 1);
     PlayerTextDrawBoxColor(playerid, gCardTD[playerid][0], 0x1B1B1BE6);
     PlayerTextDrawColor(playerid, gCardTD[playerid][0], 0x00000000);
 
     // 1: bandeau superieur (accent dore, style carte officielle)
-    gCardTD[playerid][1] = CreatePlayerTextDraw(playerid, 180.0, 140.0, "_");
-    PlayerTextDrawTextSize(playerid, gCardTD[playerid][1], 460.0, 162.0);
+    gCardTD[playerid][1] = CreatePlayerTextDraw(playerid, bx, by, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][1], bx + 280.0, by + 22.0);
     PlayerTextDrawUseBox(playerid, gCardTD[playerid][1], 1);
     PlayerTextDrawBoxColor(playerid, gCardTD[playerid][1], 0xC8A951FF);
     PlayerTextDrawColor(playerid, gCardTD[playerid][1], 0x00000000);
 
     // 2: titre du document
-    gCardTD[playerid][2] = CreatePlayerTextDraw(playerid, 190.0, 145.0, cardTitle);
+    gCardTD[playerid][2] = CreatePlayerTextDraw(playerid, bx + 10.0, by + 5.0, cardTitle);
     PlayerTextDrawFont(playerid, gCardTD[playerid][2], 2);
     PlayerTextDrawLetterSize(playerid, gCardTD[playerid][2], 0.28, 1.2);
     PlayerTextDrawColor(playerid, gCardTD[playerid][2], 0x000000FF);
     PlayerTextDrawSetShadow(playerid, gCardTD[playerid][2], 0);
 
     // 3: cadre de la "photo" (apparence du joueur)
-    gCardTD[playerid][3] = CreatePlayerTextDraw(playerid, 190.0, 172.0, "_");
-    PlayerTextDrawTextSize(playerid, gCardTD[playerid][3], 270.0, 300.0);
+    gCardTD[playerid][3] = CreatePlayerTextDraw(playerid, bx + 10.0, by + 32.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][3], bx + 100.0, by + 190.0);
     PlayerTextDrawUseBox(playerid, gCardTD[playerid][3], 1);
     PlayerTextDrawBoxColor(playerid, gCardTD[playerid][3], 0x00000090);
     PlayerTextDrawColor(playerid, gCardTD[playerid][3], 0x00000000);
 
     // 4: apercu 3D de l'apparence du joueur (fait office de photo)
-    gCardTD[playerid][4] = CreatePlayerTextDraw(playerid, 190.0, 172.0, "_");
-    PlayerTextDrawTextSize(playerid, gCardTD[playerid][4], 270.0, 300.0);
+    gCardTD[playerid][4] = CreatePlayerTextDraw(playerid, bx + 10.0, by + 32.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][4], bx + 100.0, by + 190.0);
     if(previewmodel != -1)
     {
         PlayerTextDrawSetPreviewModel(playerid, gCardTD[playerid][4], previewmodel);
-        PlayerTextDrawSetPreviewRot(playerid, gCardTD[playerid][4], 0.0, 0.0, 0.0, 1.0);
+        PlayerTextDrawSetPreviewRot(playerid, gCardTD[playerid][4], gPreviewRotX, gPreviewRotY, gPreviewRotZ, gPreviewZoom);
     }
 
     // 5: bloc des informations (nom, numero, date, statut)
     new fields[256];
     format(fields, sizeof(fields), "%s~n~~n~%s~n~~n~%s~n~~n~%s", cardLine1, cardLine2, cardLine3, cardLine4);
-    gCardTD[playerid][5] = CreatePlayerTextDraw(playerid, 300.0, 175.0, fields);
+    gCardTD[playerid][5] = CreatePlayerTextDraw(playerid, bx + 120.0, by + 35.0, fields);
     PlayerTextDrawFont(playerid, gCardTD[playerid][5], 1);
     PlayerTextDrawLetterSize(playerid, gCardTD[playerid][5], 0.22, 1.3);
     PlayerTextDrawColor(playerid, gCardTD[playerid][5], 0xFFFFFFFF);
     PlayerTextDrawSetShadow(playerid, gCardTD[playerid][5], 0);
 
     // 6: mention en bas de carte
-    gCardTD[playerid][6] = CreatePlayerTextDraw(playerid, 190.0, 455.0, "Californie RP - Document officiel");
+    gCardTD[playerid][6] = CreatePlayerTextDraw(playerid, bx + 10.0, by + 175.0, "Californie RP - Document officiel");
     PlayerTextDrawFont(playerid, gCardTD[playerid][6], 1);
     PlayerTextDrawLetterSize(playerid, gCardTD[playerid][6], 0.15, 0.8);
     PlayerTextDrawColor(playerid, gCardTD[playerid][6], 0x888888FF);
 
     // 7: bouton de fermeture (cadre rouge cliquable)
-    gCardTD[playerid][7] = CreatePlayerTextDraw(playerid, 615.0, 145.0, "_");
-    PlayerTextDrawTextSize(playerid, gCardTD[playerid][7], 640.0, 162.0);
+    gCardTD[playerid][7] = CreatePlayerTextDraw(playerid, bx + 255.0, by + 5.0, "_");
+    PlayerTextDrawTextSize(playerid, gCardTD[playerid][7], bx + 280.0, by + 22.0);
     PlayerTextDrawUseBox(playerid, gCardTD[playerid][7], 1);
     PlayerTextDrawBoxColor(playerid, gCardTD[playerid][7], 0xAA0000FF);
     PlayerTextDrawColor(playerid, gCardTD[playerid][7], 0x00000000);
     PlayerTextDrawSetSelectable(playerid, gCardTD[playerid][7], 1);
 
     // 8: croix du bouton de fermeture
-    gCardTD[playerid][8] = CreatePlayerTextDraw(playerid, 620.0, 148.0, "X");
+    gCardTD[playerid][8] = CreatePlayerTextDraw(playerid, bx + 260.0, by + 8.0, "X");
     PlayerTextDrawFont(playerid, gCardTD[playerid][8], 1);
     PlayerTextDrawLetterSize(playerid, gCardTD[playerid][8], 0.3, 1.2);
     PlayerTextDrawColor(playerid, gCardTD[playerid][8], 0xFFFFFFFF);
@@ -1347,6 +1359,7 @@ stock ResolveAdminCmd(cmd[], canon[24], &level)
     if(!strcmp(cmd, "/allercoord", true)) { canon = "GOTOXYZ"; level = ADMIN_LEVEL_DEV; return 1; }
     if(!strcmp(cmd, "/redemarrer", true)) { canon = "GMX"; level = ADMIN_LEVEL_DEV; return 1; }
     if(!strcmp(cmd, "/cmdrcon", true)) { canon = "RCONCMD"; level = ADMIN_LEVEL_DEV; return 1; }
+    if(!strcmp(cmd, "/devcarte", true)) { canon = "DEVCARTE"; level = ADMIN_LEVEL_DEV; return 1; }
 
     return 0;
 }
@@ -1757,6 +1770,35 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         }
         SendClientMessage(playerid, COLOR_GREEN, "Commande RCON envoyee.");
     }
+    else if(!strcmp(canon, "DEVCARTE"))
+    {
+        new p1[16], p2[16], p3[16], p4[16], p5[16], p6[16];
+        p1 = strtok_(cmdtext, idx);
+        p2 = strtok_(cmdtext, idx);
+        p3 = strtok_(cmdtext, idx);
+        p4 = strtok_(cmdtext, idx);
+        p5 = strtok_(cmdtext, idx);
+        p6 = strtok_(cmdtext, idx);
+
+        if(!strlen(p1) || !strlen(p2) || !strlen(p3) || !strlen(p4) || !strlen(p5) || !strlen(p6))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Utilisation : /devcarte [x] [y] [rotx] [roty] [rotz] [zoom]");
+            format(str, sizeof(str), "Valeurs actuelles : x=%f y=%f rotx=%f roty=%f rotz=%f zoom=%f", gCardBaseX, gCardBaseY, gPreviewRotX, gPreviewRotY, gPreviewRotZ, gPreviewZoom);
+            SendClientMessage(playerid, COLOR_WHITE, str);
+            SendClientMessage(playerid, COLOR_WHITE, "Exemple de depart : /devcarte 180 140 0 0 0 1.0");
+            return 1;
+        }
+
+        gCardBaseX = floatstr(p1);
+        gCardBaseY = floatstr(p2);
+        gPreviewRotX = floatstr(p3);
+        gPreviewRotY = floatstr(p4);
+        gPreviewRotZ = floatstr(p5);
+        gPreviewZoom = floatstr(p6);
+
+        ShowDocumentCard(playerid, "Carte d'identite (TEST)", "Nom : Test", "Numero : 000000", "Naissance : 01/01/1990", "Statut : Test", GetPlayerSkin(playerid));
+        SendClientMessage(playerid, COLOR_GREEN, "Carte rechargee avec les nouveaux reglages. Relance /devcarte avec d'autres valeurs pour ajuster.");
+    }
     return 1;
 }
 
@@ -1776,7 +1818,7 @@ stock ShowAdminHelp(playerid)
     if(lvl >= ADMIN_LEVEL_SUPERVISOR)
         SendClientMessage(playerid, COLOR_WHITE, "[Superviseur] /definiradmin, /annonce");
     if(lvl >= ADMIN_LEVEL_DEV)
-        SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /heure, /meteo, /donnerarme, /allercoord, /redemarrer, /cmdrcon (acces complet RCON)");
+        SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /heure, /meteo, /donnerarme, /allercoord, /redemarrer, /cmdrcon (acces complet RCON), /devcarte");
     return 1;
 }
 
