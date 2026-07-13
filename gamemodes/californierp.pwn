@@ -196,7 +196,14 @@ enum pInfo
     // Port d'armes
     pProfession[32],
     pTypeArme[32],
-    pNomArme[32]
+    pNomArme[32],
+
+    // Besoins vitaux (0 a 100)
+    pFaim,                // Faim : diminue avec le temps, /manger pour remonter
+    pSoif,                // Soif : diminue avec le temps, /boire pour remonter
+    pFatigue,             // Fatigue : augmente avec le temps, /dormir pour redescendre
+    pStress,              // Stress : augmente si besoins critiques, redescend sinon
+    pMoral                // Moral : diminue si stress/besoins critiques, remonte sinon
 };
 new PlayerInfo[MAX_PLAYERS][pInfo];
 new IsLoggedIn[MAX_PLAYERS];
@@ -212,6 +219,19 @@ forward SaveUserData(playerid);
 forward SpawnPlayerAfterLogin(playerid);
 forward KickIfNotLoggedIn(playerid);
 forward ShowSpawnSelectionDialog(playerid);
+forward NeedsUpdateTimer();
+
+// ------------------------------------------------------------
+//  Systeme de besoins vitaux (soif / faim / stress / moral / fatigue)
+//  Tick toutes les 60 secondes pour chaque joueur connecte et spawn.
+// ------------------------------------------------------------
+#define NEEDS_INTERVAL       60000  // 1 minute
+#define NEEDS_FAIM_DECAY     2
+#define NEEDS_SOIF_DECAY     3
+#define NEEDS_FATIGUE_GAIN   1
+#define NEEDS_SEUIL_CRITIQUE 25     // en dessous de ce seuil : impact stress/moral
+#define NEEDS_FATIGUE_HAUTE  75     // au dessus : impact stress
+#define NEEDS_DEGATS_CRITIQUE 3.0   // degats de sante par tick si faim ou soif a 0
 
 // ------------------------------------------------------------
 //  Applique un climat donne : change la meteo et previent tout
@@ -263,6 +283,87 @@ stock ShowClimateMenu(playerid)
     return 1;
 }
 
+// ------------------------------------------------------------
+//  Borne une valeur de besoin entre 0 et 100.
+// ------------------------------------------------------------
+stock ClampNeed(val)
+{
+    if(val < 0) return 0;
+    if(val > 100) return 100;
+    return val;
+}
+
+// ------------------------------------------------------------
+//  Tick des besoins vitaux : appele toutes les NEEDS_INTERVAL ms.
+//  Fait baisser faim/soif, monter la fatigue, ajuste stress/moral,
+//  et inflige des degats de sante en cas de faim/soif a 0.
+// ------------------------------------------------------------
+public NeedsUpdateTimer()
+{
+    for(new playerid = 0; playerid < MAX_PLAYERS; playerid++)
+    {
+        if(!IsPlayerConnected(playerid) || !IsLoggedIn[playerid] || !IsPlayerSpawned(playerid)) continue;
+
+        // --- Faim / Soif / Fatigue ---
+        PlayerInfo[playerid][pFaim] = ClampNeed(PlayerInfo[playerid][pFaim] - NEEDS_FAIM_DECAY);
+        PlayerInfo[playerid][pSoif] = ClampNeed(PlayerInfo[playerid][pSoif] - NEEDS_SOIF_DECAY);
+        PlayerInfo[playerid][pFatigue] = ClampNeed(PlayerInfo[playerid][pFatigue] + NEEDS_FATIGUE_GAIN);
+
+        new critique = (PlayerInfo[playerid][pFaim] <= NEEDS_SEUIL_CRITIQUE
+                     || PlayerInfo[playerid][pSoif] <= NEEDS_SEUIL_CRITIQUE
+                     || PlayerInfo[playerid][pFatigue] >= NEEDS_FATIGUE_HAUTE);
+
+        // --- Stress : monte si un besoin est critique, redescend doucement sinon ---
+        if(critique)
+        {
+            PlayerInfo[playerid][pStress] = ClampNeed(PlayerInfo[playerid][pStress] + 2);
+        }
+        else
+        {
+            PlayerInfo[playerid][pStress] = ClampNeed(PlayerInfo[playerid][pStress] - 1);
+        }
+
+        // --- Moral : diminue si stress eleve ou faim/soif a 0, remonte doucement sinon ---
+        if(PlayerInfo[playerid][pStress] >= 50 || PlayerInfo[playerid][pFaim] == 0 || PlayerInfo[playerid][pSoif] == 0)
+        {
+            PlayerInfo[playerid][pMoral] = ClampNeed(PlayerInfo[playerid][pMoral] - 2);
+        }
+        else
+        {
+            PlayerInfo[playerid][pMoral] = ClampNeed(PlayerInfo[playerid][pMoral] + 1);
+        }
+
+        // --- Alertes au joueur ---
+        if(PlayerInfo[playerid][pFaim] == NEEDS_SEUIL_CRITIQUE)
+        {
+            SendClientMessage(playerid, COLOR_YELLOW, "Vous commencez a avoir tres faim. Pensez a manger (/manger).");
+        }
+        if(PlayerInfo[playerid][pSoif] == NEEDS_SEUIL_CRITIQUE)
+        {
+            SendClientMessage(playerid, COLOR_YELLOW, "Vous commencez a avoir tres soif. Pensez a boire (/boire).");
+        }
+        if(PlayerInfo[playerid][pFatigue] == NEEDS_FATIGUE_HAUTE)
+        {
+            SendClientMessage(playerid, COLOR_YELLOW, "Vous etes epuise. Pensez a dormir (/dormir).");
+        }
+
+        // --- Degats de sante si faim ou soif totalement a 0 ---
+        if(PlayerInfo[playerid][pFaim] == 0 || PlayerInfo[playerid][pSoif] == 0)
+        {
+            new Float:health;
+            GetPlayerHealth(playerid, health);
+            if(health > 1.0)
+            {
+                health -= NEEDS_DEGATS_CRITIQUE;
+                if(health < 1.0) health = 1.0;
+                SetPlayerHealth(playerid, health);
+                SendClientMessage(playerid, COLOR_RED, "Votre sante decline : vous devez manger et boire d'urgence !");
+            }
+        }
+    }
+    return 1;
+}
+
 // ==============================================================
 //  OnGameModeInit
 // ==============================================================
@@ -282,6 +383,9 @@ public OnGameModeInit()
     gCurrentClimate = CLIMATE_SOLEIL;
     SetWeather(gClimateWeatherID[CLIMATE_SOLEIL]);
     SetTimer("ClimateCycleTimer", CLIMATE_INTERVAL, true);
+
+    // --- Systeme de besoins vitaux : degradation automatique toutes les minutes ---
+    SetTimer("NeedsUpdateTimer", NEEDS_INTERVAL, true);
 
     // Classes de selection de personnage (spawn Los Santos)
     AddPlayerClass(101, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Civil - Los Santos Gare (point d'apparition de depart)
@@ -315,6 +419,13 @@ public OnPlayerConnect(playerid)
     gPlayerTriedPass[playerid] = 0;
     gCardTDShown[playerid] = false;
     for(new i = 0; i < MAX_CARD_TD; i++) gCardTD[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
+
+    // --- Valeurs par defaut des besoins vitaux (ecrasees par LoadUserData si presentes dans le fichier) ---
+    PlayerInfo[playerid][pFaim] = 100;
+    PlayerInfo[playerid][pSoif] = 100;
+    PlayerInfo[playerid][pFatigue] = 0;
+    PlayerInfo[playerid][pStress] = 0;
+    PlayerInfo[playerid][pMoral] = 100;
 
     // --- Securite anti-cheat : kick si non connecte apres 60 secondes ---
     gLoginTimer[playerid] = SetTimerEx("KickIfNotLoggedIn", LOGIN_TIMEOUT, false, "d", playerid);
@@ -745,7 +856,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             new line[128];
             format(line, sizeof(line), "Password=%d\r\n", hashPass);
             fwrite(f, line);
-            format(line, sizeof(line), "Cash=500\r\n");
+            format(line, sizeof(line), "Cash=100000\r\n");
             fwrite(f, line);
             format(line, sizeof(line), "Admin=0\r\n");
             fwrite(f, line);
@@ -821,6 +932,16 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             format(line, sizeof(line), "TypeArme=Aucun\r\n");
             fwrite(f, line);
             format(line, sizeof(line), "NomArme=Aucun\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "Faim=100\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "Soif=100\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "Fatigue=0\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "Stress=0\r\n");
+            fwrite(f, line);
+            format(line, sizeof(line), "Moral=100\r\n");
             fwrite(f, line);
             fclose(f);
         }
@@ -1189,6 +1310,11 @@ public LoadUserData(playerid)
             else if(!strcmp(key, "Profession")) format(PlayerInfo[playerid][pProfession], 32, "%s", val);
             else if(!strcmp(key, "TypeArme")) format(PlayerInfo[playerid][pTypeArme], 32, "%s", val);
             else if(!strcmp(key, "NomArme")) format(PlayerInfo[playerid][pNomArme], 32, "%s", val);
+            else if(!strcmp(key, "Faim")) PlayerInfo[playerid][pFaim] = strval(val);
+            else if(!strcmp(key, "Soif")) PlayerInfo[playerid][pSoif] = strval(val);
+            else if(!strcmp(key, "Fatigue")) PlayerInfo[playerid][pFatigue] = strval(val);
+            else if(!strcmp(key, "Stress")) PlayerInfo[playerid][pStress] = strval(val);
+            else if(!strcmp(key, "Moral")) PlayerInfo[playerid][pMoral] = strval(val);
         }
     }
     fclose(f);
@@ -1259,6 +1385,11 @@ public SaveUserData(playerid)
         format(outLine, sizeof(outLine), "Profession=%s\r\n", PlayerInfo[playerid][pProfession]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "TypeArme=%s\r\n", PlayerInfo[playerid][pTypeArme]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "NomArme=%s\r\n", PlayerInfo[playerid][pNomArme]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Faim=%d\r\n", PlayerInfo[playerid][pFaim]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Soif=%d\r\n", PlayerInfo[playerid][pSoif]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Fatigue=%d\r\n", PlayerInfo[playerid][pFatigue]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Stress=%d\r\n", PlayerInfo[playerid][pStress]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Moral=%d\r\n", PlayerInfo[playerid][pMoral]); fwrite(fw, outLine);
         fclose(fw);
     }
     return 1;
@@ -1322,6 +1453,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
         SendClientMessage(playerid, COLOR_YELLOW, "== Commandes Californie RP ==");
         SendClientMessage(playerid, COLOR_WHITE, "/me /do /ooc - Roleplay");
         SendClientMessage(playerid, COLOR_WHITE, "/stats /cash - Informations personnelles");
+        SendClientMessage(playerid, COLOR_WHITE, "/manger /boire /dormir - Gerer vos besoins vitaux");
         SendClientMessage(playerid, COLOR_WHITE, "/sethome - Enregistrer votre position comme domicile");
         SendClientMessage(playerid, COLOR_WHITE, "/car - Faire apparaitre un vehicule");
         SendClientMessage(playerid, COLOR_WHITE, "/engine /lock - Interagir avec un vehicule");
@@ -1412,6 +1544,63 @@ public OnPlayerCommandText(playerid, cmdtext[])
         new str[128];
         format(str, sizeof(str), "Argent : $%d | Niveau admin : %d", GetPlayerMoney(playerid), PlayerInfo[playerid][pAdmin]);
         SendClientMessage(playerid, COLOR_YELLOW, str);
+        format(str, sizeof(str), "Faim : %d/100 | Soif : %d/100 | Fatigue : %d/100",
+            PlayerInfo[playerid][pFaim], PlayerInfo[playerid][pSoif], PlayerInfo[playerid][pFatigue]);
+        SendClientMessage(playerid, COLOR_WHITE, str);
+        format(str, sizeof(str), "Stress : %d/100 | Moral : %d/100",
+            PlayerInfo[playerid][pStress], PlayerInfo[playerid][pMoral]);
+        SendClientMessage(playerid, COLOR_WHITE, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/manger", true))
+    {
+        if(PlayerInfo[playerid][pFaim] >= 100)
+        {
+            SendClientMessage(playerid, COLOR_YELLOW, "Vous n'avez pas faim.");
+            return 1;
+        }
+        new const PRIX_REPAS = 50;
+        if(GetPlayerMoney(playerid) < PRIX_REPAS)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous n'avez pas assez d'argent pour manger ($50).");
+            return 1;
+        }
+        GivePlayerMoney(playerid, -PRIX_REPAS);
+        PlayerInfo[playerid][pFaim] = ClampNeed(PlayerInfo[playerid][pFaim] + 40);
+        SendClientMessage(playerid, COLOR_GREEN, "Vous mangez un morceau. Votre faim diminue. (-$50)");
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/boire", true))
+    {
+        if(PlayerInfo[playerid][pSoif] >= 100)
+        {
+            SendClientMessage(playerid, COLOR_YELLOW, "Vous n'avez pas soif.");
+            return 1;
+        }
+        new const PRIX_BOISSON = 25;
+        if(GetPlayerMoney(playerid) < PRIX_BOISSON)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous n'avez pas assez d'argent pour boire ($25).");
+            return 1;
+        }
+        GivePlayerMoney(playerid, -PRIX_BOISSON);
+        PlayerInfo[playerid][pSoif] = ClampNeed(PlayerInfo[playerid][pSoif] + 40);
+        SendClientMessage(playerid, COLOR_GREEN, "Vous buvez une gorgee. Votre soif diminue. (-$25)");
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/dormir", true))
+    {
+        if(PlayerInfo[playerid][pFatigue] <= 0)
+        {
+            SendClientMessage(playerid, COLOR_YELLOW, "Vous n'etes pas fatigue.");
+            return 1;
+        }
+        PlayerInfo[playerid][pFatigue] = 0;
+        PlayerInfo[playerid][pStress] = ClampNeed(PlayerInfo[playerid][pStress] - 20);
+        SendClientMessage(playerid, COLOR_GREEN, "Vous avez dormi. Votre fatigue est retombee et votre stress a diminue.");
         return 1;
     }
 
