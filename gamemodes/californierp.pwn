@@ -1772,7 +1772,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
     }
     else if(!strcmp(canon, "DEVCARTE"))
     {
-        new p1[16], p2[16], p3[16], p4[16], p5[16], p6[16];
+        new p1[64], p2[64], p3[64], p4[64], p5[64], p6[64];
         p1 = strtok_(cmdtext, idx);
         p2 = strtok_(cmdtext, idx);
         p3 = strtok_(cmdtext, idx);
