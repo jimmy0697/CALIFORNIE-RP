@@ -1416,6 +1416,7 @@ public OnPlayerSpawn(playerid)
     SetPlayerFacingAngle(playerid, PlayerInfo[playerid][pPosA]);
     SetPlayerInterior(playerid, PlayerInfo[playerid][pInt]);
     SetPlayerVirtualWorld(playerid, PlayerInfo[playerid][pWorld]);
+    ResetPlayerMoney(playerid);
     GivePlayerMoney(playerid, PlayerInfo[playerid][pCash]);
     SetPlayerHealth(playerid, 100.0);
     SetPlayerArmour(playerid, 0.0);
@@ -1425,6 +1426,10 @@ public OnPlayerSpawn(playerid)
 
 public OnPlayerDeath(playerid, killerid, reason)
 {
+    if(IsLoggedIn[playerid])
+    {
+        PlayerInfo[playerid][pCash] = GetPlayerMoney(playerid);
+    }
     return 1;
 }
 
