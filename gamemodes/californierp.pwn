@@ -947,14 +947,23 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             format(line, sizeof(line), "Moral=100\r\n");
             fwrite(f, line);
             fclose(f);
-        }
 
-        SendClientMessage(playerid, COLOR_GREEN, "Votre compte a ete cree avec succes ! Vous etes maintenant connecte.");
-        if(gLoginTimer[playerid] != 0) { KillTimer(gLoginTimer[playerid]); gLoginTimer[playerid] = 0; }
-        IsLoggedIn[playerid] = 1;
-        LoadUserData(playerid);
-        TogglePlayerControllable(playerid, true);
-        FinalizeLogin(playerid);
+            SendClientMessage(playerid, COLOR_GREEN, "Votre compte a ete cree avec succes ! Vous etes maintenant connecte.");
+            if(gLoginTimer[playerid] != 0) { KillTimer(gLoginTimer[playerid]); gLoginTimer[playerid] = 0; }
+            IsLoggedIn[playerid] = 1;
+            LoadUserData(playerid);
+            TogglePlayerControllable(playerid, true);
+            FinalizeLogin(playerid);
+        }
+        else
+        {
+            new name[MAX_PLAYER_NAME], errmsg[160];
+            GetPlayerName(playerid, name, sizeof(name));
+            format(errmsg, sizeof(errmsg), "[ERREUR] Impossible de creer le fichier de compte pour %s (dossier /scriptfiles/Accounts/ manquant sur le serveur ?)", name);
+            print(errmsg);
+            SendClientMessage(playerid, COLOR_RED, "Erreur serveur : impossible de creer votre compte. Contactez un administrateur.");
+            Kick(playerid);
+        }
         return 1;
     }
 
