@@ -957,6 +957,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
                 GetPlayerName(playerid, dbgName, sizeof(dbgName));
                 format(dbgMsg, sizeof(dbgMsg), "[DEBUG CASH] %s inscrit -> pCash charge = %d", dbgName, PlayerInfo[playerid][pCash]);
                 print(dbgMsg);
+                SendClientMessage(playerid, 0xFFFF00FF, dbgMsg);
             }
             TogglePlayerControllable(playerid, true);
             FinalizeLogin(playerid);
@@ -1438,6 +1439,7 @@ public OnPlayerSpawn(playerid)
         GetPlayerName(playerid, dbgName, sizeof(dbgName));
         format(dbgMsg, sizeof(dbgMsg), "[DEBUG CASH] %s spawn -> pCash=%d, argent reel apres Give=%d", dbgName, PlayerInfo[playerid][pCash], GetPlayerMoney(playerid));
         print(dbgMsg);
+        SendClientMessage(playerid, 0xFFFF00FF, dbgMsg);
     }
     SetPlayerHealth(playerid, 100.0);
     SetPlayerArmour(playerid, 0.0);
