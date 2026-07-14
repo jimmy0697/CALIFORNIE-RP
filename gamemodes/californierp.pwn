@@ -485,13 +485,12 @@ public OnPlayerConnect(playerid)
 
     if(fexist(UserPathStr(playerid)))
     {
-        ShowLoginRegisterTD(playerid, false, name);
+        ShowLoginRegisterDialog(playerid, false, name);
     }
     else
     {
-        ShowLoginRegisterTD(playerid, true, name);
+        ShowLoginRegisterDialog(playerid, true, name);
     }
-    SelectTextDraw(playerid, 0x00FF00FF);
 
     TogglePlayerControllable(playerid, false);
     return 1;
@@ -892,6 +891,47 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid)
     return 0;
 }
 
+// ------------------------------------------------------------
+//  Ecran de connexion / inscription au format dialog natif
+//  (meme forme, meme fond, meme taille d'ecriture et memes
+//  dimensions que le systeme "Liberty State")
+// ------------------------------------------------------------
+stock ShowLoginRegisterDialog(playerid, bool:isRegister, const playerName[])
+{
+    new count = 0;
+    for(new i = 0; i < MAX_PLAYERS; i++) if(IsPlayerConnected(i)) count++;
+
+    new title[64];
+    format(title, sizeof(title), "CALIFORNIE {FFFFFF}// ACCES SYSTEME");
+
+    new body[600];
+    format(body, sizeof(body),
+        "+==================================================+\n"\
+        "{FF00FF}CALIFORNIE // SYSTEME D'ACCES v2.0{FFFFFF}\n"\
+        "+==================================================+\n"\
+        "\n"\
+        "TERMINAL    : {00FFFF}%s{FFFFFF}\n"\
+        "IDENTITE    : {00FFFF}%s{FFFFFF}\n"\
+        "STATUT      : {%s}[ INCONNU ]{FFFFFF}\n"\
+        "OPERATEURS  : {00FFFF}%d connecte(s){FFFFFF}\n"\
+        "\n"\
+        "--------------------------------------------------\n"\
+        "%s\n"\
+        "+==================================================+",
+        isRegister ? "INSCRIPTION" : "CONNEXION",
+        playerName,
+        isRegister ? "FF66CC" : "00FFFF",
+        count,
+        isRegister ?
+            "Ce pseudonyme n'est pas encore enregistre.\nDefinissez un mot de passe pour creer\nvotre profil sur Californie." :
+            "Veuillez entrer votre mot de passe\npour vous connecter."
+    );
+
+    ShowPlayerDialog(playerid, isRegister ? DIALOG_REGISTER : DIALOG_LOGIN, DIALOG_STYLE_PASSWORD,
+        title, body, isRegister ? "Creer compte" : "Valider", "Quitter");
+    return 1;
+}
+
 stock ShowLoginRegisterTD(playerid, bool:isRegister, const playerName[])
 {
     HideLoginRegisterTD(playerid);
@@ -1174,8 +1214,9 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
         if(strlen(inputtext) < 4)
         {
             SendClientMessage(playerid, COLOR_RED, "Votre mot de passe doit contenir au moins 4 caracteres !");
-            gPlayerInputPassword[playerid][0] = EOS;
-            PlayerTextDrawSetString(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], "");
+            new rname[MAX_PLAYER_NAME];
+            GetPlayerName(playerid, rname, sizeof(rname));
+            ShowLoginRegisterDialog(playerid, true, rname);
             return 1;
         }
 
@@ -1344,8 +1385,9 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
                 return 1;
             }
             SendClientMessage(playerid, COLOR_RED, "Mot de passe incorrect ! Veuillez reessayer.");
-            gPlayerInputPassword[playerid][0] = EOS;
-            PlayerTextDrawSetString(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], "");
+            new rname[MAX_PLAYER_NAME];
+            GetPlayerName(playerid, rname, sizeof(rname));
+            ShowLoginRegisterDialog(playerid, false, rname);
         }
         return 1;
     }
