@@ -952,6 +952,12 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             if(gLoginTimer[playerid] != 0) { KillTimer(gLoginTimer[playerid]); gLoginTimer[playerid] = 0; }
             IsLoggedIn[playerid] = 1;
             LoadUserData(playerid);
+            {
+                new dbgName[MAX_PLAYER_NAME], dbgMsg[128];
+                GetPlayerName(playerid, dbgName, sizeof(dbgName));
+                format(dbgMsg, sizeof(dbgMsg), "[DEBUG CASH] %s inscrit -> pCash charge = %d", dbgName, PlayerInfo[playerid][pCash]);
+                print(dbgMsg);
+            }
             TogglePlayerControllable(playerid, true);
             FinalizeLogin(playerid);
         }
@@ -1427,6 +1433,12 @@ public OnPlayerSpawn(playerid)
     SetPlayerVirtualWorld(playerid, PlayerInfo[playerid][pWorld]);
     ResetPlayerMoney(playerid);
     GivePlayerMoney(playerid, PlayerInfo[playerid][pCash]);
+    {
+        new dbgName[MAX_PLAYER_NAME], dbgMsg[128];
+        GetPlayerName(playerid, dbgName, sizeof(dbgName));
+        format(dbgMsg, sizeof(dbgMsg), "[DEBUG CASH] %s spawn -> pCash=%d, argent reel apres Give=%d", dbgName, PlayerInfo[playerid][pCash], GetPlayerMoney(playerid));
+        print(dbgMsg);
+    }
     SetPlayerHealth(playerid, 100.0);
     SetPlayerArmour(playerid, 0.0);
     SendClientMessage(playerid, COLOR_SERVER, "Tapez /aide pour voir la liste des commandes disponibles.");
