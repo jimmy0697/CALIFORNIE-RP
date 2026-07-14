@@ -952,13 +952,6 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             if(gLoginTimer[playerid] != 0) { KillTimer(gLoginTimer[playerid]); gLoginTimer[playerid] = 0; }
             IsLoggedIn[playerid] = 1;
             LoadUserData(playerid);
-            {
-                new dbgName[MAX_PLAYER_NAME], dbgMsg[128];
-                GetPlayerName(playerid, dbgName, sizeof(dbgName));
-                format(dbgMsg, sizeof(dbgMsg), "[DEBUG CASH] %s inscrit -> pCash charge = %d", dbgName, PlayerInfo[playerid][pCash]);
-                print(dbgMsg);
-                SendClientMessage(playerid, 0xFFFF00FF, dbgMsg);
-            }
             TogglePlayerControllable(playerid, true);
             FinalizeLogin(playerid);
         }
@@ -1262,12 +1255,34 @@ stock SetDefaultSpawnPos(playerid)
 }
 
 // Petit parseur "cle=valeur" fait maison (pas de dependance externe type sscanf)
+//
+// NOTE : ne repose plus sur strmid(). Sur ce serveur, strmid() se comportait
+// de facon incoherente (KLEN=0 / VLEN=0 alors que la ligne source, ex.
+// "Admin=0", etait correcte) : il ne copiait rien du tout. C'etait la cause
+// racine de tous les champs charges a 0/vide (pCash y compris). On copie donc
+// desormais caractere par caractere, sans dependre de cette fonction native.
 stock sscanf_simple(line[], key[], val[])
 {
     new pos = strfind(line, "=", false);
     if(pos == -1) return 0;
-    strmid(key, line, 0, pos);
-    strmid(val, line, pos + 1, strlen(line));
+
+    new maxKey = sizeof key;
+    new i;
+    for(i = 0; i < pos && i < (maxKey - 1); i++)
+    {
+        key[i] = line[i];
+    }
+    key[i] = '\0';
+
+    new lineLen = strlen(line);
+    new maxVal = sizeof val;
+    new j = 0;
+    for(i = pos + 1; i < lineLen && j < (maxVal - 1); i++, j++)
+    {
+        val[j] = line[i];
+    }
+    val[j] = '\0';
+
     // Retirer les retours a la ligne eventuels
     new len = strlen(val);
     while(len > 0 && (val[len-1] == '\r' || val[len-1] == '\n'))
@@ -1286,39 +1301,16 @@ public LoadUserData(playerid)
     new file:f = fopen(UserPathStr(playerid), io_read);
     if(!f)
     {
-        SendClientMessage(playerid, 0xFF0000FF, "[DEBUG CASH] LoadUserData: fopen() a ECHOUE (fichier introuvable/inaccessible).");
         return 0;
     }
 
-    new dbgLineCount = 0;
-    new dbgCashBefore;
     new line[128];
     while(fread(f, line))
     {
-        dbgLineCount++;
-        if(dbgLineCount <= 3)
-        {
-            new dbgLine[160];
-            format(dbgLine, sizeof(dbgLine), "[DBG%d] RAW='%s' LEN=%d", dbgLineCount, line, strlen(line));
-            SendClientMessage(playerid, 0xFFFFFFFF, dbgLine);
-        }
         new key[32], val[64];
-        dbgCashBefore = PlayerInfo[playerid][pCash];
         if(sscanf_simple(line, key, val))
         {
-            if(dbgLineCount <= 3)
-            {
-                new dbgLine[160];
-                format(dbgLine, sizeof(dbgLine), "[DBG%d] KEY=[%s] VAL=[%s] KLEN=%d VLEN=%d", dbgLineCount, key, val, strlen(key), strlen(val));
-                SendClientMessage(playerid, 0xFFFF00FF, dbgLine);
-            }
-            if(!strcmp(key, "Cash"))
-            {
-                PlayerInfo[playerid][pCash] = strval(val);
-                new dbgLine[128];
-                format(dbgLine, sizeof(dbgLine), "[CASH-SET] line %d -> pCash set to %d (strval of '%s')", dbgLineCount, PlayerInfo[playerid][pCash], val);
-                SendClientMessage(playerid, 0xFF00FFFF, dbgLine);
-            }
+            if(!strcmp(key, "Cash")) PlayerInfo[playerid][pCash] = strval(val);
             else if(!strcmp(key, "Admin")) PlayerInfo[playerid][pAdmin] = strval(val);
             else if(!strcmp(key, "Skin")) PlayerInfo[playerid][pSkin] = strval(val);
             else if(!strcmp(key, "PosX")) PlayerInfo[playerid][pPosX] = floatstr(val);
@@ -1360,22 +1352,9 @@ public LoadUserData(playerid)
             else if(!strcmp(key, "Fatigue")) PlayerInfo[playerid][pFatigue] = strval(val);
             else if(!strcmp(key, "Stress")) PlayerInfo[playerid][pStress] = strval(val);
             else if(!strcmp(key, "Moral")) PlayerInfo[playerid][pMoral] = strval(val);
-
-            if(PlayerInfo[playerid][pCash] != dbgCashBefore && strcmp(key, "Cash"))
-            {
-                new dbgLine[160];
-                format(dbgLine, sizeof(dbgLine), "[CASH-CORRUPT] line %d KEY=[%s] VAL=[%s] changed pCash %d -> %d",
-                    dbgLineCount, key, val, dbgCashBefore, PlayerInfo[playerid][pCash]);
-                SendClientMessage(playerid, 0xFF0000FF, dbgLine);
-            }
         }
     }
     fclose(f);
-    {
-        new dbgLine[128];
-        format(dbgLine, sizeof(dbgLine), "[DEBUG CASH] LoadUserData termine : %d lignes lues, pCash final = %d", dbgLineCount, PlayerInfo[playerid][pCash]);
-        SendClientMessage(playerid, 0xAAAAAAFF, dbgLine);
-    }
     return 1;
 }
 
@@ -1473,13 +1452,6 @@ public OnPlayerSpawn(playerid)
     SetPlayerVirtualWorld(playerid, PlayerInfo[playerid][pWorld]);
     ResetPlayerMoney(playerid);
     GivePlayerMoney(playerid, PlayerInfo[playerid][pCash]);
-    {
-        new dbgName[MAX_PLAYER_NAME], dbgMsg[128];
-        GetPlayerName(playerid, dbgName, sizeof(dbgName));
-        format(dbgMsg, sizeof(dbgMsg), "[DEBUG CASH] %s spawn -> pCash=%d, argent reel apres Give=%d", dbgName, PlayerInfo[playerid][pCash], GetPlayerMoney(playerid));
-        print(dbgMsg);
-        SendClientMessage(playerid, 0xFFFF00FF, dbgMsg);
-    }
     SetPlayerHealth(playerid, 100.0);
     SetPlayerArmour(playerid, 0.0);
     SendClientMessage(playerid, COLOR_SERVER, "Tapez /aide pour voir la liste des commandes disponibles.");
