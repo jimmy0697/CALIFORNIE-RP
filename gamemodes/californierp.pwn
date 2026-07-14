@@ -1261,12 +1261,11 @@ stock SetDefaultSpawnPos(playerid)
 // "Admin=0", etait correcte) : il ne copiait rien du tout. C'etait la cause
 // racine de tous les champs charges a 0/vide (pCash y compris). On copie donc
 // desormais caractere par caractere, sans dependre de cette fonction native.
-stock sscanf_simple(line[], key[], val[])
+stock sscanf_simple(line[], key[], val[], maxKey = sizeof key, maxVal = sizeof val)
 {
     new pos = strfind(line, "=", false);
     if(pos == -1) return 0;
 
-    new maxKey = sizeof key;
     new i;
     for(i = 0; i < pos && i < (maxKey - 1); i++)
     {
@@ -1275,7 +1274,6 @@ stock sscanf_simple(line[], key[], val[])
     key[i] = '\0';
 
     new lineLen = strlen(line);
-    new maxVal = sizeof val;
     new j = 0;
     for(i = pos + 1; i < lineLen && j < (maxVal - 1); i++, j++)
     {
