@@ -1291,6 +1291,7 @@ public LoadUserData(playerid)
     }
 
     new dbgLineCount = 0;
+    new dbgCashBefore;
     new line[128];
     while(fread(f, line))
     {
@@ -1302,6 +1303,7 @@ public LoadUserData(playerid)
             SendClientMessage(playerid, 0xFFFFFFFF, dbgLine);
         }
         new key[32], val[64];
+        dbgCashBefore = PlayerInfo[playerid][pCash];
         if(sscanf_simple(line, key, val))
         {
             if(dbgLineCount <= 3)
@@ -1310,7 +1312,13 @@ public LoadUserData(playerid)
                 format(dbgLine, sizeof(dbgLine), "[DBG%d] KEY=[%s] VAL=[%s] KLEN=%d VLEN=%d", dbgLineCount, key, val, strlen(key), strlen(val));
                 SendClientMessage(playerid, 0xFFFF00FF, dbgLine);
             }
-            if(!strcmp(key, "Cash")) PlayerInfo[playerid][pCash] = strval(val);
+            if(!strcmp(key, "Cash"))
+            {
+                PlayerInfo[playerid][pCash] = strval(val);
+                new dbgLine[128];
+                format(dbgLine, sizeof(dbgLine), "[CASH-SET] line %d -> pCash set to %d (strval of '%s')", dbgLineCount, PlayerInfo[playerid][pCash], val);
+                SendClientMessage(playerid, 0xFF00FFFF, dbgLine);
+            }
             else if(!strcmp(key, "Admin")) PlayerInfo[playerid][pAdmin] = strval(val);
             else if(!strcmp(key, "Skin")) PlayerInfo[playerid][pSkin] = strval(val);
             else if(!strcmp(key, "PosX")) PlayerInfo[playerid][pPosX] = floatstr(val);
@@ -1352,6 +1360,14 @@ public LoadUserData(playerid)
             else if(!strcmp(key, "Fatigue")) PlayerInfo[playerid][pFatigue] = strval(val);
             else if(!strcmp(key, "Stress")) PlayerInfo[playerid][pStress] = strval(val);
             else if(!strcmp(key, "Moral")) PlayerInfo[playerid][pMoral] = strval(val);
+
+            if(PlayerInfo[playerid][pCash] != dbgCashBefore && strcmp(key, "Cash"))
+            {
+                new dbgLine[160];
+                format(dbgLine, sizeof(dbgLine), "[CASH-CORRUPT] line %d KEY=[%s] VAL=[%s] changed pCash %d -> %d",
+                    dbgLineCount, key, val, dbgCashBefore, PlayerInfo[playerid][pCash]);
+                SendClientMessage(playerid, 0xFF0000FF, dbgLine);
+            }
         }
     }
     fclose(f);
