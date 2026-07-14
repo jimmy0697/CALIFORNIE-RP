@@ -540,7 +540,7 @@ stock ReceiptPathStr(playerid)
 // ------------------------------------------------------------
 stock AddReceipt(playerid, const type[], montant, const description[])
 {
-    new file:f = fopen(ReceiptPathStr(playerid), io_append);
+    new File:f = fopen(ReceiptPathStr(playerid), io_append);
     if(!f) return 0;
 
     new y, m, d, h, mi, s;
@@ -559,7 +559,7 @@ stock AddReceipt(playerid, const type[], montant, const description[])
 // ------------------------------------------------------------
 stock ShowReceipts(playerid)
 {
-    new file:f = fopen(ReceiptPathStr(playerid), io_read);
+    new File:f = fopen(ReceiptPathStr(playerid), io_read);
     if(!f)
     {
         ShowPlayerDialog(playerid, DIALOG_PAPIERS_RECUS, DIALOG_STYLE_MSGBOX,
@@ -904,7 +904,7 @@ stock ShowLoginRegisterTD(playerid, bool:isRegister, const playerName[])
     PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_BAR]);
 
     gLoginTD[playerid][TD_LOGIN_HEADER_TEXT] = CreatePlayerTextDraw(playerid, baseX, baseY + 2.0, "CALIFORNIE // ACCES SYSTEME");
-    PlayerTextDrawAlignment(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_TEXT], TEXT_DRAW_ALIGN_CENTER);
+    PlayerTextDrawAlignment(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_TEXT], 2);
     PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_TEXT], 1);
     PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_TEXT], 0.25, 1.0);
     PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_TEXT], COLOR_WHITE);
@@ -919,7 +919,7 @@ stock ShowLoginRegisterTD(playerid, bool:isRegister, const playerName[])
     PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_INNER_BOX]);
 
     gLoginTD[playerid][TD_LOGIN_INNER_TEXT] = CreatePlayerTextDraw(playerid, baseX, baseY + 28.0, "CALIFORNIE // SYSTEME D'ACCES v2.0");
-    PlayerTextDrawAlignment(playerid, gLoginTD[playerid][TD_LOGIN_INNER_TEXT], TEXT_DRAW_ALIGN_CENTER);
+    PlayerTextDrawAlignment(playerid, gLoginTD[playerid][TD_LOGIN_INNER_TEXT], 2);
     PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_INNER_TEXT], 1);
     PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_INNER_TEXT], 0.2, 0.8);
     PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_INNER_TEXT], COLOR_GREEN_ACCENT);
@@ -1103,7 +1103,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             return 1;
         }
 
-        new file:f = fopen(UserPathStr(playerid), io_write);
+        new File:f = fopen(UserPathStr(playerid), io_write);
         if(f)
         {
             new hashPass = udb_hash(inputtext);
@@ -1228,7 +1228,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             return 1;
         }
 
-        new file:f = fopen(UserPathStr(playerid), io_read);
+        new File:f = fopen(UserPathStr(playerid), io_read);
         new storedHash = 0;
         if(f)
         {
@@ -1550,7 +1550,7 @@ stock sscanf_simple(line[], key[], val[], maxKey = sizeof key, maxVal = sizeof v
 // ==============================================================
 public LoadUserData(playerid)
 {
-    new file:f = fopen(UserPathStr(playerid), io_read);
+    new File:f = fopen(UserPathStr(playerid), io_read);
     if(!f)
     {
         return 0;
@@ -1616,7 +1616,7 @@ public SaveUserData(playerid)
     GetPlayerPos(playerid, x, y, z);
     GetPlayerFacingAngle(playerid, a);
 
-    new file:f = fopen(UserPathStr(playerid), io_read);
+    new File:f = fopen(UserPathStr(playerid), io_read);
     new storedHash = 0;
     if(f)
     {
@@ -1632,7 +1632,7 @@ public SaveUserData(playerid)
         fclose(f);
     }
 
-    new file:fw = fopen(UserPathStr(playerid), io_write);
+    new File:fw = fopen(UserPathStr(playerid), io_write);
     if(fw)
     {
         new outLine[128];
