@@ -165,6 +165,62 @@ new gPlayerInputPassword[MAX_PLAYERS][MAX_PASS_LENGTH];
 #define DIALOG_PASSWORD_INPUT 9000
 #define DIALOG_LOGIN 9004
 #define DIALOG_REGISTER 9006
+#define DIALOG_CHARSETUP_DOB 9007
+#define DIALOG_CHARSETUP_MARITAL 9008
+#define DIALOG_CHARSETUP_BIRTHPLACE 9009
+
+// ------------------------------------------------------------
+//  Creation de personnage (apres inscription) : sexe, age, skin
+//  (au format textdraw avec previsualisation 3D, "CHARACTER SETUP")
+//  puis date de naissance / situation matrimoniale / lieu de
+//  naissance (dialogs natifs), avant creation reelle du compte.
+// ------------------------------------------------------------
+#define MAX_CHARSETUP_TDS 14
+#define CS_TD_BG            0
+#define CS_TD_TITLE         1
+#define CS_TD_GENDER_LABEL  2
+#define CS_TD_MALE_BTN      3
+#define CS_TD_FEMALE_BTN    4
+#define CS_TD_AGE_LABEL     5
+#define CS_TD_AGE_VALUE     6
+#define CS_TD_AGE_MINUS     7
+#define CS_TD_AGE_PLUS      8
+#define CS_TD_SKIN_LABEL    9
+#define CS_TD_SKIN_VALUE    10
+#define CS_TD_SKIN_MINUS    11
+#define CS_TD_SKIN_PLUS     12
+#define CS_TD_CONFIRM_BTN   13
+
+new PlayerText:gCSTD[MAX_PLAYERS][MAX_CHARSETUP_TDS];
+new bool:gCharSetupShown[MAX_PLAYERS];
+new gCharGender[MAX_PLAYERS];     // 0 = Homme, 1 = Femme
+new gCharAge[MAX_PLAYERS];
+new gCharSkinIndex[MAX_PLAYERS];
+new gPendingPassHash[MAX_PLAYERS];
+new gCharDOB[MAX_PLAYERS][11];
+new gCharMarital[MAX_PLAYERS][16];
+new gCharBirthplace[MAX_PLAYERS][32];
+
+// Skins civils uniquement : les skins de faction (police, armee, gangs,
+// SWAT, FBI, pompiers, ambulanciers, etc.) et les skins "metier" en
+// uniforme (mecanicien, ouvrier, chauffeur, croupier, etc.) sont exclus.
+// Liste facilement modifiable si besoin d'ajouter/retirer des IDs.
+new const MALE_CIV_SKINS[] = {
+    14,18,20,21,22,23,26,32,33,34,43,44,45,46,47,48,51,52,57,58,
+    59,60,72,73,94,95,96,98,99,101,136,170,183,184,185,186,188,189,200,221,
+    222,223,228,229,235,236,241,242,250
+};
+new const FEMALE_CIV_SKINS[] = {
+    9,10,39,40,41,53,54,55,56,69,76,88,89,90,91,92,93,138,139,140,
+    151,169,196,197,198,199,201,215,216,219,224,225,226,231,232,233,263
+};
+
+// Les 14 villes/regions de San Andreas au choix pour le lieu de naissance
+new const BIRTHPLACE_CITIES[14][24] = {
+    "Los Santos", "San Fierro", "Las Venturas", "Angel Pine", "Blueberry",
+    "Dillimore", "El Quebrados", "Fort Carson", "Montgomery", "Palomino Creek",
+    "Red County", "Tierra Robada", "Bone County", "Whetstone"
+};
 
 #define COLOR_DARK_BG       0x000000B0
 #define COLOR_GREEN_ACCENT  0x00FF00FF
@@ -224,6 +280,7 @@ enum pInfo
     pAge,                // Age du personnage
     pLieuNaissance[32],  // Lieu de naissance
     pDateDelivID[11],    // Date de delivrance de la carte d'identite
+    pSituationMatrimoniale[16], // "Celibataire" ou "Marie(e)"
 
     // Permis de conduire par categorie
     pPermisPL,           // Poids lourd : 0/1
@@ -262,6 +319,7 @@ forward SaveUserData(playerid);
 forward SpawnPlayerAfterLogin(playerid);
 forward KickIfNotLoggedIn(playerid);
 forward ShowSpawnSelectionDialog(playerid);
+forward FinalizeAccountCreation(playerid);
 forward NeedsUpdateTimer();
 
 // ------------------------------------------------------------
@@ -469,6 +527,16 @@ public OnPlayerConnect(playerid)
     gLoginTDShown[playerid] = false;
     for(new i = 0; i < MAX_LOGIN_TDS; i++) gLoginTD[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
     gPlayerInputPassword[playerid][0] = EOS;
+
+    gCharSetupShown[playerid] = false;
+    for(new i = 0; i < MAX_CHARSETUP_TDS; i++) gCSTD[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
+    gCharGender[playerid] = 0;
+    gCharAge[playerid] = 18;
+    gCharSkinIndex[playerid] = 0;
+    gPendingPassHash[playerid] = 0;
+    gCharDOB[playerid][0] = EOS;
+    gCharMarital[playerid][0] = EOS;
+    gCharBirthplace[playerid][0] = EOS;
 
     // --- Valeurs par defaut des besoins vitaux (ecrasees par LoadUserData si presentes dans le fichier) ---
     PlayerInfo[playerid][pFaim] = 100;
@@ -879,6 +947,58 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid)
         }
     }
 
+    if(gCharSetupShown[playerid])
+    {
+        if(playertextid == gCSTD[playerid][CS_TD_MALE_BTN])
+        {
+            gCharGender[playerid] = 0;
+            gCharSkinIndex[playerid] = 0;
+            RefreshCharSetupSkinDisplay(playerid);
+            return 1;
+        }
+        if(playertextid == gCSTD[playerid][CS_TD_FEMALE_BTN])
+        {
+            gCharGender[playerid] = 1;
+            gCharSkinIndex[playerid] = 0;
+            RefreshCharSetupSkinDisplay(playerid);
+            return 1;
+        }
+        if(playertextid == gCSTD[playerid][CS_TD_AGE_MINUS])
+        {
+            if(gCharAge[playerid] > 16) gCharAge[playerid]--;
+            RefreshCharSetupAgeDisplay(playerid);
+            return 1;
+        }
+        if(playertextid == gCSTD[playerid][CS_TD_AGE_PLUS])
+        {
+            if(gCharAge[playerid] < 90) gCharAge[playerid]++;
+            RefreshCharSetupAgeDisplay(playerid);
+            return 1;
+        }
+        if(playertextid == gCSTD[playerid][CS_TD_SKIN_MINUS])
+        {
+            new maxSkins = (gCharGender[playerid] == 1) ? sizeof(FEMALE_CIV_SKINS) : sizeof(MALE_CIV_SKINS);
+            gCharSkinIndex[playerid] = (gCharSkinIndex[playerid] + maxSkins - 1) % maxSkins;
+            RefreshCharSetupSkinDisplay(playerid);
+            return 1;
+        }
+        if(playertextid == gCSTD[playerid][CS_TD_SKIN_PLUS])
+        {
+            new maxSkins = (gCharGender[playerid] == 1) ? sizeof(FEMALE_CIV_SKINS) : sizeof(MALE_CIV_SKINS);
+            gCharSkinIndex[playerid] = (gCharSkinIndex[playerid] + 1) % maxSkins;
+            RefreshCharSetupSkinDisplay(playerid);
+            return 1;
+        }
+        if(playertextid == gCSTD[playerid][CS_TD_CONFIRM_BTN])
+        {
+            HideCharacterSetupTD(playerid);
+            CancelSelectTextDraw(playerid);
+            ShowDOBInputDialog(playerid);
+            return 1;
+        }
+        return 1;
+    }
+
     if(gCardTDShown[playerid])
     {
         if(playertextid == gCardTD[playerid][CARD_TD_CLOSE_BOX] || playertextid == gCardTD[playerid][CARD_TD_CLOSE_CROSS] || playertextid == PlayerText:INVALID_TEXT_DRAW)
@@ -1188,6 +1308,386 @@ stock ShowPasswordInputDialog(playerid)
     return 1;
 }
 
+// ==============================================================
+//  CHARACTER SETUP - sexe / age / skin avec previsualisation 3D
+//  (le joueur voit son personnage en vrai, dans un salon prive,
+//  identique au principe utilise sur Liberty State)
+// ==============================================================
+
+// Position d'attente utilisee pour la previsualisation du personnage.
+// Chaque joueur y est isole via SetPlayerVirtualWorld(playerid, playerid+1)
+// pour ne jamais voir ni etre vu par un autre joueur en pleine creation.
+#define CHARSETUP_INT 3
+new const Float:CHARSETUP_POS[4] = {-1449.9767, -337.8399, 999.6797, 172.0};
+new const Float:CHARSETUP_CAM_POS[3] = {-1451.7, -334.6, 1000.0};
+new const Float:CHARSETUP_CAM_LOOK[3] = {-1449.9767, -337.8399, 999.9};
+
+stock GetCurrentSkinForCharSetup(playerid)
+{
+    if(gCharGender[playerid] == 1)
+        return FEMALE_CIV_SKINS[gCharSkinIndex[playerid] % sizeof(FEMALE_CIV_SKINS)];
+    return MALE_CIV_SKINS[gCharSkinIndex[playerid] % sizeof(MALE_CIV_SKINS)];
+}
+
+stock ShowCharacterSetupTD(playerid)
+{
+    HideCharacterSetupTD(playerid);
+
+    gCharGender[playerid] = 0;
+    gCharAge[playerid] = 18;
+    gCharSkinIndex[playerid] = 0;
+
+    // --- Salon prive de previsualisation ---
+    SetPlayerVirtualWorld(playerid, playerid + 1);
+    SetPlayerInterior(playerid, CHARSETUP_INT);
+    SetPlayerPos(playerid, CHARSETUP_POS[0], CHARSETUP_POS[1], CHARSETUP_POS[2]);
+    SetPlayerFacingAngle(playerid, CHARSETUP_POS[3]);
+    SetPlayerCameraPos(playerid, CHARSETUP_CAM_POS[0], CHARSETUP_CAM_POS[1], CHARSETUP_CAM_POS[2]);
+    SetPlayerCameraLookAt(playerid, CHARSETUP_CAM_LOOK[0], CHARSETUP_CAM_LOOK[1], CHARSETUP_CAM_LOOK[2]);
+    TogglePlayerControllable(playerid, false);
+    SetPlayerSkin(playerid, GetCurrentSkinForCharSetup(playerid));
+
+    new Float:baseX = 20.0;
+    new Float:baseY = 200.0;
+
+    // Fond
+    gCSTD[playerid][CS_TD_BG] = CreatePlayerTextDraw(playerid, baseX - 5.0, baseY - 5.0, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_BG], baseX + 375.0, baseY + 250.0);
+    PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_BG], 1);
+    PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_BG], COLOR_DARK_BG);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_BG], 0x00000000);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_BG]);
+
+    // Titre
+    gCSTD[playerid][CS_TD_TITLE] = CreatePlayerTextDraw(playerid, baseX + 10.0, baseY + 5.0, "CHARACTER SETUP");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_TITLE], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_TITLE], 0.27, 1.3);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_TITLE], COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_TITLE], 0);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_TITLE]);
+
+    // GENDER
+    gCSTD[playerid][CS_TD_GENDER_LABEL] = CreatePlayerTextDraw(playerid, baseX + 10.0, baseY + 35.0, "GENDER");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL], 0.2, 1.0);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL], 0);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL]);
+
+    gCSTD[playerid][CS_TD_MALE_BTN] = CreatePlayerTextDraw(playerid, baseX + 10.0, baseY + 58.0, "MALE");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0.22, 1.2);
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_MALE_BTN], baseX + 170.0, baseY + 80.0);
+    PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 1);
+    PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0x0033CCFF);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_MALE_BTN], COLOR_WHITE);
+    PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 2);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0);
+    PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 1);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_MALE_BTN]);
+
+    gCSTD[playerid][CS_TD_FEMALE_BTN] = CreatePlayerTextDraw(playerid, baseX + 190.0, baseY + 58.0, "FEMALE");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0.22, 1.2);
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], baseX + 350.0, baseY + 80.0);
+    PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 1);
+    PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0xCC0099FF);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], COLOR_WHITE);
+    PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 2);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0);
+    PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 1);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN]);
+
+    // AGE
+    gCSTD[playerid][CS_TD_AGE_LABEL] = CreatePlayerTextDraw(playerid, baseX + 10.0, baseY + 100.0, "AGE");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_AGE_LABEL], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_LABEL], 0.2, 1.0);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_AGE_LABEL], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_AGE_LABEL], 0);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_AGE_LABEL]);
+
+    gCSTD[playerid][CS_TD_AGE_MINUS] = CreatePlayerTextDraw(playerid, baseX + 10.0, baseY + 122.0, "<<<");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], 0.22, 1.2);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], 0);
+    PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], 1);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_AGE_MINUS]);
+
+    gCSTD[playerid][CS_TD_AGE_VALUE] = CreatePlayerTextDraw(playerid, baseX + 90.0, baseY + 122.0, "18");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], 0.22, 1.2);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], COLOR_WHITE);
+    PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], 2);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], 0);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_AGE_VALUE]);
+
+    gCSTD[playerid][CS_TD_AGE_PLUS] = CreatePlayerTextDraw(playerid, baseX + 130.0, baseY + 122.0, ">>>");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], 0.22, 1.2);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], 0);
+    PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], 1);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_AGE_PLUS]);
+
+    // SKIN
+    gCSTD[playerid][CS_TD_SKIN_LABEL] = CreatePlayerTextDraw(playerid, baseX + 10.0, baseY + 160.0, "SKIN");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL], 0.2, 1.0);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL], 0);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL]);
+
+    gCSTD[playerid][CS_TD_SKIN_MINUS] = CreatePlayerTextDraw(playerid, baseX + 10.0, baseY + 182.0, "<<<");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], 0.22, 1.2);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], 0);
+    PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], 1);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS]);
+
+    gCSTD[playerid][CS_TD_SKIN_VALUE] = CreatePlayerTextDraw(playerid, baseX + 90.0, baseY + 182.0, "1/49");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], 0.22, 1.2);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], COLOR_WHITE);
+    PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], 2);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], 0);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE]);
+
+    gCSTD[playerid][CS_TD_SKIN_PLUS] = CreatePlayerTextDraw(playerid, baseX + 150.0, baseY + 182.0, ">>>");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], 0.22, 1.2);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], 0);
+    PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], 1);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS]);
+
+    // CONFIRMER
+    gCSTD[playerid][CS_TD_CONFIRM_BTN] = CreatePlayerTextDraw(playerid, baseX + 10.0, baseY + 215.0, "CONFIRMER");
+    PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 2);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 0.24, 1.2);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 0x33CC33FF);
+    PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 0);
+    PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 1);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN]);
+
+    gCharSetupShown[playerid] = true;
+    SelectTextDraw(playerid, 0x00FF00FF);
+    return 1;
+}
+
+stock HideCharacterSetupTD(playerid)
+{
+    if(!gCharSetupShown[playerid]) return 0;
+
+    for(new i = 0; i < MAX_CHARSETUP_TDS; i++)
+    {
+        if(gCSTD[playerid][i] != PlayerText:INVALID_TEXT_DRAW)
+        {
+            PlayerTextDrawDestroy(playerid, gCSTD[playerid][i]);
+            gCSTD[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
+        }
+    }
+    gCharSetupShown[playerid] = false;
+    return 1;
+}
+
+stock RefreshCharSetupSkinDisplay(playerid)
+{
+    new maxSkins = (gCharGender[playerid] == 1) ? sizeof(FEMALE_CIV_SKINS) : sizeof(MALE_CIV_SKINS);
+    new str[16];
+    format(str, sizeof(str), "%d/%d", gCharSkinIndex[playerid] + 1, maxSkins);
+    PlayerTextDrawSetString(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], str);
+    SetPlayerSkin(playerid, GetCurrentSkinForCharSetup(playerid));
+    return 1;
+}
+
+stock RefreshCharSetupAgeDisplay(playerid)
+{
+    new str[8];
+    format(str, sizeof(str), "%d", gCharAge[playerid]);
+    PlayerTextDrawSetString(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], str);
+    return 1;
+}
+
+// Appelee lorsque le joueur clique "CONFIRMER" sur l'ecran CHARACTER SETUP :
+// on enchaine avec les papiers d'identite (date de naissance, situation
+// matrimoniale, lieu de naissance) avant de creer reellement le compte.
+stock ShowDOBInputDialog(playerid)
+{
+    ShowPlayerDialog(playerid, DIALOG_CHARSETUP_DOB, DIALOG_STYLE_INPUT,
+        "Date de naissance",
+        "Entrez votre date de naissance au format JJ/MM/AAAA :\n(exemple : 14/07/2000)",
+        "Valider", "");
+    return 1;
+}
+
+stock ShowMaritalStatusDialog(playerid)
+{
+    ShowPlayerDialog(playerid, DIALOG_CHARSETUP_MARITAL, DIALOG_STYLE_LIST,
+        "Situation matrimoniale",
+        "Celibataire\nMarie(e)",
+        "Choisir", "");
+    return 1;
+}
+
+stock ShowBirthplaceDialog(playerid)
+{
+    new items[400];
+    items[0] = EOS;
+    for(new i = 0; i < 14; i++)
+    {
+        strcat(items, BIRTHPLACE_CITIES[i], sizeof(items));
+        if(i != 13) strcat(items, "\n", sizeof(items));
+    }
+    ShowPlayerDialog(playerid, DIALOG_CHARSETUP_BIRTHPLACE, DIALOG_STYLE_LIST,
+        "Lieu de naissance",
+        items,
+        "Choisir", "");
+    return 1;
+}
+
+// Validation simple du format JJ/MM/AAAA (10 caracteres, separateurs '/')
+stock IsValidDateFormat(const date[])
+{
+    if(strlen(date) != 10) return 0;
+    if(date[2] != '/' || date[5] != '/') return 0;
+    for(new i = 0; i < 10; i++)
+    {
+        if(i == 2 || i == 5) continue;
+        if(date[i] < '0' || date[i] > '9') return 0;
+    }
+    new day = ((date[0] - '0') * 10) + (date[1] - '0');
+    new month = ((date[3] - '0') * 10) + (date[4] - '0');
+    if(day < 1 || day > 31) return 0;
+    if(month < 1 || month > 12) return 0;
+    return 1;
+}
+
+// Ecrit reellement le compte sur le disque, une fois que le joueur a
+// termine la creation de son personnage (sexe/age/skin + papiers).
+public FinalizeAccountCreation(playerid)
+{
+    new File:f = fopen(UserPathStr(playerid), io_write);
+    if(f)
+    {
+        new chosenSkin = GetCurrentSkinForCharSetup(playerid);
+        new line[128];
+
+        format(line, sizeof(line), "Password=%d\r\n", gPendingPassHash[playerid]);
+        fwrite(f, line);
+        format(line, sizeof(line), "Cash=100000\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "Admin=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "Skin=%d\r\n", chosenSkin);
+        fwrite(f, line);
+        format(line, sizeof(line), "PosX=1569.2711\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "PosY=-2348.7114\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "PosZ=13.5547\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "PosA=0.0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "Int=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "World=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "HomeSet=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "HomeX=0.0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "HomeY=0.0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "HomeZ=0.0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "HomeA=0.0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "HomeInt=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "HomeWorld=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "VipExpire=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "IDNum=%d\r\n", 100000 + random(900000));
+        fwrite(f, line);
+        format(line, sizeof(line), "DateNaissance=%s\r\n", gCharDOB[playerid]);
+        fwrite(f, line);
+        format(line, sizeof(line), "PermisConduire=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "PortArme=0\r\n");
+        fwrite(f, line);
+
+        new regY, regM, regD;
+        getdate(regY, regM, regD);
+        format(line, sizeof(line), "Sexe=%s\r\n", (gCharGender[playerid] == 1) ? "F" : "H");
+        fwrite(f, line);
+        format(line, sizeof(line), "Age=%d\r\n", gCharAge[playerid]);
+        fwrite(f, line);
+        format(line, sizeof(line), "LieuNaissance=%s\r\n", gCharBirthplace[playerid]);
+        fwrite(f, line);
+        format(line, sizeof(line), "DateDelivID=%02d/%02d/%04d\r\n", regD, regM, regY);
+        fwrite(f, line);
+        format(line, sizeof(line), "SituationMatrimoniale=%s\r\n", gCharMarital[playerid]);
+        fwrite(f, line);
+        format(line, sizeof(line), "PermisPL=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "PermisAvion=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "PermisBateau=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "PermisMoto=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "DatePermisVehicule=--/--/----\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "DatePermisPL=--/--/----\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "DatePermisAvion=--/--/----\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "DatePermisBateau=--/--/----\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "DatePermisMoto=--/--/----\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "Profession=Sans emploi\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "TypeArme=Aucun\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "NomArme=Aucun\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "Faim=100\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "Soif=100\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "Fatigue=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "Stress=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "Moral=100\r\n");
+        fwrite(f, line);
+        fclose(f);
+
+        SendClientMessage(playerid, COLOR_GREEN, "Votre compte a ete cree avec succes ! Vous etes maintenant connecte.");
+        if(gLoginTimer[playerid] != 0) { KillTimer(gLoginTimer[playerid]); gLoginTimer[playerid] = 0; }
+        IsLoggedIn[playerid] = 1;
+        LoadUserData(playerid);
+        SetPlayerVirtualWorld(playerid, 0);
+        TogglePlayerControllable(playerid, true);
+        CancelSelectTextDraw(playerid);
+        FinalizeLogin(playerid);
+    }
+    else
+    {
+        new pname[MAX_PLAYER_NAME], errmsg[160];
+        GetPlayerName(playerid, pname, sizeof(pname));
+        format(errmsg, sizeof(errmsg), "[ERREUR] Impossible de creer le fichier de compte pour %s (dossier /scriptfiles/Accounts/ manquant sur le serveur ?)", pname);
+        print(errmsg);
+        SendClientMessage(playerid, COLOR_RED, "Erreur serveur : impossible de creer votre compte. Contactez un administrateur.");
+        Kick(playerid);
+    }
+    return 1;
+}
+
 
 public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 {
@@ -1220,120 +1720,55 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             return 1;
         }
 
-        new File:f = fopen(UserPathStr(playerid), io_write);
-        if(f)
-        {
-            new hashPass = udb_hash(inputtext);
-            new line[128];
-            format(line, sizeof(line), "Password=%d\r\n", hashPass);
-            fwrite(f, line);
-            format(line, sizeof(line), "Cash=100000\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "Admin=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "Skin=101\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "PosX=1569.2711\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "PosY=-2348.7114\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "PosZ=13.5547\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "PosA=0.0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "Int=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "World=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "HomeSet=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "HomeX=0.0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "HomeY=0.0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "HomeZ=0.0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "HomeA=0.0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "HomeInt=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "HomeWorld=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "VipExpire=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "IDNum=%d\r\n", 100000 + random(900000));
-            fwrite(f, line);
-            format(line, sizeof(line), "DateNaissance=01/01/1990\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "PermisConduire=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "PortArme=0\r\n");
-            fwrite(f, line);
+        // Le mot de passe est valide : on ne cree pas encore le compte.
+        // On enchaine avec la creation du personnage (sexe/age/skin puis
+        // papiers d'identite) ; le compte n'est ecrit sur le disque qu'a
+        // la toute fin, dans FinalizeAccountCreation().
+        gPendingPassHash[playerid] = udb_hash(inputtext);
+        ShowCharacterSetupTD(playerid);
+        return 1;
+    }
 
-            new regY, regM, regD;
-            getdate(regY, regM, regD);
-            format(line, sizeof(line), "Sexe=H\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "Age=18\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "LieuNaissance=Los Santos\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "DateDelivID=%02d/%02d/%04d\r\n", regD, regM, regY);
-            fwrite(f, line);
-            format(line, sizeof(line), "PermisPL=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "PermisAvion=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "PermisBateau=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "PermisMoto=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "DatePermisVehicule=--/--/----\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "DatePermisPL=--/--/----\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "DatePermisAvion=--/--/----\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "DatePermisBateau=--/--/----\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "DatePermisMoto=--/--/----\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "Profession=Sans emploi\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "TypeArme=Aucun\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "NomArme=Aucun\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "Faim=100\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "Soif=100\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "Fatigue=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "Stress=0\r\n");
-            fwrite(f, line);
-            format(line, sizeof(line), "Moral=100\r\n");
-            fwrite(f, line);
-            fclose(f);
-
-            SendClientMessage(playerid, COLOR_GREEN, "Votre compte a ete cree avec succes ! Vous etes maintenant connecte.");
-            if(gLoginTimer[playerid] != 0) { KillTimer(gLoginTimer[playerid]); gLoginTimer[playerid] = 0; }
-            IsLoggedIn[playerid] = 1;
-            LoadUserData(playerid);
-            TogglePlayerControllable(playerid, true);
-            CancelSelectTextDraw(playerid);
-            HideLoginRegisterTD(playerid);
-            FinalizeLogin(playerid);
-        }
-        else
+    if(dialogid == DIALOG_CHARSETUP_DOB)
+    {
+        if(!response)
         {
-            new name[MAX_PLAYER_NAME], errmsg[160];
-            GetPlayerName(playerid, name, sizeof(name));
-            format(errmsg, sizeof(errmsg), "[ERREUR] Impossible de creer le fichier de compte pour %s (dossier /scriptfiles/Accounts/ manquant sur le serveur ?)", name);
-            print(errmsg);
-            SendClientMessage(playerid, COLOR_RED, "Erreur serveur : impossible de creer votre compte. Contactez un administrateur.");
-            Kick(playerid);
+            ShowDOBInputDialog(playerid);
+            return 1;
         }
+        if(!IsValidDateFormat(inputtext))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Format invalide ! Utilisez JJ/MM/AAAA (exemple : 14/07/2000).");
+            ShowDOBInputDialog(playerid);
+            return 1;
+        }
+        format(gCharDOB[playerid], 11, "%s", inputtext);
+        ShowMaritalStatusDialog(playerid);
+        return 1;
+    }
+
+    if(dialogid == DIALOG_CHARSETUP_MARITAL)
+    {
+        if(!response)
+        {
+            ShowMaritalStatusDialog(playerid);
+            return 1;
+        }
+        format(gCharMarital[playerid], 16, "%s", (listitem == 1) ? "Marie(e)" : "Celibataire");
+        ShowBirthplaceDialog(playerid);
+        return 1;
+    }
+
+    if(dialogid == DIALOG_CHARSETUP_BIRTHPLACE)
+    {
+        if(!response)
+        {
+            ShowBirthplaceDialog(playerid);
+            return 1;
+        }
+        if(listitem < 0 || listitem >= 14) listitem = 0;
+        format(gCharBirthplace[playerid], 32, "%s", BIRTHPLACE_CITIES[listitem]);
+        FinalizeAccountCreation(playerid);
         return 1;
     }
 
@@ -1487,7 +1922,11 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             format(values[5], 48, "%s", PlayerInfo[playerid][pDateDelivID]);
             colors[5] = 0xFFFFFFFF;
 
-            ShowDocumentCard(playerid, "CARTE D'IDENTITE", 0x1A3E8CFF, numCarte, labels, values, colors, 6, GetPlayerSkin(playerid));
+            format(labels[6], 24, "SITUATION");
+            format(values[6], 48, "%s", PlayerInfo[playerid][pSituationMatrimoniale]);
+            colors[6] = 0xFFFFFFFF;
+
+            ShowDocumentCard(playerid, "CARTE D'IDENTITE", 0x1A3E8CFF, numCarte, labels, values, colors, 7, GetPlayerSkin(playerid));
         }
         else if(listitem == 1) // Permis de conduire
         {
@@ -1705,6 +2144,7 @@ public LoadUserData(playerid)
             else if(!strcmp(key, "Age")) PlayerInfo[playerid][pAge] = strval(val);
             else if(!strcmp(key, "LieuNaissance")) format(PlayerInfo[playerid][pLieuNaissance], 32, "%s", val);
             else if(!strcmp(key, "DateDelivID")) format(PlayerInfo[playerid][pDateDelivID], 11, "%s", val);
+            else if(!strcmp(key, "SituationMatrimoniale")) format(PlayerInfo[playerid][pSituationMatrimoniale], 16, "%s", val);
             else if(!strcmp(key, "PermisPL")) PlayerInfo[playerid][pPermisPL] = strval(val);
             else if(!strcmp(key, "PermisAvion")) PlayerInfo[playerid][pPermisAvion] = strval(val);
             else if(!strcmp(key, "PermisBateau")) PlayerInfo[playerid][pPermisBateau] = strval(val);
@@ -1780,6 +2220,7 @@ public SaveUserData(playerid)
         format(outLine, sizeof(outLine), "Age=%d\r\n", PlayerInfo[playerid][pAge]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "LieuNaissance=%s\r\n", PlayerInfo[playerid][pLieuNaissance]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "DateDelivID=%s\r\n", PlayerInfo[playerid][pDateDelivID]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "SituationMatrimoniale=%s\r\n", PlayerInfo[playerid][pSituationMatrimoniale]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "PermisPL=%d\r\n", PlayerInfo[playerid][pPermisPL]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "PermisAvion=%d\r\n", PlayerInfo[playerid][pPermisAvion]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "PermisBateau=%d\r\n", PlayerInfo[playerid][pPermisBateau]); fwrite(fw, outLine);
