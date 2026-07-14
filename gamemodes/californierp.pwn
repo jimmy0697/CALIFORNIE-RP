@@ -133,6 +133,39 @@ new gJailed[MAX_PLAYERS];
 new PlayerText:gCardTD[MAX_PLAYERS][MAX_CARD_TD];
 new bool:gCardTDShown[MAX_PLAYERS];
 
+// --- Interface Connexion / Inscription ---
+#define TD_LOGIN_BG                 0
+#define TD_LOGIN_HEADER_BAR         1
+#define TD_LOGIN_HEADER_TEXT        2
+#define TD_LOGIN_INNER_BOX          3
+#define TD_LOGIN_INNER_TEXT         4
+#define TD_LOGIN_TERMINAL_LABEL     5
+#define TD_LOGIN_TERMINAL_VALUE     6
+#define TD_LOGIN_IDENTITY_LABEL     7
+#define TD_LOGIN_IDENTITY_VALUE     8
+#define TD_LOGIN_STATUS_LABEL       9
+#define TD_LOGIN_STATUS_VALUE       10
+#define TD_LOGIN_OPERATORS_LABEL    11
+#define TD_LOGIN_OPERATORS_VALUE    12
+#define TD_LOGIN_DESCRIPTION        13
+#define TD_LOGIN_INPUT_BOX          14
+#define TD_LOGIN_INPUT_TEXT         15
+#define TD_LOGIN_BUTTON_CREATE      16
+#define TD_LOGIN_BUTTON_QUIT        17
+#define MAX_LOGIN_TDS               18
+
+new PlayerText:gLoginTD[MAX_PLAYERS][MAX_LOGIN_TDS];
+new bool:gLoginTDShown[MAX_PLAYERS];
+new gPlayerInputPassword[MAX_PLAYERS][MAX_PASS_LENGTH];
+
+#define DIALOG_PASSWORD_INPUT 9000
+
+#define COLOR_DARK_BG       0x000000B0
+#define COLOR_GREEN_ACCENT  0x00FF00FF
+#define COLOR_WHITE         0xFFFFFFFF
+#define COLOR_GREY          0xAAAAAAFF
+
+
 // Reglages ajustables en direct via /devcarte (developpeur uniquement),
 // sans avoir besoin de recompiler pour chaque essai.
 new Float:gCardBaseX = 180.0;
@@ -422,6 +455,10 @@ public OnPlayerConnect(playerid)
     gPlayerTriedPass[playerid] = 0;
     gCardTDShown[playerid] = false;
     for(new i = 0; i < MAX_CARD_TD; i++) gCardTD[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
+    
+    gLoginTDShown[playerid] = false;
+    for(new i = 0; i < MAX_LOGIN_TDS; i++) gLoginTD[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
+    gPlayerInputPassword[playerid][0] = EOS;
 
     // --- Valeurs par defaut des besoins vitaux (ecrasees par LoadUserData si presentes dans le fichier) ---
     PlayerInfo[playerid][pFaim] = 100;
@@ -438,34 +475,13 @@ public OnPlayerConnect(playerid)
 
     if(fexist(UserPathStr(playerid)))
     {
-        new msg[400];
-        format(msg, sizeof(msg),
-            "{FFFFFF}Bienvenue %s sur Californie RP.\n\
-{00FF00}Votre compte est enregistre.\n\
-{FFFFFF}Site : {FFFF00}%s{FFFFFF} | Forum : {FFFF00}%s\n\n\
-{FFFFFF}Veuillez entrer votre mot de passe pour vous connecter :",
-            name, SERVER_SITE, SERVER_FORUM);
-
-        ShowPlayerDialog(playerid, DIALOG_LOGIN, DIALOG_STYLE_PASSWORD,
-            "Connexion",
-            msg,
-            "Valider", "Quitter");
+        ShowLoginRegisterTD(playerid, false, name);
     }
     else
     {
-        new msg[400];
-        format(msg, sizeof(msg),
-            "{FFFFFF}Bienvenue %s sur Californie RP.\n\
-{FF0000}Ce compte n'existe pas encore.\n\
-{FFFFFF}Site : {FFFF00}%s{FFFFFF} | Forum : {FFFF00}%s\n\n\
-{FFFFFF}Choisissez un mot de passe pour creer votre compte :",
-            name, SERVER_SITE, SERVER_FORUM);
-
-        ShowPlayerDialog(playerid, DIALOG_REGISTER, DIALOG_STYLE_PASSWORD,
-            "Inscription",
-            msg,
-            "Valider", "Quitter");
+        ShowLoginRegisterTD(playerid, true, name);
     }
+    SelectTextDraw(playerid, 0x00FF00FF);
 
     TogglePlayerControllable(playerid, false);
     return 1;
@@ -824,18 +840,254 @@ stock ShowDocumentCard(playerid, const cardTitle[], accentColor, cardNumber, con
 // ------------------------------------------------------------
 public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid)
 {
-    if(!gCardTDShown[playerid]) return 0;
-
-    if(playertextid == gCardTD[playerid][CARD_TD_CLOSE_BOX] || playertextid == gCardTD[playerid][CARD_TD_CLOSE_CROSS] || playertextid == PlayerText:INVALID_TEXT_DRAW)
+    if(gLoginTDShown[playerid])
     {
-        CancelSelectTextDraw(playerid);
-        DestroyCardTD(playerid);
+        if(playertextid == gLoginTD[playerid][TD_LOGIN_INPUT_BOX])
+        {
+            ShowPasswordInputDialog(playerid);
+            return 1;
+        }
+        if(playertextid == gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE])
+        {
+            new name[MAX_PLAYER_NAME];
+            GetPlayerName(playerid, name, sizeof(name));
+            if(fexist(UserPathStr(playerid)))
+            {
+                // On simule OnDialogResponse pour DIALOG_LOGIN
+                OnDialogResponse(playerid, DIALOG_LOGIN, 1, 0, gPlayerInputPassword[playerid]);
+            }
+            else
+            {
+                // On simule OnDialogResponse pour DIALOG_REGISTER
+                OnDialogResponse(playerid, DIALOG_REGISTER, 1, 0, gPlayerInputPassword[playerid]);
+            }
+            return 1;
+        }
+        if(playertextid == gLoginTD[playerid][TD_LOGIN_BUTTON_QUIT] || playertextid == PlayerText:INVALID_TEXT_DRAW)
+        {
+            Kick(playerid);
+            return 1;
+        }
     }
+
+    if(gCardTDShown[playerid])
+    {
+        if(playertextid == gCardTD[playerid][CARD_TD_CLOSE_BOX] || playertextid == gCardTD[playerid][CARD_TD_CLOSE_CROSS] || playertextid == PlayerText:INVALID_TEXT_DRAW)
+        {
+            CancelSelectTextDraw(playerid);
+            DestroyCardTD(playerid);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+stock ShowLoginRegisterTD(playerid, bool:isRegister, const playerName[])
+{
+    HideLoginRegisterTD(playerid);
+
+    new Float:baseX = 320.0;
+    new Float:baseY = 100.0;
+
+    gLoginTD[playerid][TD_LOGIN_BG] = CreatePlayerTextDraw(playerid, baseX - 150.0, baseY, "_");
+    PlayerTextDrawTextSize(playerid, gLoginTD[playerid][TD_LOGIN_BG], baseX + 150.0, baseY + 250.0);
+    PlayerTextDrawUseBox(playerid, gLoginTD[playerid][TD_LOGIN_BG], 1);
+    PlayerTextDrawBoxColor(playerid, gLoginTD[playerid][TD_LOGIN_BG], COLOR_DARK_BG);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_BG], 0x00000000);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_BG]);
+
+    gLoginTD[playerid][TD_LOGIN_HEADER_BAR] = CreatePlayerTextDraw(playerid, baseX - 150.0, baseY, "_");
+    PlayerTextDrawTextSize(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_BAR], baseX + 150.0, baseY + 20.0);
+    PlayerTextDrawUseBox(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_BAR], 1);
+    PlayerTextDrawBoxColor(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_BAR], COLOR_GREEN_ACCENT);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_BAR], 0x00000000);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_BAR]);
+
+    gLoginTD[playerid][TD_LOGIN_HEADER_TEXT] = CreatePlayerTextDraw(playerid, baseX, baseY + 2.0, "CALIFORNIE // ACCES SYSTEME");
+    PlayerTextDrawAlignment(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_TEXT], TEXT_DRAW_ALIGN_CENTER);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_TEXT], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_TEXT], 0.25, 1.0);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_TEXT], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_TEXT], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_HEADER_TEXT]);
+
+    gLoginTD[playerid][TD_LOGIN_INNER_BOX] = CreatePlayerTextDraw(playerid, baseX - 145.0, baseY + 25.0, "_");
+    PlayerTextDrawTextSize(playerid, gLoginTD[playerid][TD_LOGIN_INNER_BOX], baseX + 145.0, baseY + 180.0);
+    PlayerTextDrawUseBox(playerid, gLoginTD[playerid][TD_LOGIN_INNER_BOX], 1);
+    PlayerTextDrawBoxColor(playerid, gLoginTD[playerid][TD_LOGIN_INNER_BOX], 0x000000C0);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_INNER_BOX], 0x00000000);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_INNER_BOX]);
+
+    gLoginTD[playerid][TD_LOGIN_INNER_TEXT] = CreatePlayerTextDraw(playerid, baseX, baseY + 28.0, "CALIFORNIE // SYSTEME D'ACCES v2.0");
+    PlayerTextDrawAlignment(playerid, gLoginTD[playerid][TD_LOGIN_INNER_TEXT], TEXT_DRAW_ALIGN_CENTER);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_INNER_TEXT], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_INNER_TEXT], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_INNER_TEXT], COLOR_GREEN_ACCENT);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_INNER_TEXT], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_INNER_TEXT]);
+
+    new Float:currentY = baseY + 50.0;
+    new str[128];
+
+    gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL] = CreatePlayerTextDraw(playerid, baseX - 130.0, currentY, "TERMINAL :");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL]);
+
+    format(str, sizeof(str), "%s", isRegister ? "INSCRIPTION" : "CONNEXION");
+    gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE] = CreatePlayerTextDraw(playerid, baseX - 70.0, currentY, str);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE], COLOR_GREEN_ACCENT);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE]);
+
+    currentY += 15.0;
+
+    gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL] = CreatePlayerTextDraw(playerid, baseX - 130.0, currentY, "IDENTITE :");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL]);
+
+    format(str, sizeof(str), "%s", playerName);
+    gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE] = CreatePlayerTextDraw(playerid, baseX - 70.0, currentY, str);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE], COLOR_GREEN_ACCENT);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE]);
+
+    currentY += 15.0;
+
+    gLoginTD[playerid][TD_LOGIN_STATUS_LABEL] = CreatePlayerTextDraw(playerid, baseX - 130.0, currentY, "STATUT :");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_LABEL], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_LABEL], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_LABEL], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_LABEL], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_LABEL]);
+
+    format(str, sizeof(str), "[%s]", isRegister ? "INCONNU" : "ENREGISTRE");
+    gLoginTD[playerid][TD_LOGIN_STATUS_VALUE] = CreatePlayerTextDraw(playerid, baseX - 70.0, currentY, str);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_VALUE], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_VALUE], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_VALUE], isRegister ? COLOR_RED : COLOR_GREEN_ACCENT);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_VALUE], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_VALUE]);
+
+    currentY += 15.0;
+
+    gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL] = CreatePlayerTextDraw(playerid, baseX - 130.0, currentY, "OPERATEURS :");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL]);
+
+    new count = 0;
+    for(new i = 0; i < MAX_PLAYERS; i++) if(IsPlayerConnected(i)) count++;
+    format(str, sizeof(str), "%d connecte(s)", count);
+    gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE] = CreatePlayerTextDraw(playerid, baseX - 70.0, currentY, str);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE]);
+
+    currentY += 25.0;
+
+    format(str, sizeof(str), "%s", isRegister ?
+        "Ce pseudonyme n'est pas encore enregistre.\nDefinissez un mot de passe pour creer\nvotre profil sur Californie."
+        :
+        "Veuillez entrer votre mot de passe pour vous connecter :"
+    );
+    gLoginTD[playerid][TD_LOGIN_DESCRIPTION] = CreatePlayerTextDraw(playerid, baseX - 130.0, currentY, str);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_DESCRIPTION], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_DESCRIPTION], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_DESCRIPTION], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_DESCRIPTION], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_DESCRIPTION]);
+
+    currentY += (isRegister ? 35.0 : 20.0);
+
+    gLoginTD[playerid][TD_LOGIN_INPUT_BOX] = CreatePlayerTextDraw(playerid, baseX - 130.0, currentY, "_");
+    PlayerTextDrawTextSize(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], baseX + 130.0, currentY + 20.0);
+    PlayerTextDrawUseBox(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], 1);
+    PlayerTextDrawBoxColor(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], 0x000000C0);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], 0x00000000);
+    PlayerTextDrawSetSelectable(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], 1);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX]);
+
+    gLoginTD[playerid][TD_LOGIN_INPUT_TEXT] = CreatePlayerTextDraw(playerid, baseX - 125.0, currentY + 2.0, "");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT]);
+
+    currentY += 30.0;
+
+    gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE] = CreatePlayerTextDraw(playerid, baseX - 130.0, currentY, isRegister ? ">> CREER COMPTE" : ">> VALIDER");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE], COLOR_GREEN_ACCENT);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE], 0);
+    PlayerTextDrawSetSelectable(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE], 1);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE]);
+
+    gLoginTD[playerid][TD_LOGIN_BUTTON_QUIT] = CreatePlayerTextDraw(playerid, baseX + 80.0, currentY, "Quitter");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_QUIT], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_QUIT], 0.2, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_QUIT], COLOR_RED);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_QUIT], 0);
+    PlayerTextDrawSetSelectable(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_QUIT], 1);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_QUIT]);
+
+    gLoginTDShown[playerid] = true;
     return 1;
 }
 
+stock HideLoginRegisterTD(playerid)
+{
+    if(!gLoginTDShown[playerid]) return 0;
+
+    for(new i = 0; i < MAX_LOGIN_TDS; i++)
+    {
+        if(gLoginTD[playerid][i] != PlayerText:INVALID_TEXT_DRAW)
+        {
+            PlayerTextDrawDestroy(playerid, gLoginTD[playerid][i]);
+            gLoginTD[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
+        }
+    }
+    gLoginTDShown[playerid] = false;
+    return 1;
+}
+
+stock ShowPasswordInputDialog(playerid)
+{
+    ShowPlayerDialog(playerid, DIALOG_PASSWORD_INPUT, DIALOG_STYLE_PASSWORD, "Saisie du mot de passe", "Veuillez entrer votre mot de passe :", "Valider", "Annuler");
+    return 1;
+}
+
+
 public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 {
+    if(dialogid == DIALOG_PASSWORD_INPUT)
+    {
+        if(response)
+        {
+            format(gPlayerInputPassword[playerid], MAX_PASS_LENGTH, "%s", inputtext);
+            new stars[MAX_PASS_LENGTH];
+            for(new i = 0; i < strlen(inputtext); i++) stars[i] = '*';
+            stars[strlen(inputtext)] = EOS;
+            PlayerTextDrawSetString(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], stars);
+        }
+        return 1;
+    }
+
     if(dialogid == DIALOG_REGISTER)
     {
         if(!response)
@@ -845,10 +1097,9 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
         }
         if(strlen(inputtext) < 4)
         {
-            ShowPlayerDialog(playerid, DIALOG_REGISTER, DIALOG_STYLE_PASSWORD,
-                "Inscription - Californie RP",
-                "{FF0000}Votre mot de passe doit contenir au moins 4 caracteres !\n{FFFFFF}Choisissez un mot de passe pour creer votre compte :",
-                "Inscription", "Quitter");
+            SendClientMessage(playerid, COLOR_RED, "Votre mot de passe doit contenir au moins 4 caracteres !");
+            gPlayerInputPassword[playerid][0] = EOS;
+            PlayerTextDrawSetString(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], "");
             return 1;
         }
 
@@ -953,6 +1204,8 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             IsLoggedIn[playerid] = 1;
             LoadUserData(playerid);
             TogglePlayerControllable(playerid, true);
+            CancelSelectTextDraw(playerid);
+            HideLoginRegisterTD(playerid);
             FinalizeLogin(playerid);
         }
         else
@@ -1001,6 +1254,8 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             IsLoggedIn[playerid] = 1;
             LoadUserData(playerid);
             TogglePlayerControllable(playerid, true);
+            CancelSelectTextDraw(playerid);
+            HideLoginRegisterTD(playerid);
             FinalizeLogin(playerid);
         }
         else
@@ -1012,10 +1267,9 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
                 Kick(playerid);
                 return 1;
             }
-            ShowPlayerDialog(playerid, DIALOG_LOGIN, DIALOG_STYLE_PASSWORD,
-                "Connexion - Californie RP",
-                "{FF0000}Mot de passe incorrect !\n{FFFFFF}Veuillez entrer votre mot de passe pour vous connecter :",
-                "Connexion", "Quitter");
+            SendClientMessage(playerid, COLOR_RED, "Mot de passe incorrect ! Veuillez reessayer.");
+            gPlayerInputPassword[playerid][0] = EOS;
+            PlayerTextDrawSetString(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], "");
         }
         return 1;
     }
