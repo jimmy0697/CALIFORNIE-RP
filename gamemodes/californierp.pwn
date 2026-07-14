@@ -133,15 +133,30 @@ new gJailed[MAX_PLAYERS];
 new PlayerText:gCardTD[MAX_PLAYERS][MAX_CARD_TD];
 new bool:gCardTDShown[MAX_PLAYERS];
 
-// --- Interface Connexion / Inscription (style terminal ASCII, identique au design de reference) ---
-#define TD_LOGIN_TITLE               0
-#define TD_LOGIN_CONSOLE             1
-#define TD_LOGIN_INPUT_BORDER        2
-#define TD_LOGIN_INPUT_BOX           3
-#define TD_LOGIN_INPUT_TEXT          4
-#define TD_LOGIN_BUTTON_CREATE       5
-#define TD_LOGIN_BUTTON_QUIT         6
-#define MAX_LOGIN_TDS                7
+// --- Interface Connexion / Inscription (style terminal ASCII, TDs separes par couleur) ---
+#define TD_LOGIN_BG                  0
+#define TD_LOGIN_TITLE_NAME          1
+#define TD_LOGIN_TITLE_SUFFIX        2
+#define TD_LOGIN_BORDER_TOP          3
+#define TD_LOGIN_SUBTITLE            4
+#define TD_LOGIN_BORDER_MID          5
+#define TD_LOGIN_TERMINAL_LABEL      6
+#define TD_LOGIN_TERMINAL_VALUE      7
+#define TD_LOGIN_IDENTITY_LABEL      8
+#define TD_LOGIN_IDENTITY_VALUE      9
+#define TD_LOGIN_STATUS_LABEL        10
+#define TD_LOGIN_STATUS_VALUE        11
+#define TD_LOGIN_OPERATORS_LABEL     12
+#define TD_LOGIN_OPERATORS_VALUE     13
+#define TD_LOGIN_SEPARATOR           14
+#define TD_LOGIN_DESCRIPTION         15
+#define TD_LOGIN_BORDER_BOTTOM       16
+#define TD_LOGIN_INPUT_BORDER        17
+#define TD_LOGIN_INPUT_BOX           18
+#define TD_LOGIN_INPUT_TEXT          19
+#define TD_LOGIN_BUTTON_CREATE       20
+#define TD_LOGIN_BUTTON_QUIT         21
+#define MAX_LOGIN_TDS                22
 
 new PlayerText:gLoginTD[MAX_PLAYERS][MAX_LOGIN_TDS];
 new bool:gLoginTDShown[MAX_PLAYERS];
@@ -154,6 +169,9 @@ new gPlayerInputPassword[MAX_PLAYERS][MAX_PASS_LENGTH];
 #define COLOR_DARK_BG       0x000000B0
 #define COLOR_GREEN_ACCENT  0x00FF00FF
 #define COLOR_ORANGE        0xFF8000FF
+#define COLOR_CYAN          0x00FFFFFF
+#define COLOR_MAGENTA       0xFF00FFFF
+#define COLOR_PINK          0xFF66CCFF
 #define COLOR_WHITE         0xFFFFFFFF
 #define COLOR_GREY          0xAAAAAAFF
 
@@ -879,109 +897,206 @@ stock ShowLoginRegisterTD(playerid, bool:isRegister, const playerName[])
     HideLoginRegisterTD(playerid);
 
     new Float:baseX = 320.0;
-    new Float:baseY = 100.0;
+    new Float:baseY = 90.0;
+    new Float:boxH = isRegister ? 225.0 : 195.0;
+    new str[144];
 
     // ------------------------------------------------------------
-    //  Ligne de titre (au-dessus du bloc console), sans fond,
-    //  a l'identique du design de reference : "CALIFORNIE // ACCES SYSTEME"
+    //  Fond sombre unique derriere tout le panneau (titre + bloc)
     // ------------------------------------------------------------
-    gLoginTD[playerid][TD_LOGIN_TITLE] = CreatePlayerTextDraw(playerid, baseX - 150.0, baseY, "{00FFFF}CALIFORNIE {FFFFFF}// ACCES SYSTEME");
-    PlayerTextDrawAlignment(playerid, gLoginTD[playerid][TD_LOGIN_TITLE], 1);
-    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_TITLE], 2);
-    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_TITLE], 0.24, 1.2);
-    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_TITLE], COLOR_WHITE);
-    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_TITLE], 1);
-    PlayerTextDrawSetOutline(playerid, gLoginTD[playerid][TD_LOGIN_TITLE], 0);
-    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_TITLE]);
+    gLoginTD[playerid][TD_LOGIN_BG] = CreatePlayerTextDraw(playerid, baseX - 150.0, baseY - 4.0, "_");
+    PlayerTextDrawTextSize(playerid, gLoginTD[playerid][TD_LOGIN_BG], baseX + 150.0, baseY + boxH);
+    PlayerTextDrawUseBox(playerid, gLoginTD[playerid][TD_LOGIN_BG], 1);
+    PlayerTextDrawBoxColor(playerid, gLoginTD[playerid][TD_LOGIN_BG], COLOR_DARK_BG);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_BG], 0x00000000);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_BG]);
 
     // ------------------------------------------------------------
-    //  Bloc console (police monospace, bordures ASCII "+===+",
-    //  couleurs cyan/magenta) : reconstitue fidelement le visuel
-    //  du design de reference, un seul TextDraw multi-lignes.
+    //  Titre : "CALIFORNIE" (cyan) + "// ACCES SYSTEME" (blanc)
     // ------------------------------------------------------------
+    gLoginTD[playerid][TD_LOGIN_TITLE_NAME] = CreatePlayerTextDraw(playerid, baseX - 145.0, baseY, "CALIFORNIE");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_TITLE_NAME], 2);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_TITLE_NAME], 0.24, 1.2);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_TITLE_NAME], COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_TITLE_NAME], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_TITLE_NAME]);
+
+    gLoginTD[playerid][TD_LOGIN_TITLE_SUFFIX] = CreatePlayerTextDraw(playerid, baseX - 55.0, baseY, "// ACCES SYSTEME");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_TITLE_SUFFIX], 2);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_TITLE_SUFFIX], 0.24, 1.2);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_TITLE_SUFFIX], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_TITLE_SUFFIX], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_TITLE_SUFFIX]);
+
+    new Float:currentY = baseY + 22.0;
+
+    // ------------------------------------------------------------
+    //  Bordure ASCII superieure
+    // ------------------------------------------------------------
+    gLoginTD[playerid][TD_LOGIN_BORDER_TOP] = CreatePlayerTextDraw(playerid, baseX - 145.0, currentY, "+=================================================+");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_TOP], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_TOP], 0.145, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_TOP], COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_TOP], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_TOP]);
+
+    currentY += 13.0;
+
+    // ------------------------------------------------------------
+    //  Sous-titre "CALIFORNIE // SYSTEME D'ACCES v2.0" (magenta)
+    // ------------------------------------------------------------
+    gLoginTD[playerid][TD_LOGIN_SUBTITLE] = CreatePlayerTextDraw(playerid, baseX, currentY, "CALIFORNIE // SYSTEME D'ACCES v2.0");
+    PlayerTextDrawAlignment(playerid, gLoginTD[playerid][TD_LOGIN_SUBTITLE], 2);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_SUBTITLE], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_SUBTITLE], 0.17, 0.9);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_SUBTITLE], COLOR_MAGENTA);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_SUBTITLE], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_SUBTITLE]);
+
+    currentY += 13.0;
+
+    gLoginTD[playerid][TD_LOGIN_BORDER_MID] = CreatePlayerTextDraw(playerid, baseX - 145.0, currentY, "+=================================================+");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_MID], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_MID], 0.145, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_MID], COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_MID], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_MID]);
+
+    currentY += 18.0;
+
+    // ------------------------------------------------------------
+    //  TERMINAL / IDENTITE / STATUT / OPERATEURS
+    //  (label blanc + valeur coloree, 2 TextDraws par ligne)
+    // ------------------------------------------------------------
+    gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL] = CreatePlayerTextDraw(playerid, baseX - 135.0, currentY, "TERMINAL :");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL], 0.19, 0.85);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_LABEL]);
+
+    format(str, sizeof(str), "%s", isRegister ? "INSCRIPTION" : "CONNEXION");
+    gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE] = CreatePlayerTextDraw(playerid, baseX - 55.0, currentY, str);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE], 0.19, 0.85);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE], COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_TERMINAL_VALUE]);
+
+    currentY += 14.0;
+
+    gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL] = CreatePlayerTextDraw(playerid, baseX - 135.0, currentY, "IDENTITE :");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL], 0.19, 0.85);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_LABEL]);
+
+    format(str, sizeof(str), "%s", playerName);
+    gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE] = CreatePlayerTextDraw(playerid, baseX - 55.0, currentY, str);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE], 0.19, 0.85);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE], COLOR_PINK);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_IDENTITY_VALUE]);
+
+    currentY += 14.0;
+
+    gLoginTD[playerid][TD_LOGIN_STATUS_LABEL] = CreatePlayerTextDraw(playerid, baseX - 135.0, currentY, "STATUT :");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_LABEL], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_LABEL], 0.19, 0.85);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_LABEL], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_LABEL], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_LABEL]);
+
+    format(str, sizeof(str), "[ %s ]", isRegister ? "INCONNU" : "ENREGISTRE");
+    gLoginTD[playerid][TD_LOGIN_STATUS_VALUE] = CreatePlayerTextDraw(playerid, baseX - 55.0, currentY, str);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_VALUE], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_VALUE], 0.19, 0.85);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_VALUE], isRegister ? COLOR_PINK : COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_VALUE], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_STATUS_VALUE]);
+
+    currentY += 14.0;
+
+    gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL] = CreatePlayerTextDraw(playerid, baseX - 135.0, currentY, "OPERATEURS :");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL], 0.19, 0.85);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_LABEL]);
+
     new count = 0;
     for(new i = 0; i < MAX_PLAYERS; i++) if(IsPlayerConnected(i)) count++;
+    format(str, sizeof(str), "%d connecte(s)", count);
+    gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE] = CreatePlayerTextDraw(playerid, baseX - 40.0, currentY, str);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE], 0.19, 0.85);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE], COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_OPERATORS_VALUE]);
 
-    new statutTxt[16], statutColor[8];
-    if(isRegister)
-    {
-        format(statutTxt, sizeof(statutTxt), "INCONNU");
-        format(statutColor, sizeof(statutColor), "FF3399");
-    }
-    else
-    {
-        format(statutTxt, sizeof(statutTxt), "ENREGISTRE");
-        format(statutColor, sizeof(statutColor), "00FF99");
-    }
+    currentY += 20.0;
 
-    new descLine[160];
-    if(isRegister)
-    {
-        format(descLine, sizeof(descLine), "Ce pseudonyme n'est pas encore enregistre.\nDefinissez un mot de passe pour creer\nvotre profil sur Californie.");
-    }
-    else
-    {
-        format(descLine, sizeof(descLine), "Veuillez entrer votre mot de passe\npour vous connecter.");
-    }
+    // ------------------------------------------------------------
+    //  Ligne de separation en tirets
+    // ------------------------------------------------------------
+    gLoginTD[playerid][TD_LOGIN_SEPARATOR] = CreatePlayerTextDraw(playerid, baseX - 135.0, currentY, "-------------------------------------------");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_SEPARATOR], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_SEPARATOR], 0.145, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_SEPARATOR], COLOR_GREY);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_SEPARATOR], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_SEPARATOR]);
 
-    new console[700];
-    format(console, sizeof(console),
-        "+===================================================+\n\
-{FF00FF}         CALIFORNIE // SYSTEME D'ACCES v2.0\n\
-{00FFFF}+===================================================+\n\
-\n\
-{FFFFFF}TERMINAL    {AAAAAA}: {00FFFF}%s\n\
-{FFFFFF}IDENTITE    {AAAAAA}: {FF66CC}%s\n\
-{FFFFFF}STATUT      {AAAAAA}: {%s}[ %s ]\n\
-{FFFFFF}OPERATEURS  {AAAAAA}: {00FFFF}%d connecte(s)\n\
-\n\
-{888888}-----------------------------------------------------\n\
-{FFFFFF}%s\n\
-{00FFFF}+===================================================+",
-        isRegister ? "INSCRIPTION" : "CONNEXION",
-        playerName,
-        statutColor, statutTxt,
-        count,
-        descLine
+    currentY += 12.0;
+
+    // ------------------------------------------------------------
+    //  Texte de description (blanc, multi-lignes)
+    // ------------------------------------------------------------
+    format(str, sizeof(str), "%s", isRegister ?
+        "Ce pseudonyme n'est pas encore enregistre.\nDefinissez un mot de passe pour creer\nvotre profil sur Californie."
+        :
+        "Veuillez entrer votre mot de passe\npour vous connecter."
     );
+    gLoginTD[playerid][TD_LOGIN_DESCRIPTION] = CreatePlayerTextDraw(playerid, baseX - 135.0, currentY, str);
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_DESCRIPTION], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_DESCRIPTION], 0.19, 0.85);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_DESCRIPTION], COLOR_WHITE);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_DESCRIPTION], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_DESCRIPTION]);
 
-    gLoginTD[playerid][TD_LOGIN_CONSOLE] = CreatePlayerTextDraw(playerid, baseX - 150.0, baseY + 22.0, console);
-    PlayerTextDrawAlignment(playerid, gLoginTD[playerid][TD_LOGIN_CONSOLE], 1);
-    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_CONSOLE], 3);
-    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_CONSOLE], 0.155, 0.95);
-    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_CONSOLE], COLOR_WHITE);
-    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_CONSOLE], 0);
-    PlayerTextDrawSetOutline(playerid, gLoginTD[playerid][TD_LOGIN_CONSOLE], 0);
-    PlayerTextDrawUseBox(playerid, gLoginTD[playerid][TD_LOGIN_CONSOLE], 1);
-    PlayerTextDrawBoxColor(playerid, gLoginTD[playerid][TD_LOGIN_CONSOLE], COLOR_DARK_BG);
-    PlayerTextDrawTextSize(playerid, gLoginTD[playerid][TD_LOGIN_CONSOLE], baseX + 150.0, baseY + (isRegister ? 260.0 : 245.0));
-    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_CONSOLE]);
+    currentY += (isRegister ? 42.0 : 28.0);
 
-    new Float:currentY = baseY + (isRegister ? 235.0 : 220.0);
+    gLoginTD[playerid][TD_LOGIN_BORDER_BOTTOM] = CreatePlayerTextDraw(playerid, baseX - 145.0, currentY, "+=================================================+");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_BOTTOM], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_BOTTOM], 0.145, 0.8);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_BOTTOM], COLOR_CYAN);
+    PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_BOTTOM], 0);
+    PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_BORDER_BOTTOM]);
+
+    currentY += 20.0;
 
     // ------------------------------------------------------------
-    //  Champ de saisie : bordure orange (boite legerement plus
-    //  grande) + boite noire de remplissage, comme sur le design
-    //  de reference.
+    //  Champ de saisie : bordure orange + boite noire de remplissage
     // ------------------------------------------------------------
-    gLoginTD[playerid][TD_LOGIN_INPUT_BORDER] = CreatePlayerTextDraw(playerid, baseX - 150.0, currentY, "_");
-    PlayerTextDrawTextSize(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BORDER], baseX + 150.0, currentY + 22.0);
+    gLoginTD[playerid][TD_LOGIN_INPUT_BORDER] = CreatePlayerTextDraw(playerid, baseX - 145.0, currentY, "_");
+    PlayerTextDrawTextSize(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BORDER], baseX + 145.0, currentY + 22.0);
     PlayerTextDrawUseBox(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BORDER], 1);
     PlayerTextDrawBoxColor(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BORDER], COLOR_ORANGE);
     PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BORDER], 0x00000000);
     PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BORDER]);
 
-    gLoginTD[playerid][TD_LOGIN_INPUT_BOX] = CreatePlayerTextDraw(playerid, baseX - 148.0, currentY + 2.0, "_");
-    PlayerTextDrawTextSize(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], baseX + 148.0, currentY + 20.0);
+    gLoginTD[playerid][TD_LOGIN_INPUT_BOX] = CreatePlayerTextDraw(playerid, baseX - 143.0, currentY + 2.0, "_");
+    PlayerTextDrawTextSize(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], baseX + 143.0, currentY + 20.0);
     PlayerTextDrawUseBox(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], 1);
-    PlayerTextDrawBoxColor(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], COLOR_DARK_BG);
+    PlayerTextDrawBoxColor(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], 0x000000E0);
     PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], 0x00000000);
     PlayerTextDrawSetSelectable(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX], 1);
     PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_BOX]);
 
-    gLoginTD[playerid][TD_LOGIN_INPUT_TEXT] = CreatePlayerTextDraw(playerid, baseX - 143.0, currentY + 4.0, "");
-    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], 3);
-    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], 0.16, 0.9);
+    gLoginTD[playerid][TD_LOGIN_INPUT_TEXT] = CreatePlayerTextDraw(playerid, baseX - 138.0, currentY + 4.0, "");
+    PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], 1);
+    PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], 0.2, 0.9);
     PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], COLOR_WHITE);
     PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT], 0);
     PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_INPUT_TEXT]);
@@ -989,13 +1104,12 @@ stock ShowLoginRegisterTD(playerid, bool:isRegister, const playerName[])
     currentY += 30.0;
 
     // ------------------------------------------------------------
-    //  Boutons ">> CREER COMPTE" (cyan) / ">> VALIDER" et "Quitter"
-    //  (rouge), identiques au design de reference.
+    //  Boutons ">> CREER COMPTE" / ">> VALIDER" (cyan) et "Quitter" (rouge)
     // ------------------------------------------------------------
-    gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE] = CreatePlayerTextDraw(playerid, baseX - 150.0, currentY, isRegister ? ">> CREER COMPTE" : ">> VALIDER");
+    gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE] = CreatePlayerTextDraw(playerid, baseX - 145.0, currentY, isRegister ? ">> CREER COMPTE" : ">> VALIDER");
     PlayerTextDrawFont(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE], 2);
     PlayerTextDrawLetterSize(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE], 0.21, 1.0);
-    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE], COLOR_GREEN_ACCENT);
+    PlayerTextDrawColor(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE], COLOR_CYAN);
     PlayerTextDrawSetShadow(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE], 0);
     PlayerTextDrawSetSelectable(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE], 1);
     PlayerTextDrawShow(playerid, gLoginTD[playerid][TD_LOGIN_BUTTON_CREATE]);
