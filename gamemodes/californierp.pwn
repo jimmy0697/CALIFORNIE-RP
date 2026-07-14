@@ -1295,14 +1295,20 @@ public LoadUserData(playerid)
     while(fread(f, line))
     {
         dbgLineCount++;
+        if(dbgLineCount <= 3)
+        {
+            new dbgLine[160];
+            format(dbgLine, sizeof(dbgLine), "[DBG%d] RAW='%s' LEN=%d", dbgLineCount, line, strlen(line));
+            SendClientMessage(playerid, 0xFFFFFFFF, dbgLine);
+        }
         new key[32], val[64];
         if(sscanf_simple(line, key, val))
         {
-            if(!strcmp(key, "Cash"))
+            if(dbgLineCount <= 3)
             {
-                new dbgLine[128];
-                format(dbgLine, sizeof(dbgLine), "[DEBUG CASH] ligne %d lue -> key='%s' val='%s'", dbgLineCount, key, val);
-                SendClientMessage(playerid, 0xAAAAAAFF, dbgLine);
+                new dbgLine[160];
+                format(dbgLine, sizeof(dbgLine), "[DBG%d] KEY=[%s] VAL=[%s] KLEN=%d VLEN=%d", dbgLineCount, key, val, strlen(key), strlen(val));
+                SendClientMessage(playerid, 0xFFFF00FF, dbgLine);
             }
             if(!strcmp(key, "Cash")) PlayerInfo[playerid][pCash] = strval(val);
             else if(!strcmp(key, "Admin")) PlayerInfo[playerid][pAdmin] = strval(val);
