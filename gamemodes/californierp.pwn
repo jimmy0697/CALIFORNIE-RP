@@ -1284,14 +1284,26 @@ stock sscanf_simple(line[], key[], val[])
 public LoadUserData(playerid)
 {
     new file:f = fopen(UserPathStr(playerid), io_read);
-    if(!f) return 0;
+    if(!f)
+    {
+        SendClientMessage(playerid, 0xFF0000FF, "[DEBUG CASH] LoadUserData: fopen() a ECHOUE (fichier introuvable/inaccessible).");
+        return 0;
+    }
 
+    new dbgLineCount = 0;
     new line[128];
     while(fread(f, line))
     {
+        dbgLineCount++;
         new key[32], val[64];
         if(sscanf_simple(line, key, val))
         {
+            if(!strcmp(key, "Cash"))
+            {
+                new dbgLine[128];
+                format(dbgLine, sizeof(dbgLine), "[DEBUG CASH] ligne %d lue -> key='%s' val='%s'", dbgLineCount, key, val);
+                SendClientMessage(playerid, 0xAAAAAAFF, dbgLine);
+            }
             if(!strcmp(key, "Cash")) PlayerInfo[playerid][pCash] = strval(val);
             else if(!strcmp(key, "Admin")) PlayerInfo[playerid][pAdmin] = strval(val);
             else if(!strcmp(key, "Skin")) PlayerInfo[playerid][pSkin] = strval(val);
@@ -1337,6 +1349,11 @@ public LoadUserData(playerid)
         }
     }
     fclose(f);
+    {
+        new dbgLine[128];
+        format(dbgLine, sizeof(dbgLine), "[DEBUG CASH] LoadUserData termine : %d lignes lues, pCash final = %d", dbgLineCount, PlayerInfo[playerid][pCash]);
+        SendClientMessage(playerid, 0xAAAAAAFF, dbgLine);
+    }
     return 1;
 }
 
