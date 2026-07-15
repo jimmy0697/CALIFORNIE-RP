@@ -2334,7 +2334,6 @@ public SaveUserData(playerid)
 
 public SpawnPlayerAfterLogin(playerid)
 {
-    SetPlayerSkin(playerid, PlayerInfo[playerid][pSkin]);
     SpawnPlayer(playerid);
     return 1;
 }
@@ -2345,6 +2344,11 @@ public SpawnPlayerAfterLogin(playerid)
 public OnPlayerSpawn(playerid)
 {
     if(!IsLoggedIn[playerid]) return 1;
+
+    // Le skin doit etre applique APRES SpawnPlayer(), jamais avant :
+    // sinon le client garde le skin de la classe de selection (AddPlayerClass)
+    // et ecrase silencieusement le skin choisi/enregistre du joueur.
+    SetPlayerSkin(playerid, PlayerInfo[playerid][pSkin]);
 
     SetPlayerPos(playerid, PlayerInfo[playerid][pPosX], PlayerInfo[playerid][pPosY], PlayerInfo[playerid][pPosZ]);
     SetPlayerFacingAngle(playerid, PlayerInfo[playerid][pPosA]);
