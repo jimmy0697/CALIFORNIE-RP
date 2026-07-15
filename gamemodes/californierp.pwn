@@ -67,7 +67,6 @@ stock udb_hash(buf[])
 #if !defined SERVER_FORUM
     #define SERVER_FORUM "forum.californie-rp.fr"
 #endif
-#define LOGIN_TIMEOUT 60000 // 60 secondes (anti-cheat)
 
 // ------------------------------------------------------------
 //  Niveaux Admin / Dev
@@ -332,7 +331,6 @@ enum pInfo
 new PlayerInfo[MAX_PLAYERS][pInfo];
 new IsLoggedIn[MAX_PLAYERS];
 new gPlayerTriedPass[MAX_PLAYERS];
-new gLoginTimer[MAX_PLAYERS];
 
 // ------------------------------------------------------------
 //  Forwards utilitaires
@@ -341,7 +339,6 @@ forward UserPath(playerid);
 forward LoadUserData(playerid);
 forward SaveUserData(playerid);
 forward SpawnPlayerAfterLogin(playerid);
-forward KickIfNotLoggedIn(playerid);
 forward ShowSpawnSelectionDialog(playerid);
 forward FinalizeAccountCreation(playerid);
 forward NeedsUpdateTimer();
@@ -569,9 +566,6 @@ public OnPlayerConnect(playerid)
     PlayerInfo[playerid][pStress] = 0;
     PlayerInfo[playerid][pMoral] = 100;
 
-    // --- Securite anti-cheat : kick si non connecte apres 60 secondes ---
-    gLoginTimer[playerid] = SetTimerEx("KickIfNotLoggedIn", LOGIN_TIMEOUT, false, "d", playerid);
-
     // --- Systeme de connexion / inscription -----------------------------
     // IMPORTANT : ce bloc doit s'executer AVANT toute fonction qui appelle
     // des natives fournies par un plugin externe (ex: SAMPVOICE). Si le
@@ -606,11 +600,6 @@ public OnPlayerConnect(playerid)
 public OnPlayerDisconnect(playerid, reason)
 {
     DestroyCardTD(playerid);
-    if(gLoginTimer[playerid] != 0)
-    {
-        KillTimer(gLoginTimer[playerid]);
-        gLoginTimer[playerid] = 0;
-    }
     if(IsLoggedIn[playerid])
     {
         SaveUserData(playerid);
@@ -619,18 +608,6 @@ public OnPlayerDisconnect(playerid, reason)
     // SAMPVOICE plante ou n'est pas charge, ca ne doit jamais empecher la
     // sauvegarde des donnees du joueur (meme logique que dans OnPlayerConnect).
     TeardownPlayerVoice(playerid);
-    return 1;
-}
-
-// Kicke automatiquement si le joueur n'est pas connecte 60s apres OnPlayerConnect
-public KickIfNotLoggedIn(playerid)
-{
-    gLoginTimer[playerid] = 0;
-    if(IsPlayerConnected(playerid) && !IsLoggedIn[playerid])
-    {
-        SendClientMessage(playerid, COLOR_RED, "Vous avez mis trop de temps a vous connecter. Vous etes expulse.");
-        Kick(playerid);
-    }
     return 1;
 }
 
@@ -1793,7 +1770,6 @@ public FinalizeAccountCreation(playerid)
         fclose(f);
 
         SendClientMessage(playerid, COLOR_GREEN, "Votre compte a ete cree avec succes ! Vous etes maintenant connecte.");
-        if(gLoginTimer[playerid] != 0) { KillTimer(gLoginTimer[playerid]); gLoginTimer[playerid] = 0; }
         IsLoggedIn[playerid] = 1;
         LoadUserData(playerid);
         SetPlayerVirtualWorld(playerid, 0);
@@ -1927,7 +1903,6 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
         if(udb_hash(inputtext) == storedHash)
         {
             SendClientMessage(playerid, COLOR_GREEN, "Connexion reussie ! Bienvenue sur Californie RP.");
-            if(gLoginTimer[playerid] != 0) { KillTimer(gLoginTimer[playerid]); gLoginTimer[playerid] = 0; }
             IsLoggedIn[playerid] = 1;
             LoadUserData(playerid);
             TogglePlayerControllable(playerid, true);
