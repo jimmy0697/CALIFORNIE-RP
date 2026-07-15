@@ -5,8 +5,22 @@
 
 #include <a_samp>
 #include "californie.inc"
+#include <sampvoice>
 
 #define FILTERSCRIPT
+
+// ------------------------------------------------------------
+//  Systeme de Chat Vocal (SAMPVOICE) - voix de proximite
+//  Necessite le plugin serveur "sampvoice" (sampvoice.dll / .so)
+//  + sampvoice.inc dans le dossier includes ; cote client le
+//  joueur doit avoir le plugin SAMPVOICE installe.
+// ------------------------------------------------------------
+#define VOICE_LOCAL_CHANNEL   0
+#define VOICE_RADIUS          20.0   // portee de la voix en metres (immersion RP)
+#define VOICE_PTT_KEY         0x14   // touche Push-To-Talk par defaut : CAPS LOCK
+
+new gVoiceStream[MAX_PLAYERS];     // SV_UINT du stream de proximite de chaque joueur
+new bool:gVoiceReady[MAX_PLAYERS]; // true si plugin + micro detectes pour ce joueur
 
 main() {}
 
@@ -555,6 +569,9 @@ public OnPlayerConnect(playerid)
     // --- Securite anti-cheat : kick si non connecte apres 60 secondes ---
     gLoginTimer[playerid] = SetTimerEx("KickIfNotLoggedIn", LOGIN_TIMEOUT, false, "d", playerid);
 
+    // --- Systeme de Chat Vocal (SAMPVOICE) ---
+    SetupPlayerVoice(playerid);
+
     new name[MAX_PLAYER_NAME];
     GetPlayerName(playerid, name, sizeof(name));
 
@@ -574,6 +591,7 @@ public OnPlayerConnect(playerid)
 public OnPlayerDisconnect(playerid, reason)
 {
     DestroyCardTD(playerid);
+    TeardownPlayerVoice(playerid);
     if(gLoginTimer[playerid] != 0)
     {
         KillTimer(gLoginTimer[playerid]);
@@ -2749,6 +2767,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         targetid = strval(tmp);
         if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /muet [id]");
         gMuted[targetid] = 1;
+        TeardownPlayerVoice(targetid); // coupe aussi le chat vocal SAMPVOICE
         SendClientMessage(targetid, COLOR_RED, "Vous avez ete reduit au silence.");
         SendClientMessage(playerid, COLOR_GREEN, "Joueur muet.");
     }
@@ -2758,6 +2777,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         targetid = strval(tmp);
         if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /demuet [id]");
         gMuted[targetid] = 0;
+        SetupPlayerVoice(targetid); // redonne le chat vocal SAMPVOICE
         SendClientMessage(targetid, COLOR_GREEN, "Vous pouvez de nouveau parler.");
         SendClientMessage(playerid, COLOR_GREEN, "Joueur demute.");
     }
@@ -3295,6 +3315,58 @@ stock ShowAdminHelp(playerid)
         SendClientMessage(playerid, COLOR_WHITE, "[Superviseur] /definiradmin, /annonce");
     if(lvl >= ADMIN_LEVEL_DEV)
         SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /heure, /meteo, /donnerarme, /allercoord, /redemarrer, /cmdrcon (acces complet RCON), /devcarte");
+    return 1;
+}
+
+// ==============================================================
+//  Systeme de Chat Vocal (SAMPVOICE) - fonctions utilitaires
+// ==============================================================
+
+// Cree le stream de proximite d'un joueur (voix entendue par les
+// joueurs proches, distance = VOICE_RADIUS) et lie la touche PTT.
+// Appelee a la connexion, et lors du /demuet pour redonner la voix.
+stock SetupPlayerVoice(playerid)
+{
+    gVoiceStream[playerid] = SV_NONE;
+    gVoiceReady[playerid] = false;
+
+    if(SvGetVersion(playerid) == 0)
+    {
+        // Plugin SAMPVOICE non detecte chez ce joueur : chat vocal indisponible pour lui.
+        return 0;
+    }
+    if(SvHasMicro(playerid) == SV_FALSE)
+    {
+        SendClientMessage(playerid, COLOR_WHITE, "(( Chat vocal : aucun microphone detecte. ))");
+        return 0;
+    }
+
+    gVoiceStream[playerid] = SvCreateStream(VOICE_RADIUS);
+    if(gVoiceStream[playerid] != SV_NONE)
+    {
+        SvSetKey(playerid, VOICE_PTT_KEY, VOICE_LOCAL_CHANNEL);
+        SvAttachStream(playerid, gVoiceStream[playerid], VOICE_LOCAL_CHANNEL);
+        SvSetTarget(gVoiceStream[playerid], SvMakePlayer(playerid));
+        SvSetIcon(gVoiceStream[playerid], "speaker");
+        gVoiceReady[playerid] = true;
+
+        if(!gMuted[playerid])
+        {
+            SendClientMessage(playerid, COLOR_GREEN, "(( Chat vocal active : maintenez CAPS LOCK pour parler aux joueurs proches. ))");
+        }
+    }
+    return 1;
+}
+
+// Detruit proprement le stream vocal d'un joueur (deconnexion ou mise en muet).
+stock TeardownPlayerVoice(playerid)
+{
+    if(gVoiceStream[playerid] != SV_NONE)
+    {
+        SvDeleteStream(gVoiceStream[playerid]);
+        gVoiceStream[playerid] = SV_NONE;
+    }
+    gVoiceReady[playerid] = false;
     return 1;
 }
 
