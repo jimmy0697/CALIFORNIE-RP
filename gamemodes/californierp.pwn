@@ -1399,7 +1399,7 @@ stock ShowCharacterSetupTD(playerid)
     SetPlayerSkin(playerid, GetCurrentSkinForCharSetup(playerid));
 
     new Float:baseX = 20.0;
-    new Float:baseY = 150.0;
+    new Float:baseY = 230.0; // descendu pour eviter la zone des boutons tactiles ESC/ALT (client mobile) qui cachait MALE
 
     // --- Bordure exterieure du panneau (liseré bleu, style "Liberty State") ---
     gCSTD[playerid][CS_TD_BORDER] = CreatePlayerTextDraw(playerid, baseX - 6.0, baseY - 6.0, "_");
