@@ -1326,10 +1326,16 @@ stock ShowPasswordInputDialog(playerid)
 // Position d'attente utilisee pour la previsualisation du personnage.
 // Chaque joueur y est isole via SetPlayerVirtualWorld(playerid, playerid+1)
 // pour ne jamais voir ni etre vu par un autre joueur en pleine creation.
+// L'interieur 3 est reutilise a plusieurs endroits reels de la map SA (Jizzy's Club,
+// Johnson House, Wheel Arch Angels...). L'ancienne position (-1449.9767, -337.8399, 999.6797)
+// ne correspond a aucun de ces emplacements reels : le joueur se retrouvait donc hors du
+// decor charge, d'ou le fond bleu/vide (ciel) au lieu d'une piece.
+// On utilise ici les coordonnees reelles de l'interieur "Jizzy's Club" (int 3), qui offre
+// un vrai sol/plafond/eclairage, avec les memes offsets camera qu'avant.
 #define CHARSETUP_INT 3
-new const Float:CHARSETUP_POS[4] = {-1449.9767, -337.8399, 999.6797, 172.0};
-new const Float:CHARSETUP_CAM_POS[3] = {-1451.7, -334.6, 1000.0};
-new const Float:CHARSETUP_CAM_LOOK[3] = {-1449.9767, -337.8399, 999.9};
+new const Float:CHARSETUP_POS[4] = {-2637.6900, 1404.2400, 906.4600, 332.0};
+new const Float:CHARSETUP_CAM_POS[3] = {-2639.4133, 1407.4799, 906.7803};
+new const Float:CHARSETUP_CAM_LOOK[3] = {-2637.6900, 1404.2400, 906.6803};
 
 stock GetCurrentSkinForCharSetup(playerid)
 {
