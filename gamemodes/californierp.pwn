@@ -569,9 +569,14 @@ public OnPlayerConnect(playerid)
     // --- Securite anti-cheat : kick si non connecte apres 60 secondes ---
     gLoginTimer[playerid] = SetTimerEx("KickIfNotLoggedIn", LOGIN_TIMEOUT, false, "d", playerid);
 
-    // --- Systeme de Chat Vocal (SAMPVOICE) ---
-    SetupPlayerVoice(playerid);
-
+    // --- Systeme de connexion / inscription -----------------------------
+    // IMPORTANT : ce bloc doit s'executer AVANT toute fonction qui appelle
+    // des natives fournies par un plugin externe (ex: SAMPVOICE). Si le
+    // plugin n'est pas charge cote serveur (absent de server.cfg/config.json,
+    // mauvaise architecture 32/64 bits, version incompatible), l'appel a une
+    // native manquante genere un "Run time error 19" qui arrete net le
+    // callback en cours : tout le code place APRES cet appel (donc le
+    // systeme de connexion) ne s'executerait alors plus jamais.
     new name[MAX_PLAYER_NAME];
     GetPlayerName(playerid, name, sizeof(name));
 
@@ -585,6 +590,13 @@ public OnPlayerConnect(playerid)
     }
 
     TogglePlayerControllable(playerid, false);
+
+    // --- Systeme de Chat Vocal (SAMPVOICE) -------------------------------
+    // Place en dernier et volontairement isole : si SAMPVOICE echoue ou
+    // n'est pas installe cote serveur, ca ne doit plus jamais impacter la
+    // connexion, l'inscription ni aucun autre systeme du gamemode.
+    SetupPlayerVoice(playerid);
+
     return 1;
 }
 
