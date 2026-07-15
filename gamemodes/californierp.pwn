@@ -10,17 +10,20 @@
 #define FILTERSCRIPT
 
 // ------------------------------------------------------------
-//  Systeme de Chat Vocal (SAMPVOICE) - voix de proximite
+//  Systeme de Chat Vocal (SAMPVOICE - fork open.mp AmyrAhmady)
 //  Necessite le plugin serveur "sampvoice" (sampvoice.dll / .so)
 //  + sampvoice.inc dans le dossier includes ; cote client le
 //  joueur doit avoir le plugin SAMPVOICE installe.
+//  API du fork open.mp : SvCreateDLStreamAtPlayer / SvAttachSpeakerToStream
+//  / SvAddKey + callbacks OnPlayerActivationKeyPress/Release
+//  (differente de l'ancienne API SvCreateStream/SvSetKey/SvSetTarget).
 // ------------------------------------------------------------
-#define VOICE_LOCAL_CHANNEL   0
 #define VOICE_RADIUS          20.0   // portee de la voix en metres (immersion RP)
 #define VOICE_PTT_KEY         0x14   // touche Push-To-Talk par defaut : CAPS LOCK
+#define VOICE_MAX_LISTENERS   SV_INFINITY // nb d'auditeurs simultanes sur le stream local
 
-new gVoiceStream[MAX_PLAYERS];     // SV_UINT du stream de proximite de chaque joueur
-new bool:gVoiceReady[MAX_PLAYERS]; // true si plugin + micro detectes pour ce joueur
+new SV_DLSTREAM:gVoiceStream[MAX_PLAYERS]; // stream local dynamique de proximite de chaque joueur
+new bool:gVoiceReady[MAX_PLAYERS];        // true si plugin + micro detectes pour ce joueur
 
 main() {}
 
@@ -603,7 +606,6 @@ public OnPlayerConnect(playerid)
 public OnPlayerDisconnect(playerid, reason)
 {
     DestroyCardTD(playerid);
-    TeardownPlayerVoice(playerid);
     if(gLoginTimer[playerid] != 0)
     {
         KillTimer(gLoginTimer[playerid]);
@@ -613,6 +615,10 @@ public OnPlayerDisconnect(playerid, reason)
     {
         SaveUserData(playerid);
     }
+    // Nettoyage du chat vocal place en DERNIER, volontairement isole : si
+    // SAMPVOICE plante ou n'est pas charge, ca ne doit jamais empecher la
+    // sauvegarde des donnees du joueur (meme logique que dans OnPlayerConnect).
+    TeardownPlayerVoice(playerid);
     return 1;
 }
 
@@ -3334,12 +3340,13 @@ stock ShowAdminHelp(playerid)
 //  Systeme de Chat Vocal (SAMPVOICE) - fonctions utilitaires
 // ==============================================================
 
-// Cree le stream de proximite d'un joueur (voix entendue par les
-// joueurs proches, distance = VOICE_RADIUS) et lie la touche PTT.
+// Cree le stream local dynamique de proximite d'un joueur (voix entendue
+// par les joueurs proches, distance = VOICE_RADIUS) et lui assigne la
+// touche PTT (activee/desactivee via OnPlayerActivationKeyPress/Release).
 // Appelee a la connexion, et lors du /demuet pour redonner la voix.
 stock SetupPlayerVoice(playerid)
 {
-    gVoiceStream[playerid] = SV_NONE;
+    gVoiceStream[playerid] = SV_DLSTREAM:SV_NULL;
     gVoiceReady[playerid] = false;
 
     if(SvGetVersion(playerid) == 0)
@@ -3353,13 +3360,10 @@ stock SetupPlayerVoice(playerid)
         return 0;
     }
 
-    gVoiceStream[playerid] = SvCreateStream(VOICE_RADIUS);
-    if(gVoiceStream[playerid] != SV_NONE)
+    gVoiceStream[playerid] = SvCreateDLStreamAtPlayer(VOICE_RADIUS, VOICE_MAX_LISTENERS, playerid, 0xFFFFFFFF, "Local");
+    if(gVoiceStream[playerid] != SV_DLSTREAM:SV_NULL)
     {
-        SvSetKey(playerid, VOICE_PTT_KEY, VOICE_LOCAL_CHANNEL);
-        SvAttachStream(playerid, gVoiceStream[playerid], VOICE_LOCAL_CHANNEL);
-        SvSetTarget(gVoiceStream[playerid], SvMakePlayer(playerid));
-        SvSetIcon(gVoiceStream[playerid], "speaker");
+        SvAddKey(playerid, VOICE_PTT_KEY);
         gVoiceReady[playerid] = true;
 
         if(!gMuted[playerid])
@@ -3373,13 +3377,36 @@ stock SetupPlayerVoice(playerid)
 // Detruit proprement le stream vocal d'un joueur (deconnexion ou mise en muet).
 stock TeardownPlayerVoice(playerid)
 {
-    if(gVoiceStream[playerid] != SV_NONE)
+    if(gVoiceStream[playerid] != SV_DLSTREAM:SV_NULL)
     {
         SvDeleteStream(gVoiceStream[playerid]);
-        gVoiceStream[playerid] = SV_NONE;
+        gVoiceStream[playerid] = SV_DLSTREAM:SV_NULL;
     }
     gVoiceReady[playerid] = false;
     return 1;
+}
+
+// Appele par le plugin quand un joueur appuie sur une touche qui lui a ete
+// assignee via SvAddKey. On y attache le joueur comme "speaker" de son
+// propre stream local le temps que la touche PTT reste enfoncee.
+public SV_VOID:OnPlayerActivationKeyPress(SV_UINT:playerid, SV_UINT:keyid)
+{
+    if(keyid == VOICE_PTT_KEY && gVoiceReady[playerid] && !gMuted[playerid] && gVoiceStream[playerid] != SV_DLSTREAM:SV_NULL)
+    {
+        SvAttachSpeakerToStream(gVoiceStream[playerid], playerid);
+    }
+    return;
+}
+
+// Appele quand la touche PTT est relachee : on detache le joueur en tant
+// que speaker pour qu'il arrete d'emettre.
+public SV_VOID:OnPlayerActivationKeyRelease(SV_UINT:playerid, SV_UINT:keyid)
+{
+    if(keyid == VOICE_PTT_KEY && gVoiceStream[playerid] != SV_DLSTREAM:SV_NULL)
+    {
+        SvDetachSpeakerFromStream(gVoiceStream[playerid], playerid);
+    }
+    return;
 }
 
 // Petit tokenizer maison (evite une dependance externe)
