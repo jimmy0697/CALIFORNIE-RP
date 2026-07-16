@@ -191,28 +191,30 @@ new gPlayerInputPassword[MAX_PLAYERS][MAX_PASS_LENGTH];
 //  puis date de naissance / situation matrimoniale / lieu de
 //  naissance (dialogs natifs), avant creation reelle du compte.
 // ------------------------------------------------------------
-#define MAX_CHARSETUP_TDS 21
+#define MAX_CHARSETUP_TDS 23
 #define CS_TD_BORDER         0
 #define CS_TD_BG             1
 #define CS_TD_TITLE_BAR      2
 #define CS_TD_TITLE          3
 #define CS_TD_GENDER_LABEL   4
 #define CS_TD_MALE_BORDER    5
-#define CS_TD_MALE_BTN       6
-#define CS_TD_FEMALE_BORDER  7
-#define CS_TD_FEMALE_BTN     8
-#define CS_TD_AGE_LABEL      9
-#define CS_TD_AGE_BOX        10
-#define CS_TD_AGE_MINUS      11
-#define CS_TD_AGE_VALUE      12
-#define CS_TD_AGE_PLUS       13
-#define CS_TD_SKIN_LABEL     14
-#define CS_TD_SKIN_BOX       15
-#define CS_TD_SKIN_MINUS     16
-#define CS_TD_SKIN_VALUE     17
-#define CS_TD_SKIN_PLUS      18
-#define CS_TD_CONFIRM_BORDER 19
-#define CS_TD_CONFIRM_BTN    20
+#define CS_TD_MALE_FILL      6
+#define CS_TD_MALE_BTN       7
+#define CS_TD_FEMALE_BORDER  8
+#define CS_TD_FEMALE_FILL    9
+#define CS_TD_FEMALE_BTN     10
+#define CS_TD_AGE_LABEL      11
+#define CS_TD_AGE_BOX        12
+#define CS_TD_AGE_MINUS      13
+#define CS_TD_AGE_VALUE      14
+#define CS_TD_AGE_PLUS       15
+#define CS_TD_SKIN_LABEL     16
+#define CS_TD_SKIN_BOX       17
+#define CS_TD_SKIN_MINUS     18
+#define CS_TD_SKIN_VALUE     19
+#define CS_TD_SKIN_PLUS      20
+#define CS_TD_CONFIRM_BORDER 21
+#define CS_TD_CONFIRM_BTN    22
 
 new PlayerText:gCSTD[MAX_PLAYERS][MAX_CHARSETUP_TDS];
 new bool:gCharSetupShown[MAX_PLAYERS];
@@ -969,7 +971,7 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid)
 
     if(gCharSetupShown[playerid])
     {
-        if(playertextid == gCSTD[playerid][CS_TD_MALE_BTN])
+        if(playertextid == gCSTD[playerid][CS_TD_MALE_BTN] || playertextid == gCSTD[playerid][CS_TD_MALE_FILL] || playertextid == gCSTD[playerid][CS_TD_MALE_BORDER])
         {
             gCharGender[playerid] = 0;
             gCharSkinIndex[playerid] = 0;
@@ -977,7 +979,7 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid)
             RefreshCharSetupSkinDisplay(playerid);
             return 1;
         }
-        if(playertextid == gCSTD[playerid][CS_TD_FEMALE_BTN])
+        if(playertextid == gCSTD[playerid][CS_TD_FEMALE_BTN] || playertextid == gCSTD[playerid][CS_TD_FEMALE_FILL] || playertextid == gCSTD[playerid][CS_TD_FEMALE_BORDER])
         {
             gCharGender[playerid] = 1;
             gCharSkinIndex[playerid] = 0;
@@ -1429,18 +1431,28 @@ stock ShowCharacterSetupTD(playerid)
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_MALE_BORDER], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_MALE_BORDER], 0x0A0A14EE);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_MALE_BORDER], 0x00000000);
+    PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_MALE_BORDER], 1);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_MALE_BORDER]);
 
-    gCSTD[playerid][CS_TD_MALE_BTN] = CreatePlayerTextDraw(playerid, baseX + 6.0, baseY + 44.4, "MALE");
+    // Remplissage bleu (boite seule, SANS alignment dessus : c'etait le
+    // melange UseBox + Alignment sur un meme textdraw qui debordait sur
+    // le client mobile). Toujours bleu, que ce soit selectionne ou non,
+    // comme sur la reference Liberty State.
+    gCSTD[playerid][CS_TD_MALE_FILL] = CreatePlayerTextDraw(playerid, baseX + 5.4, baseY + 41.4, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_MALE_FILL], baseX + 89.4, baseY + 60.6);
+    PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_MALE_FILL], 1);
+    PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_MALE_FILL], 1);
+    PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_MALE_FILL], 0x1544AAFF);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_MALE_FILL], 0x00000000);
+    PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_MALE_FILL], 1);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_MALE_FILL]);
+
+    // Texte "MALE" seul, sans boite : evite de combiner UseBox+Alignment.
+    gCSTD[playerid][CS_TD_MALE_BTN] = CreatePlayerTextDraw(playerid, baseX + 47.4, baseY + 44.4, "MALE");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 1);
     PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0.09, 0.862);
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_MALE_BTN], baseX + 88.8, baseY + 60.0);
-    // Pas de UseBox/BoxColor ici : sur le client mobile, deux box textdraws
-    // cote a cote (BORDER + BTN) se dimensionnent mal et debordent. On
-    // garde uniquement le texte colore ; le cadre CS_TD_MALE_BORDER,
-    // lui, s'allume deja en blanc/sombre pour indiquer la selection.
-    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0x66AAFFFF);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_MALE_BTN], COLOR_WHITE);
     PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 2);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0);
     PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 1);
@@ -1453,19 +1465,30 @@ stock ShowCharacterSetupTD(playerid)
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_FEMALE_BORDER], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_FEMALE_BORDER], 0x0A0A14EE);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_FEMALE_BORDER], 0x00000000);
+    PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_FEMALE_BORDER], 1);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_FEMALE_BORDER]);
 
-    gCSTD[playerid][CS_TD_FEMALE_BTN] = CreatePlayerTextDraw(playerid, baseX + 98.4, baseY + 45.6, "FEMALE");
+    // Remplissage rose (boite seule, meme principe que MALE_FILL).
+    gCSTD[playerid][CS_TD_FEMALE_FILL] = CreatePlayerTextDraw(playerid, baseX + 97.8, baseY + 41.4, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL], baseX + 181.8, baseY + 60.6);
+    PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL], 1);
+    PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL], 1);
+    PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL], 0xCC1F8FFF);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL], 0x00000000);
+    PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL], 1);
+    PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL]);
+
+    // Texte "FEMALE" seul, sans boite.
+    gCSTD[playerid][CS_TD_FEMALE_BTN] = CreatePlayerTextDraw(playerid, baseX + 139.8, baseY + 45.6, "FEMALE");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 1);
     PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0.083, 0.862);
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], baseX + 181.2, baseY + 60.0);
-    // Pas de UseBox/BoxColor ici, pour la meme raison que MALE_BTN.
-    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0xFF99DDFF);
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], COLOR_WHITE);
     PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 2);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0);
     PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 1);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN]);
+
 
     // ================= AGE =================
     gCSTD[playerid][CS_TD_AGE_LABEL] = CreatePlayerTextDraw(playerid, baseX + 4.8, baseY + 73.2, "AGE");
