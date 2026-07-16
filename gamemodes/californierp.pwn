@@ -61,6 +61,26 @@ stock udb_hash(buf[])
 #if !defined DIALOG_PAPIERS_RECUS
     #define DIALOG_PAPIERS_RECUS 9005
 #endif
+#if !defined DIALOG_BANQUE
+    #define DIALOG_BANQUE 9010
+#endif
+#if !defined DIALOG_BANQUE_DEPOT
+    #define DIALOG_BANQUE_DEPOT 9011
+#endif
+#if !defined DIALOG_BANQUE_RETRAIT
+    #define DIALOG_BANQUE_RETRAIT 9012
+#endif
+#if !defined DIALOG_BANQUE_SOLDE
+    #define DIALOG_BANQUE_SOLDE 9013
+#endif
+
+// ------------------------------------------------------------
+//  Banque - position et parametres
+// ------------------------------------------------------------
+#define BANK_POS_X (1487.9711)
+#define BANK_POS_Y (-1750.1216)
+#define BANK_POS_Z (15.3746)
+#define BANK_RADIUS (6.0)
 #if !defined SERVER_SITE
     #define SERVER_SITE "www.californie-rp.fr"
 #endif
@@ -279,6 +299,8 @@ enum pInfo
     pInt,
     pWorld,
     pCash,
+    pBank,               // Solde du compte bancaire
+    pCarteBancaire,      // 0 = pas encore recuperee a la banque, 1 = recuperee
     pAdmin,
     pSkin,
 
@@ -418,6 +440,47 @@ stock ClampNeed(val)
 }
 
 // ------------------------------------------------------------
+//  Banque : utilitaires
+// ------------------------------------------------------------
+stock IsPlayerNearBank(playerid)
+{
+    return IsPlayerInRangeOfPoint(playerid, BANK_RADIUS, BANK_POS_X, BANK_POS_Y, BANK_POS_Z);
+}
+
+// Utilisee par tout systeme (salaires de faction, virements, etc.) pour
+// crediter directement le compte bancaire d'un joueur, meme hors ligne
+// si l'index playerid correspond a un joueur connecte.
+stock GivePlayerBankMoney(playerid, amount)
+{
+    PlayerInfo[playerid][pBank] += amount;
+    if(PlayerInfo[playerid][pBank] < 0) PlayerInfo[playerid][pBank] = 0;
+    return 1;
+}
+
+stock ShowBanqueSoldeDialog(playerid)
+{
+    new str[128];
+    format(str, sizeof(str), "Solde de votre compte bancaire :\n$%d", PlayerInfo[playerid][pBank]);
+    ShowPlayerDialog(playerid, DIALOG_BANQUE_SOLDE, DIALOG_STYLE_MSGBOX, "Solde bancaire", str, "OK", "");
+    return 1;
+}
+
+stock ShowBanqueMenu(playerid)
+{
+    new str[256];
+    if(PlayerInfo[playerid][pCarteBancaire])
+    {
+        format(str, sizeof(str), "Consulter mon solde ($%d)\nDeposer de l'argent\nRetirer de l'argent", PlayerInfo[playerid][pBank]);
+    }
+    else
+    {
+        format(str, sizeof(str), "Recuperer ma carte bancaire\nConsulter mon solde ($%d)\nDeposer de l'argent\nRetirer de l'argent", PlayerInfo[playerid][pBank]);
+    }
+    ShowPlayerDialog(playerid, DIALOG_BANQUE, DIALOG_STYLE_LIST, "Banque de Californie", str, "Choisir", "Fermer");
+    return 1;
+}
+
+// ------------------------------------------------------------
 //  Tick des besoins vitaux : appele toutes les NEEDS_INTERVAL ms.
 //  Fait baisser faim/soif, monter la fatigue, ajuste stress/moral,
 //  et inflige des degats de sante en cas de faim/soif a 0.
@@ -513,6 +576,10 @@ public OnGameModeInit()
 
     // --- Systeme de besoins vitaux : degradation automatique toutes les minutes ---
     SetTimer("NeedsUpdateTimer", NEEDS_INTERVAL, true);
+
+    // --- Banque : pickup + panneau 3D sur place, carte bancaire a recuperer sur place ---
+    CreatePickup(1274, 1, BANK_POS_X, BANK_POS_Y, BANK_POS_Z, -1);
+    Create3DTextLabel("{33CC33}BANQUE\n{FFFFFF}/banque pour interagir", 0xFFFFFFFF, BANK_POS_X, BANK_POS_Y, BANK_POS_Z + 0.7, 15.0, 0, 0);
 
     // Classes de selection de personnage (spawn Los Santos)
     AddPlayerClass(101, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Civil - Los Santos Gare (point d'apparition de depart)
@@ -1725,6 +1792,10 @@ public FinalizeAccountCreation(playerid)
         fwrite(f, line);
         format(line, sizeof(line), "Cash=100000\r\n");
         fwrite(f, line);
+        format(line, sizeof(line), "Bank=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "CarteBancaire=0\r\n");
+        fwrite(f, line);
         format(line, sizeof(line), "Admin=0\r\n");
         fwrite(f, line);
         format(line, sizeof(line), "Skin=%d\r\n", chosenSkin);
@@ -2146,6 +2217,107 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
     {
         return 1;
     }
+
+    if(dialogid == DIALOG_BANQUE_SOLDE)
+    {
+        return 1;
+    }
+
+    if(dialogid == DIALOG_BANQUE)
+    {
+        if(!response) return 1;
+        if(!IsPlayerNearBank(playerid))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez etre a la banque pour faire cela.");
+            return 1;
+        }
+
+        // La liste change selon que le joueur possede deja sa carte ou non,
+        // donc listitem 0 signifie des choses differentes dans les deux cas.
+        if(!PlayerInfo[playerid][pCarteBancaire])
+        {
+            switch(listitem)
+            {
+                case 0: // Recuperer ma carte bancaire
+                {
+                    PlayerInfo[playerid][pCarteBancaire] = 1;
+                    SendClientMessage(playerid, COLOR_GREEN, "Vous avez recupere votre carte bancaire. Vous pouvez desormais consulter votre solde avec /solde.");
+                }
+                case 1: ShowBanqueSoldeDialog(playerid); // Consulter mon solde
+                case 2: ShowPlayerDialog(playerid, DIALOG_BANQUE_DEPOT, DIALOG_STYLE_INPUT, "Depot bancaire", "Entrez le montant a deposer sur votre compte :", "Valider", "Annuler");
+                case 3: ShowPlayerDialog(playerid, DIALOG_BANQUE_RETRAIT, DIALOG_STYLE_INPUT, "Retrait bancaire", "Entrez le montant a retirer de votre compte :", "Valider", "Annuler");
+            }
+        }
+        else
+        {
+            switch(listitem)
+            {
+                case 0: ShowBanqueSoldeDialog(playerid); // Consulter mon solde
+                case 1: ShowPlayerDialog(playerid, DIALOG_BANQUE_DEPOT, DIALOG_STYLE_INPUT, "Depot bancaire", "Entrez le montant a deposer sur votre compte :", "Valider", "Annuler");
+                case 2: ShowPlayerDialog(playerid, DIALOG_BANQUE_RETRAIT, DIALOG_STYLE_INPUT, "Retrait bancaire", "Entrez le montant a retirer de votre compte :", "Valider", "Annuler");
+            }
+        }
+        return 1;
+    }
+
+    if(dialogid == DIALOG_BANQUE_DEPOT)
+    {
+        if(!response) return 1;
+        if(!IsPlayerNearBank(playerid))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez etre a la banque pour faire cela.");
+            return 1;
+        }
+        new montant = strval(inputtext);
+        if(montant <= 0)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Montant invalide.");
+            return 1;
+        }
+        if(GetPlayerMoney(playerid) < montant)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous n'avez pas assez d'argent liquide sur vous.");
+            return 1;
+        }
+        GivePlayerMoney(playerid, -montant);
+        GivePlayerBankMoney(playerid, montant);
+        new str[96];
+        format(str, sizeof(str), "Vous avez depose $%d sur votre compte bancaire. Nouveau solde : $%d", montant, PlayerInfo[playerid][pBank]);
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(dialogid == DIALOG_BANQUE_RETRAIT)
+    {
+        if(!response) return 1;
+        if(!IsPlayerNearBank(playerid))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez etre a la banque pour faire cela.");
+            return 1;
+        }
+        if(!PlayerInfo[playerid][pCarteBancaire])
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez d'abord recuperer votre carte bancaire.");
+            return 1;
+        }
+        new montant = strval(inputtext);
+        if(montant <= 0)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Montant invalide.");
+            return 1;
+        }
+        if(PlayerInfo[playerid][pBank] < montant)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Solde bancaire insuffisant.");
+            return 1;
+        }
+        GivePlayerBankMoney(playerid, -montant);
+        GivePlayerMoney(playerid, montant);
+        new str[96];
+        format(str, sizeof(str), "Vous avez retire $%d de votre compte bancaire. Nouveau solde : $%d", montant, PlayerInfo[playerid][pBank]);
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
     return 0;
 }
 
@@ -2265,6 +2437,8 @@ public LoadUserData(playerid)
         if(sscanf_simple(line, key, val))
         {
             if(!strcmp(key, "Cash")) PlayerInfo[playerid][pCash] = strval(val);
+            else if(!strcmp(key, "Bank")) PlayerInfo[playerid][pBank] = strval(val);
+            else if(!strcmp(key, "CarteBancaire")) PlayerInfo[playerid][pCarteBancaire] = strval(val);
             else if(!strcmp(key, "Admin")) PlayerInfo[playerid][pAdmin] = strval(val);
             else if(!strcmp(key, "Skin")) PlayerInfo[playerid][pSkin] = strval(val);
             else if(!strcmp(key, "PosX")) PlayerInfo[playerid][pPosX] = floatstr(val);
@@ -2341,6 +2515,8 @@ public SaveUserData(playerid)
         new outLine[128];
         format(outLine, sizeof(outLine), "Password=%d\r\n", storedHash); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "Cash=%d\r\n", GetPlayerMoney(playerid)); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Bank=%d\r\n", PlayerInfo[playerid][pBank]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "CarteBancaire=%d\r\n", PlayerInfo[playerid][pCarteBancaire]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "Admin=%d\r\n", PlayerInfo[playerid][pAdmin]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "Skin=%d\r\n", GetPlayerSkin(playerid)); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "PosX=%f\r\n", x); fwrite(fw, outLine);
@@ -2454,7 +2630,8 @@ public OnPlayerCommandText(playerid, cmdtext[])
     {
         SendClientMessage(playerid, COLOR_YELLOW, "== Commandes Californie RP ==");
         SendClientMessage(playerid, COLOR_WHITE, "/me /do /ooc - Roleplay");
-        SendClientMessage(playerid, COLOR_WHITE, "/stats /cash - Informations personnelles");
+        SendClientMessage(playerid, COLOR_WHITE, "/stats /cash /solde - Informations personnelles");
+        SendClientMessage(playerid, COLOR_WHITE, "/banque - Gerer votre compte bancaire (sur place)");
         SendClientMessage(playerid, COLOR_WHITE, "/manger /boire /dormir - Gerer vos besoins vitaux");
         SendClientMessage(playerid, COLOR_WHITE, "/sethome - Enregistrer votre position comme domicile");
         SendClientMessage(playerid, COLOR_WHITE, "/car - Faire apparaitre un vehicule");
@@ -2546,6 +2723,15 @@ public OnPlayerCommandText(playerid, cmdtext[])
         new str[128];
         format(str, sizeof(str), "Argent : $%d | Niveau admin : %d", GetPlayerMoney(playerid), PlayerInfo[playerid][pAdmin]);
         SendClientMessage(playerid, COLOR_YELLOW, str);
+        if(PlayerInfo[playerid][pCarteBancaire])
+        {
+            format(str, sizeof(str), "Banque : $%d", PlayerInfo[playerid][pBank]);
+        }
+        else
+        {
+            format(str, sizeof(str), "Banque : carte bancaire non recuperee (rendez-vous a la banque)");
+        }
+        SendClientMessage(playerid, COLOR_YELLOW, str);
         format(str, sizeof(str), "Faim : %d/100 | Soif : %d/100 | Fatigue : %d/100",
             PlayerInfo[playerid][pFaim], PlayerInfo[playerid][pSoif], PlayerInfo[playerid][pFatigue]);
         SendClientMessage(playerid, COLOR_WHITE, str);
@@ -2610,6 +2796,30 @@ public OnPlayerCommandText(playerid, cmdtext[])
     {
         new str[64];
         format(str, sizeof(str), "Vous possedez $%d", GetPlayerMoney(playerid));
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/banque", true))
+    {
+        if(!IsPlayerNearBank(playerid))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez vous rendre a la banque pour utiliser cette commande.");
+            return 1;
+        }
+        ShowBanqueMenu(playerid);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/solde", true))
+    {
+        if(!PlayerInfo[playerid][pCarteBancaire])
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez d'abord recuperer votre carte bancaire a la banque.");
+            return 1;
+        }
+        new str[64];
+        format(str, sizeof(str), "Solde de votre compte bancaire : $%d", PlayerInfo[playerid][pBank]);
         SendClientMessage(playerid, COLOR_GREEN, str);
         return 1;
     }
