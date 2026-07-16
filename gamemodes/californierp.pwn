@@ -301,6 +301,8 @@ enum pInfo
     pCash,
     pBank,               // Solde du compte bancaire
     pCarteBancaire,      // 0 = pas encore recuperee a la banque, 1 = recuperee
+    pFaction,            // Faction/metier actuel (voir FACTION_*)
+    pGrade,              // Grade 1 a 5 au sein de la faction
     pAdmin,
     pSkin,
 
@@ -432,12 +434,198 @@ stock ShowClimateMenu(playerid)
 // ------------------------------------------------------------
 //  Borne une valeur de besoin entre 0 et 100.
 // ------------------------------------------------------------
+// ------------------------------------------------------------
+//  Factions / metiers - identifiants, grades, salaires
+// ------------------------------------------------------------
+#define FACTION_NONE          0
+#define FACTION_POLICE        1
+#define FACTION_FBI           2
+#define FACTION_PENITENCIER   3
+#define FACTION_POMPIER       4
+#define FACTION_MEDECIN       5
+#define FACTION_GOUVERNEUR    6
+#define FACTION_JUGE          7
+#define FACTION_AVOCAT        8
+#define FACTION_GARDE         9
+#define FACTION_JOURNALISTE   10
+#define FACTION_MECANO        11
+#define MAX_FACTIONS          12
+
+new gFactionName[MAX_FACTIONS][32] = {
+    "Civil",
+    "Police",
+    "FBI",
+    "Administration Penitentiaire",
+    "Pompiers",
+    "Medecins",
+    "Gouvernement",
+    "Justice (Juges)",
+    "Barreau (Avocats)",
+    "Securite Privee",
+    "Presse",
+    "Mecanique"
+};
+
+// Salaire fixe verse toutes les 30 minutes, par faction (0 = pas de salaire fixe).
+new gFactionSalary[MAX_FACTIONS] = {
+    0,      // Civil
+    80000,  // Police
+    80000,  // FBI
+    50000,  // Penitentiaire
+    40000,  // Pompiers
+    60000,  // Medecins
+    0,      // Gouverneur (pourcentage, gere a part)
+    120000, // Juges
+    0,      // Avocats (commission uniquement)
+    0,      // Garde du corps (paye a la minute par le client)
+    50000,  // Journalistes
+    0       // Mecaniciens (paye a la reparation)
+};
+
+// Grades 1 a 5 pour chaque faction (index 0 = non utilise / "Aucun").
+new gGradePolice[6][32]      = {"Aucun","Cadet","Agent","Sergent","Lieutenant","Chef de Police"};
+new gGradeFBI[6][32]         = {"Aucun","Stagiaire","Agent Special","Agent Senior","Superviseur","Directeur"};
+new gGradePenitencier[6][32] = {"Aucun","Surveillant Stagiaire","Surveillant","Surveillant Chef","Sous-Directeur","Directeur"};
+new gGradePompier[6][32]     = {"Aucun","Stagiaire","Pompier","Pompier Confirme","Chef d'Equipe","Capitaine"};
+new gGradeMedecin[6][32]     = {"Aucun","Interne","Medecin","Medecin Senior","Chirurgien","Chef de Service"};
+new gGradeGouverneur[6][32]  = {"Aucun","Adjoint au Maire","Maire","Vice-Gouverneur","Gouverneur","Gouverneur en Chef"};
+new gGradeJuge[6][32]        = {"Aucun","Juge Stagiaire","Juge","Juge Senior","Vice-President","President du Tribunal"};
+new gGradeAvocat[6][32]      = {"Aucun","Avocat Stagiaire","Avocat","Avocat Senior","Associe","Batonnier"};
+new gGradeGarde[6][32]       = {"Aucun","Recrue","Garde du Corps","Garde Senior","Chef d'Equipe","Responsable Securite"};
+new gGradeJournaliste[6][32] = {"Aucun","Stagiaire","Journaliste","Journaliste Senior","Redacteur","Redacteur en Chef"};
+new gGradeMecano[6][32]      = {"Aucun","Apprenti","Mecanicien","Mecanicien Confirme","Chef d'Atelier","Responsable Garage"};
+
+// Pourcentage du Tresor de l'Etat verse au Gouverneur/Maire toutes les 30 min, par grade.
+new gGouverneurPercent[6] = {0, 5, 10, 15, 25, 35};
+
+// Tresor de l'Etat : alimente par la part de l'Etat sur les honoraires d'avocat
+// (20%), sert de base au versement du Gouverneur/Maire. Systeme simplifie en
+// attendant un vrai systeme de taxes/proprietes.
+new gEtatTresor = 0;
+
+// Primes fixes (utilisees en l'absence de systeme d'incendies/detention complet)
+#define PRIME_DETENU_SURVEILLE 5000
+#define PRIME_INCENDIE_ETEINT  5000
+#define PRIX_SOINS_MEDECIN     2000
+#define BONUS_ARTICLE          1000
+#define PRIME_COOLDOWN         300 // secondes entre deux primes (anti-spam) pour pompier/penitentiaire
+
+new gLastPrimePompier[MAX_PLAYERS];
+new gLastPrimePenitencier[MAX_PLAYERS];
+
+// Garde du corps : client qui a engage chaque garde (-1 = aucun) + tarif/minute
+new gGardeClient[MAX_PLAYERS];
+new gGardeRate[MAX_PLAYERS];
+
+forward FactionSalaryTimer();
+forward GardeDuCorpsTimer();
+
+stock GetGradeName(faction, grade, dest[], destSize)
+{
+    if(grade < 0 || grade > 5) grade = 0;
+    switch(faction)
+    {
+        case FACTION_POLICE: format(dest, destSize, "%s", gGradePolice[grade]);
+        case FACTION_FBI: format(dest, destSize, "%s", gGradeFBI[grade]);
+        case FACTION_PENITENCIER: format(dest, destSize, "%s", gGradePenitencier[grade]);
+        case FACTION_POMPIER: format(dest, destSize, "%s", gGradePompier[grade]);
+        case FACTION_MEDECIN: format(dest, destSize, "%s", gGradeMedecin[grade]);
+        case FACTION_GOUVERNEUR: format(dest, destSize, "%s", gGradeGouverneur[grade]);
+        case FACTION_JUGE: format(dest, destSize, "%s", gGradeJuge[grade]);
+        case FACTION_AVOCAT: format(dest, destSize, "%s", gGradeAvocat[grade]);
+        case FACTION_GARDE: format(dest, destSize, "%s", gGradeGarde[grade]);
+        case FACTION_JOURNALISTE: format(dest, destSize, "%s", gGradeJournaliste[grade]);
+        case FACTION_MECANO: format(dest, destSize, "%s", gGradeMecano[grade]);
+        default: format(dest, destSize, "%s", "Civil");
+    }
+    return 1;
+}
+
 stock ClampNeed(val)
 {
     if(val < 0) return 0;
     if(val > 100) return 100;
     return val;
 }
+
+// ------------------------------------------------------------
+//  Salaires de faction : verses toutes les 30 minutes.
+// ------------------------------------------------------------
+public FactionSalaryTimer()
+{
+    for(new i = 0; i < MAX_PLAYERS; i++)
+    {
+        if(!IsPlayerConnected(i) || !IsLoggedIn[i]) continue;
+
+        new faction = PlayerInfo[i][pFaction];
+        if(faction == FACTION_NONE) continue;
+
+        new montant = 0;
+        if(faction == FACTION_GOUVERNEUR)
+        {
+            new grade = PlayerInfo[i][pGrade];
+            if(grade < 0 || grade > 5) grade = 0;
+            montant = (gEtatTresor * gGouverneurPercent[grade]) / 100;
+            if(montant > gEtatTresor) montant = gEtatTresor;
+            gEtatTresor -= montant;
+        }
+        else
+        {
+            montant = gFactionSalary[faction];
+        }
+
+        if(montant > 0)
+        {
+            GivePlayerBankMoney(i, montant);
+            new str[128], gname[32];
+            GetGradeName(faction, PlayerInfo[i][pGrade], gname, 32);
+            format(str, sizeof(str), "Salaire verse sur votre compte bancaire : $%d (%s - %s)", montant, gFactionName[faction], gname);
+            SendClientMessage(i, COLOR_GREEN, str);
+        }
+    }
+    return 1;
+}
+
+// ------------------------------------------------------------
+//  Garde du corps : facturation du client toutes les minutes.
+// ------------------------------------------------------------
+public GardeDuCorpsTimer()
+{
+    for(new i = 0; i < MAX_PLAYERS; i++)
+    {
+        if(!IsPlayerConnected(i) || !IsLoggedIn[i]) continue;
+        if(PlayerInfo[i][pFaction] != FACTION_GARDE) continue;
+
+        new clientid = gGardeClient[i];
+        if(clientid == -1) continue;
+        if(!IsPlayerConnected(clientid) || !IsLoggedIn[clientid])
+        {
+            gGardeClient[i] = -1;
+            continue;
+        }
+
+        new rate = gGardeRate[i];
+        if(PlayerInfo[clientid][pBank] < rate)
+        {
+            SendClientMessage(clientid, COLOR_RED, "Solde bancaire insuffisant : votre contrat avec votre garde du corps a pris fin.");
+            SendClientMessage(i, COLOR_RED, "Votre client n'a plus les moyens de vous payer. Contrat termine.");
+            gGardeClient[i] = -1;
+            continue;
+        }
+
+        GivePlayerBankMoney(clientid, -rate);
+        GivePlayerBankMoney(i, rate);
+
+        new str[96];
+        format(str, sizeof(str), "Garde du corps : $%d preleves de votre compte pour cette minute.", rate);
+        SendClientMessage(clientid, COLOR_YELLOW, str);
+        format(str, sizeof(str), "Garde du corps : $%d verses sur votre compte pour cette minute.", rate);
+        SendClientMessage(i, COLOR_GREEN, str);
+    }
+    return 1;
+}
+
+
 
 // ------------------------------------------------------------
 //  Banque : utilitaires
@@ -577,6 +765,10 @@ public OnGameModeInit()
     // --- Systeme de besoins vitaux : degradation automatique toutes les minutes ---
     SetTimer("NeedsUpdateTimer", NEEDS_INTERVAL, true);
 
+    // --- Salaires de faction (toutes les 30 minutes) et facturation garde du corps (toutes les minutes) ---
+    SetTimer("FactionSalaryTimer", 1800000, true);
+    SetTimer("GardeDuCorpsTimer", 60000, true);
+
     // --- Banque : pickup + panneau 3D sur place, carte bancaire a recuperer sur place ---
     CreatePickup(1274, 1, BANK_POS_X, BANK_POS_Y, BANK_POS_Z, -1);
     Create3DTextLabel("{33CC33}BANQUE\n{FFFFFF}/banque pour interagir", 0xFFFFFFFF, BANK_POS_X, BANK_POS_Y, BANK_POS_Z + 0.7, 15.0, 0, 0);
@@ -611,6 +803,10 @@ public OnPlayerConnect(playerid)
 {
     IsLoggedIn[playerid] = 0;
     gPlayerTriedPass[playerid] = 0;
+    gGardeClient[playerid] = -1;
+    gGardeRate[playerid] = 0;
+    gLastPrimePompier[playerid] = 0;
+    gLastPrimePenitencier[playerid] = 0;
     gCardTDShown[playerid] = false;
     for(new i = 0; i < MAX_CARD_TD; i++) gCardTD[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
     
@@ -669,6 +865,13 @@ public OnPlayerConnect(playerid)
 public OnPlayerDisconnect(playerid, reason)
 {
     DestroyCardTD(playerid);
+    // Si le joueur qui se deconnecte est un garde du corps en contrat, ou le
+    // client d'un garde, on coupe la facturation pour eviter tout blocage.
+    gGardeClient[playerid] = -1;
+    for(new i = 0; i < MAX_PLAYERS; i++)
+    {
+        if(gGardeClient[i] == playerid) gGardeClient[i] = -1;
+    }
     if(IsLoggedIn[playerid])
     {
         SaveUserData(playerid);
@@ -1796,6 +1999,10 @@ public FinalizeAccountCreation(playerid)
         fwrite(f, line);
         format(line, sizeof(line), "CarteBancaire=0\r\n");
         fwrite(f, line);
+        format(line, sizeof(line), "Faction=0\r\n");
+        fwrite(f, line);
+        format(line, sizeof(line), "Grade=0\r\n");
+        fwrite(f, line);
         format(line, sizeof(line), "Admin=0\r\n");
         fwrite(f, line);
         format(line, sizeof(line), "Skin=%d\r\n", chosenSkin);
@@ -2439,6 +2646,8 @@ public LoadUserData(playerid)
             if(!strcmp(key, "Cash")) PlayerInfo[playerid][pCash] = strval(val);
             else if(!strcmp(key, "Bank")) PlayerInfo[playerid][pBank] = strval(val);
             else if(!strcmp(key, "CarteBancaire")) PlayerInfo[playerid][pCarteBancaire] = strval(val);
+            else if(!strcmp(key, "Faction")) PlayerInfo[playerid][pFaction] = strval(val);
+            else if(!strcmp(key, "Grade")) PlayerInfo[playerid][pGrade] = strval(val);
             else if(!strcmp(key, "Admin")) PlayerInfo[playerid][pAdmin] = strval(val);
             else if(!strcmp(key, "Skin")) PlayerInfo[playerid][pSkin] = strval(val);
             else if(!strcmp(key, "PosX")) PlayerInfo[playerid][pPosX] = floatstr(val);
@@ -2517,6 +2726,8 @@ public SaveUserData(playerid)
         format(outLine, sizeof(outLine), "Cash=%d\r\n", GetPlayerMoney(playerid)); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "Bank=%d\r\n", PlayerInfo[playerid][pBank]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "CarteBancaire=%d\r\n", PlayerInfo[playerid][pCarteBancaire]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Faction=%d\r\n", PlayerInfo[playerid][pFaction]); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Grade=%d\r\n", PlayerInfo[playerid][pGrade]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "Admin=%d\r\n", PlayerInfo[playerid][pAdmin]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "Skin=%d\r\n", GetPlayerSkin(playerid)); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "PosX=%f\r\n", x); fwrite(fw, outLine);
@@ -2630,8 +2841,11 @@ public OnPlayerCommandText(playerid, cmdtext[])
     {
         SendClientMessage(playerid, COLOR_YELLOW, "== Commandes Californie RP ==");
         SendClientMessage(playerid, COLOR_WHITE, "/me /do /ooc - Roleplay");
-        SendClientMessage(playerid, COLOR_WHITE, "/stats /cash /solde - Informations personnelles");
+        SendClientMessage(playerid, COLOR_WHITE, "/stats /cash /solde /poste - Informations personnelles");
         SendClientMessage(playerid, COLOR_WHITE, "/banque - Gerer votre compte bancaire (sur place)");
+        SendClientMessage(playerid, COLOR_WHITE, "Metiers : /soins /therapie (medecin), /honoraires (avocat), /reparer (mecano)");
+        SendClientMessage(playerid, COLOR_WHITE, "Metiers : /publier (journaliste), /surveiller (penitentiaire), /extinction (pompier)");
+        SendClientMessage(playerid, COLOR_WHITE, "Metiers : /engager /renvoyer /demission (garde du corps)");
         SendClientMessage(playerid, COLOR_WHITE, "/manger /boire /dormir - Gerer vos besoins vitaux");
         SendClientMessage(playerid, COLOR_WHITE, "/sethome - Enregistrer votre position comme domicile");
         SendClientMessage(playerid, COLOR_WHITE, "/car - Faire apparaitre un vehicule");
@@ -2821,6 +3035,406 @@ public OnPlayerCommandText(playerid, cmdtext[])
         new str[64];
         format(str, sizeof(str), "Solde de votre compte bancaire : $%d", PlayerInfo[playerid][pBank]);
         SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/poste", true) || !strcmp(cmd, "/monposte", true))
+    {
+        new faction = PlayerInfo[playerid][pFaction];
+        new str[128], gname[32];
+        if(faction == FACTION_NONE)
+        {
+            SendClientMessage(playerid, COLOR_YELLOW, "Vous n'occupez actuellement aucun poste (Civil).");
+            return 1;
+        }
+        GetGradeName(faction, PlayerInfo[playerid][pGrade], gname, 32);
+        format(str, sizeof(str), "Poste actuel : %s - %s", gFactionName[faction], gname);
+        SendClientMessage(playerid, COLOR_YELLOW, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/listepostes", true))
+    {
+        if(PlayerInfo[playerid][pAdmin] <= 0)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Cette commande est reservee aux administrateurs.");
+            return 1;
+        }
+        SendClientMessage(playerid, COLOR_YELLOW, "== Factions disponibles (ID a utiliser avec /setjob) ==");
+        for(new f = 0; f < MAX_FACTIONS; f++)
+        {
+            new str[96];
+            format(str, sizeof(str), "%d - %s", f, gFactionName[f]);
+            SendClientMessage(playerid, COLOR_WHITE, str);
+        }
+        SendClientMessage(playerid, COLOR_YELLOW, "Grades : de 1 (le plus bas) a 5 (le plus haut), 0 = aucun/civil.");
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/setjob", true))
+    {
+        if(PlayerInfo[playerid][pAdmin] < 3)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Cette commande est reservee aux administrateurs (niveau 3+).");
+            return 1;
+        }
+        tmp = strtok_(cmdtext, idx);
+        new tmp2[32] = "";
+        tmp2 = strtok_(cmdtext, idx);
+        new tmp3[32] = "";
+        tmp3 = strtok_(cmdtext, idx);
+        if(!strlen(tmp) || !strlen(tmp2) || !strlen(tmp3))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Utilisation : /setjob [id joueur] [id faction] [grade 0-5]");
+            SendClientMessage(playerid, COLOR_YELLOW, "Tapez /listepostes pour voir les ID de faction.");
+            return 1;
+        }
+        new targetid = strval(tmp);
+        new faction = strval(tmp2);
+        new grade = strval(tmp3);
+        if(!IsPlayerConnected(targetid) || !IsLoggedIn[targetid])
+        {
+            SendClientMessage(playerid, COLOR_RED, "Joueur introuvable ou non connecte.");
+            return 1;
+        }
+        if(faction < 0 || faction >= MAX_FACTIONS)
+        {
+            SendClientMessage(playerid, COLOR_RED, "ID de faction invalide. Tapez /listepostes.");
+            return 1;
+        }
+        if(grade < 0 || grade > 5)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Grade invalide (0 a 5).");
+            return 1;
+        }
+        PlayerInfo[targetid][pFaction] = faction;
+        PlayerInfo[targetid][pGrade] = grade;
+
+        new str[128], gname[32], tname[MAX_PLAYER_NAME];
+        GetGradeName(faction, grade, gname, 32);
+        GetPlayerName(targetid, tname, sizeof(tname));
+        format(str, sizeof(str), "Vous occupez desormais le poste : %s - %s", gFactionName[faction], gname);
+        SendClientMessage(targetid, COLOR_GREEN, str);
+        format(str, sizeof(str), "%s a ete affecte au poste : %s - %s", tname, gFactionName[faction], gname);
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/soins", true) || !strcmp(cmd, "/therapie", true))
+    {
+        new isTherapie = !strcmp(cmd, "/therapie", true);
+        if(PlayerInfo[playerid][pFaction] != FACTION_MEDECIN)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Seul un medecin peut utiliser cette commande.");
+            return 1;
+        }
+        tmp = strtok_(cmdtext, idx);
+        if(!strlen(tmp))
+        {
+            SendClientMessage(playerid, COLOR_RED, isTherapie ? "Utilisation : /therapie [id joueur]" : "Utilisation : /soins [id joueur]");
+            return 1;
+        }
+        new targetid = strval(tmp);
+        if(!IsPlayerConnected(targetid) || !IsLoggedIn[targetid])
+        {
+            SendClientMessage(playerid, COLOR_RED, "Joueur introuvable ou non connecte.");
+            return 1;
+        }
+        new Float:mx, Float:my, Float:mz;
+        GetPlayerPos(playerid, mx, my, mz);
+        if(!IsPlayerInRangeOfPoint(targetid, 4.0, mx, my, mz))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Ce joueur n'est pas assez proche de vous.");
+            return 1;
+        }
+        if(!PlayerInfo[targetid][pCarteBancaire] || PlayerInfo[targetid][pBank] < PRIX_SOINS_MEDECIN)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Le patient n'a pas les fonds necessaires sur son compte bancaire.");
+            return 1;
+        }
+
+        GivePlayerBankMoney(targetid, -PRIX_SOINS_MEDECIN);
+        GivePlayerBankMoney(playerid, PRIX_SOINS_MEDECIN);
+
+        new str[128];
+        if(isTherapie)
+        {
+            PlayerInfo[targetid][pStress] = ClampNeed(PlayerInfo[targetid][pStress] - 40);
+            PlayerInfo[targetid][pMoral] = ClampNeed(PlayerInfo[targetid][pMoral] + 40);
+            SendClientMessage(targetid, COLOR_GREEN, "Vous avez suivi une seance de therapie. Votre stress diminue et votre moral remonte.");
+        }
+        else
+        {
+            SetPlayerHealth(targetid, 100.0);
+            SendClientMessage(targetid, COLOR_GREEN, "Vous avez ete soigne par un medecin.");
+        }
+        format(str, sizeof(str), "-$%d preleves sur votre compte bancaire pour les soins.", PRIX_SOINS_MEDECIN);
+        SendClientMessage(targetid, COLOR_YELLOW, str);
+        format(str, sizeof(str), "Vous recevez $%d sur votre compte bancaire pour ces soins.", PRIX_SOINS_MEDECIN);
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/honoraires", true))
+    {
+        if(PlayerInfo[playerid][pFaction] != FACTION_AVOCAT)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Seul un avocat peut utiliser cette commande.");
+            return 1;
+        }
+        tmp = strtok_(cmdtext, idx);
+        new tmp2[32] = "";
+        tmp2 = strtok_(cmdtext, idx);
+        if(!strlen(tmp) || !strlen(tmp2))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Utilisation : /honoraires [id client] [montant]");
+            return 1;
+        }
+        new targetid = strval(tmp);
+        new montant = strval(tmp2);
+        if(!IsPlayerConnected(targetid) || !IsLoggedIn[targetid])
+        {
+            SendClientMessage(playerid, COLOR_RED, "Client introuvable ou non connecte.");
+            return 1;
+        }
+        if(montant <= 0)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Montant invalide.");
+            return 1;
+        }
+        if(!PlayerInfo[targetid][pCarteBancaire] || PlayerInfo[targetid][pBank] < montant)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Le client n'a pas les fonds necessaires sur son compte bancaire.");
+            return 1;
+        }
+
+        new partAvocat = (montant * 80) / 100;
+        new partEtat = montant - partAvocat;
+        GivePlayerBankMoney(targetid, -montant);
+        GivePlayerBankMoney(playerid, partAvocat);
+        gEtatTresor += partEtat;
+
+        new str[128];
+        format(str, sizeof(str), "-$%d preleves sur votre compte pour vos honoraires d'avocat.", montant);
+        SendClientMessage(targetid, COLOR_YELLOW, str);
+        format(str, sizeof(str), "Honoraires percus : $%d (80%%) - $%d reverses a l'Etat (20%%).", partAvocat, partEtat);
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/reparer", true))
+    {
+        if(PlayerInfo[playerid][pFaction] != FACTION_MECANO)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Seul un mecanicien peut utiliser cette commande.");
+            return 1;
+        }
+        tmp = strtok_(cmdtext, idx);
+        new tmp2[32] = "";
+        tmp2 = strtok_(cmdtext, idx);
+        if(!strlen(tmp) || !strlen(tmp2))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Utilisation : /reparer [id client] [montant]");
+            return 1;
+        }
+        new targetid = strval(tmp);
+        new montant = strval(tmp2);
+        if(!IsPlayerConnected(targetid) || !IsLoggedIn[targetid])
+        {
+            SendClientMessage(playerid, COLOR_RED, "Client introuvable ou non connecte.");
+            return 1;
+        }
+        if(montant <= 0)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Montant invalide.");
+            return 1;
+        }
+        new Float:mx2, Float:my2, Float:mz2;
+        GetPlayerPos(playerid, mx2, my2, mz2);
+        if(!IsPlayerInRangeOfPoint(targetid, 6.0, mx2, my2, mz2))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Ce client n'est pas assez proche de vous.");
+            return 1;
+        }
+        if(!PlayerInfo[targetid][pCarteBancaire] || PlayerInfo[targetid][pBank] < montant)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Le client n'a pas les fonds necessaires sur son compte bancaire.");
+            return 1;
+        }
+
+        GivePlayerBankMoney(targetid, -montant);
+        GivePlayerBankMoney(playerid, montant);
+
+        if(IsPlayerInAnyVehicle(targetid))
+        {
+            new veh = GetPlayerVehicleID(targetid);
+            RepairVehicle(veh);
+        }
+
+        new str[96];
+        format(str, sizeof(str), "-$%d preleves sur votre compte pour la reparation.", montant);
+        SendClientMessage(targetid, COLOR_YELLOW, str);
+        format(str, sizeof(str), "Reparation payee : $%d verses sur votre compte.", montant);
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/publier", true))
+    {
+        if(PlayerInfo[playerid][pFaction] != FACTION_JOURNALISTE)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Seul un journaliste peut utiliser cette commande.");
+            return 1;
+        }
+        tmp = strtok_(cmdtext, idx);
+        if(!strlen(tmp))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Utilisation : /publier [texte de l'article/annonce]");
+            return 1;
+        }
+        new name[MAX_PLAYER_NAME], str[300];
+        GetPlayerName(playerid, name, sizeof(name));
+        format(str, sizeof(str), "[PRESSE] %s : %s", name, tmp);
+        SendClientMessageToAll(COLOR_YELLOW, str);
+
+        GivePlayerBankMoney(playerid, BONUS_ARTICLE);
+        format(str, sizeof(str), "Article/annonce publie ! Bonus recu : $%d sur votre compte bancaire.", BONUS_ARTICLE);
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/surveiller", true))
+    {
+        if(PlayerInfo[playerid][pFaction] != FACTION_PENITENCIER)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Seul un membre de l'administration penitentiaire peut utiliser cette commande.");
+            return 1;
+        }
+        tmp = strtok_(cmdtext, idx);
+        if(!strlen(tmp))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Utilisation : /surveiller [id detenu]");
+            return 1;
+        }
+        new targetid = strval(tmp);
+        if(!IsPlayerConnected(targetid) || !IsLoggedIn[targetid])
+        {
+            SendClientMessage(playerid, COLOR_RED, "Joueur introuvable ou non connecte.");
+            return 1;
+        }
+        if((gettime() - gLastPrimePenitencier[playerid]) < PRIME_COOLDOWN)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez attendre avant de toucher une nouvelle prime de surveillance.");
+            return 1;
+        }
+        gLastPrimePenitencier[playerid] = gettime();
+        GivePlayerBankMoney(playerid, PRIME_DETENU_SURVEILLE);
+
+        new str[96];
+        format(str, sizeof(str), "Prime de surveillance de detenu : +$%d sur votre compte bancaire.", PRIME_DETENU_SURVEILLE);
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/extinction", true))
+    {
+        if(PlayerInfo[playerid][pFaction] != FACTION_POMPIER)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Seul un pompier peut utiliser cette commande.");
+            return 1;
+        }
+        if((gettime() - gLastPrimePompier[playerid]) < PRIME_COOLDOWN)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez attendre avant de toucher une nouvelle prime d'extinction.");
+            return 1;
+        }
+        gLastPrimePompier[playerid] = gettime();
+        GivePlayerBankMoney(playerid, PRIME_INCENDIE_ETEINT);
+
+        new str[96];
+        format(str, sizeof(str), "Prime d'incendie eteint : +$%d sur votre compte bancaire.", PRIME_INCENDIE_ETEINT);
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/engager", true))
+    {
+        tmp = strtok_(cmdtext, idx);
+        new tmp2[32] = "";
+        tmp2 = strtok_(cmdtext, idx);
+        if(!strlen(tmp) || !strlen(tmp2))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Utilisation : /engager [id garde du corps] [tarif par minute]");
+            return 1;
+        }
+        new targetid = strval(tmp);
+        new tarif = strval(tmp2);
+        if(!IsPlayerConnected(targetid) || !IsLoggedIn[targetid])
+        {
+            SendClientMessage(playerid, COLOR_RED, "Joueur introuvable ou non connecte.");
+            return 1;
+        }
+        if(PlayerInfo[targetid][pFaction] != FACTION_GARDE)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Ce joueur n'est pas garde du corps.");
+            return 1;
+        }
+        if(tarif <= 0)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Tarif invalide.");
+            return 1;
+        }
+        if(gGardeClient[targetid] != -1)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Ce garde du corps est deja engage par quelqu'un d'autre.");
+            return 1;
+        }
+        gGardeClient[targetid] = playerid;
+        gGardeRate[targetid] = tarif;
+
+        new str[128], name[MAX_PLAYER_NAME];
+        GetPlayerName(playerid, name, sizeof(name));
+        format(str, sizeof(str), "Vous avez engage votre garde du corps pour $%d/minute (preleve sur votre compte).", tarif);
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        format(str, sizeof(str), "%s vous a engage comme garde du corps pour $%d/minute.", name, tarif);
+        SendClientMessage(targetid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/renvoyer", true))
+    {
+        tmp = strtok_(cmdtext, idx);
+        if(!strlen(tmp))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Utilisation : /renvoyer [id garde du corps]");
+            return 1;
+        }
+        new targetid = strval(tmp);
+        if(!IsPlayerConnected(targetid) || !IsLoggedIn[targetid] || gGardeClient[targetid] != playerid)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous n'avez pas de contrat en cours avec ce garde du corps.");
+            return 1;
+        }
+        gGardeClient[targetid] = -1;
+        SendClientMessage(playerid, COLOR_YELLOW, "Vous avez mis fin au contrat de votre garde du corps.");
+        SendClientMessage(targetid, COLOR_YELLOW, "Votre client a mis fin au contrat.");
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/demission", true))
+    {
+        if(PlayerInfo[playerid][pFaction] != FACTION_GARDE || gGardeClient[playerid] == -1)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous n'avez aucun contrat en cours.");
+            return 1;
+        }
+        new clientid = gGardeClient[playerid];
+        gGardeClient[playerid] = -1;
+        SendClientMessage(playerid, COLOR_YELLOW, "Vous avez mis fin a votre contrat en cours.");
+        if(IsPlayerConnected(clientid))
+        {
+            SendClientMessage(clientid, COLOR_YELLOW, "Votre garde du corps a mis fin au contrat.");
+        }
         return 1;
     }
 
@@ -3556,7 +4170,7 @@ stock ShowAdminHelp(playerid)
         SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /expulser, /gifler, /soigner, /armure, /allerA, /amener, /climat, /definirpermis, /definirport, /amende, /fourriere");
         SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /definirsexe, /definirage, /definirnaissance, /definirprofession, /definirarme");
     if(lvl >= ADMIN_LEVEL_ADMIN)
-        SendClientMessage(playerid, COLOR_WHITE, "[Admin] /bannir, /debannir, /apparence, /armes, /dieu");
+        SendClientMessage(playerid, COLOR_WHITE, "[Admin] /bannir, /debannir, /apparence, /armes, /dieu, /setjob, /listepostes");
     if(lvl >= ADMIN_LEVEL_SUPERIOR)
         SendClientMessage(playerid, COLOR_WHITE, "[Admin Sup.] /argent, /donnerargent, /vip, /niveau");
     if(lvl >= ADMIN_LEVEL_SUPERVISOR)
