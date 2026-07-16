@@ -1378,11 +1378,11 @@ stock ShowCharacterSetupTD(playerid)
     SetPlayerSkin(playerid, GetCurrentSkinForCharSetup(playerid));
 
     new Float:baseX = 90.0;  // decale a droite pour eviter le HUD debug (FPS/MEM/ID) du client mobile, affiche en haut a gauche
-    new Float:baseY = 210.0; // legerement remonte pour compenser l'agrandissement du panneau (reste sous ESC/ALT)
+    new Float:baseY = 195.0; // remonte encore un peu pour compenser le nouvel agrandissement
 
     // --- Bordure exterieure du panneau (liseré bleu, style "Liberty State") ---
-    gCSTD[playerid][CS_TD_BORDER] = CreatePlayerTextDraw(playerid, baseX - 7.2, baseY - 7.2, "_");
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_BORDER], baseX + 187.2, baseY + 243.6);
+    gCSTD[playerid][CS_TD_BORDER] = CreatePlayerTextDraw(playerid, baseX - 8.28, baseY - 8.28, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_BORDER], baseX + 215.28, baseY + 280.14);
     PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_BORDER], 1);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_BORDER], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_BORDER], 0x3C8FE6FF);
@@ -1390,8 +1390,8 @@ stock ShowCharacterSetupTD(playerid)
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_BORDER]);
 
     // --- Fond principal (opaque, comme sur la reference) ---
-    gCSTD[playerid][CS_TD_BG] = CreatePlayerTextDraw(playerid, baseX - 3.6, baseY - 3.6, "_");
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_BG], baseX + 183.6, baseY + 240.0);
+    gCSTD[playerid][CS_TD_BG] = CreatePlayerTextDraw(playerid, baseX - 4.14, baseY - 4.14, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_BG], baseX + 211.14, baseY + 276.0);
     PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_BG], 1);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_BG], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_BG], 0x0A0A14EE);
@@ -1399,34 +1399,34 @@ stock ShowCharacterSetupTD(playerid)
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_BG]);
 
     // --- Bandeau titre "CHARACTER SETUP" ---
-    gCSTD[playerid][CS_TD_TITLE_BAR] = CreatePlayerTextDraw(playerid, baseX - 3.6, baseY - 3.6, "_");
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_TITLE_BAR], baseX + 183.6, baseY + 16.8);
+    gCSTD[playerid][CS_TD_TITLE_BAR] = CreatePlayerTextDraw(playerid, baseX - 4.14, baseY - 4.14, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_TITLE_BAR], baseX + 211.14, baseY + 19.32);
     PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_TITLE_BAR], 1);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_TITLE_BAR], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_TITLE_BAR], 0x1E3A66E6);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_TITLE_BAR], 0x00000000);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_TITLE_BAR]);
 
-    gCSTD[playerid][CS_TD_TITLE] = CreatePlayerTextDraw(playerid, baseX + 4.8, baseY - 3.6, "CHARACTER SETUP");
+    gCSTD[playerid][CS_TD_TITLE] = CreatePlayerTextDraw(playerid, baseX + 5.52, baseY - 4.14, "CHARACTER SETUP");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_TITLE], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_TITLE], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_TITLE], 0.132, 0.862);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_TITLE], 0.148, 0.965);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_TITLE], COLOR_CYAN);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_TITLE], 0);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_TITLE]);
 
     // ================= GENDER =================
-    gCSTD[playerid][CS_TD_GENDER_LABEL] = CreatePlayerTextDraw(playerid, baseX + 4.8, baseY + 25.2, "GENDER");
+    gCSTD[playerid][CS_TD_GENDER_LABEL] = CreatePlayerTextDraw(playerid, baseX + 5.52, baseY + 28.98, "GENDER");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL], 0.121, 0.747);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL], 0.136, 0.837);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL], COLOR_WHITE);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL], 0);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_GENDER_LABEL]);
 
     // Liseré MALE (s'allume en blanc quand selectionne)
-    gCSTD[playerid][CS_TD_MALE_BORDER] = CreatePlayerTextDraw(playerid, baseX + 3.6, baseY + 39.6, "_");
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_MALE_BORDER], baseX + 91.2, baseY + 62.4);
+    gCSTD[playerid][CS_TD_MALE_BORDER] = CreatePlayerTextDraw(playerid, baseX + 4.14, baseY + 45.54, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_MALE_BORDER], baseX + 104.88, baseY + 71.76);
     PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_MALE_BORDER], 1);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_MALE_BORDER], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_MALE_BORDER], 0x0A0A14EE);
@@ -1438,8 +1438,8 @@ stock ShowCharacterSetupTD(playerid)
     // melange UseBox + Alignment sur un meme textdraw qui debordait sur
     // le client mobile). Toujours bleu, que ce soit selectionne ou non,
     // comme sur la reference Liberty State.
-    gCSTD[playerid][CS_TD_MALE_FILL] = CreatePlayerTextDraw(playerid, baseX + 5.4, baseY + 41.4, "_");
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_MALE_FILL], baseX + 89.4, baseY + 60.6);
+    gCSTD[playerid][CS_TD_MALE_FILL] = CreatePlayerTextDraw(playerid, baseX + 6.21, baseY + 47.61, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_MALE_FILL], baseX + 102.81, baseY + 69.69);
     PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_MALE_FILL], 1);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_MALE_FILL], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_MALE_FILL], 0x1544AAFF);
@@ -1448,10 +1448,10 @@ stock ShowCharacterSetupTD(playerid)
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_MALE_FILL]);
 
     // Texte "MALE" seul, sans boite : evite de combiner UseBox+Alignment.
-    gCSTD[playerid][CS_TD_MALE_BTN] = CreatePlayerTextDraw(playerid, baseX + 47.4, baseY + 44.4, "MALE");
+    gCSTD[playerid][CS_TD_MALE_BTN] = CreatePlayerTextDraw(playerid, baseX + 54.51, baseY + 51.06, "MALE");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0.09, 0.862);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0.101, 0.965);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_MALE_BTN], COLOR_WHITE);
     PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 2);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0);
@@ -1459,8 +1459,8 @@ stock ShowCharacterSetupTD(playerid)
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_MALE_BTN]);
 
     // Liseré FEMALE (s'allume en blanc quand selectionne)
-    gCSTD[playerid][CS_TD_FEMALE_BORDER] = CreatePlayerTextDraw(playerid, baseX + 96.0, baseY + 39.6, "_");
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_FEMALE_BORDER], baseX + 183.6, baseY + 62.4);
+    gCSTD[playerid][CS_TD_FEMALE_BORDER] = CreatePlayerTextDraw(playerid, baseX + 110.4, baseY + 45.54, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_FEMALE_BORDER], baseX + 211.14, baseY + 71.76);
     PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_FEMALE_BORDER], 1);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_FEMALE_BORDER], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_FEMALE_BORDER], 0x0A0A14EE);
@@ -1469,8 +1469,8 @@ stock ShowCharacterSetupTD(playerid)
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_FEMALE_BORDER]);
 
     // Remplissage rose (boite seule, meme principe que MALE_FILL).
-    gCSTD[playerid][CS_TD_FEMALE_FILL] = CreatePlayerTextDraw(playerid, baseX + 97.8, baseY + 41.4, "_");
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL], baseX + 181.8, baseY + 60.6);
+    gCSTD[playerid][CS_TD_FEMALE_FILL] = CreatePlayerTextDraw(playerid, baseX + 112.47, baseY + 47.61, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL], baseX + 209.07, baseY + 69.69);
     PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL], 1);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL], 0xCC1F8FFF);
@@ -1479,10 +1479,10 @@ stock ShowCharacterSetupTD(playerid)
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_FEMALE_FILL]);
 
     // Texte "FEMALE" seul, sans boite.
-    gCSTD[playerid][CS_TD_FEMALE_BTN] = CreatePlayerTextDraw(playerid, baseX + 139.8, baseY + 45.6, "FEMALE");
+    gCSTD[playerid][CS_TD_FEMALE_BTN] = CreatePlayerTextDraw(playerid, baseX + 160.77, baseY + 52.44, "FEMALE");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0.083, 0.862);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0.093, 0.965);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], COLOR_WHITE);
     PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 2);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0);
@@ -1491,107 +1491,107 @@ stock ShowCharacterSetupTD(playerid)
 
 
     // ================= AGE =================
-    gCSTD[playerid][CS_TD_AGE_LABEL] = CreatePlayerTextDraw(playerid, baseX + 4.8, baseY + 73.2, "AGE");
+    gCSTD[playerid][CS_TD_AGE_LABEL] = CreatePlayerTextDraw(playerid, baseX + 5.52, baseY + 84.18, "AGE");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_AGE_LABEL], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_AGE_LABEL], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_LABEL], 0.121, 0.747);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_LABEL], 0.136, 0.837);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_AGE_LABEL], COLOR_WHITE);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_AGE_LABEL], 0);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_AGE_LABEL]);
 
-    gCSTD[playerid][CS_TD_AGE_BOX] = CreatePlayerTextDraw(playerid, baseX + 3.6, baseY + 86.4, "_");
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_AGE_BOX], baseX + 183.6, baseY + 104.4);
+    gCSTD[playerid][CS_TD_AGE_BOX] = CreatePlayerTextDraw(playerid, baseX + 4.14, baseY + 99.36, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_AGE_BOX], baseX + 211.14, baseY + 120.06);
     PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_AGE_BOX], 1);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_AGE_BOX], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_AGE_BOX], 0x1B1B28E6);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_AGE_BOX], 0x00000000);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_AGE_BOX]);
 
-    gCSTD[playerid][CS_TD_AGE_MINUS] = CreatePlayerTextDraw(playerid, baseX + 9.6, baseY + 88.8, "<<<");
+    gCSTD[playerid][CS_TD_AGE_MINUS] = CreatePlayerTextDraw(playerid, baseX + 11.04, baseY + 102.12, "<<<");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], 0.132, 0.862);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], 0.148, 0.965);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], COLOR_CYAN);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], 0);
     PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_AGE_MINUS], 1);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_AGE_MINUS]);
 
-    gCSTD[playerid][CS_TD_AGE_VALUE] = CreatePlayerTextDraw(playerid, baseX + 93.6, baseY + 88.8, "18");
+    gCSTD[playerid][CS_TD_AGE_VALUE] = CreatePlayerTextDraw(playerid, baseX + 107.64, baseY + 102.12, "18");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], 0.138, 0.862);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], 0.155, 0.965);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], COLOR_WHITE);
     PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], 2);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_AGE_VALUE], 0);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_AGE_VALUE]);
 
-    gCSTD[playerid][CS_TD_AGE_PLUS] = CreatePlayerTextDraw(playerid, baseX + 170.4, baseY + 88.8, ">>>");
+    gCSTD[playerid][CS_TD_AGE_PLUS] = CreatePlayerTextDraw(playerid, baseX + 195.96, baseY + 102.12, ">>>");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], 0.132, 0.862);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], 0.148, 0.965);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], COLOR_CYAN);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], 0);
     PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_AGE_PLUS], 1);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_AGE_PLUS]);
 
     // ================= SKIN =================
-    gCSTD[playerid][CS_TD_SKIN_LABEL] = CreatePlayerTextDraw(playerid, baseX + 4.8, baseY + 115.2, "SKIN");
+    gCSTD[playerid][CS_TD_SKIN_LABEL] = CreatePlayerTextDraw(playerid, baseX + 5.52, baseY + 132.48, "SKIN");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL], 0.121, 0.747);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL], 0.136, 0.837);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL], COLOR_WHITE);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL], 0);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_SKIN_LABEL]);
 
-    gCSTD[playerid][CS_TD_SKIN_BOX] = CreatePlayerTextDraw(playerid, baseX + 3.6, baseY + 128.4, "_");
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_SKIN_BOX], baseX + 183.6, baseY + 146.4);
+    gCSTD[playerid][CS_TD_SKIN_BOX] = CreatePlayerTextDraw(playerid, baseX + 4.14, baseY + 147.66, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_SKIN_BOX], baseX + 211.14, baseY + 168.36);
     PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_SKIN_BOX], 1);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_SKIN_BOX], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_SKIN_BOX], 0x1B1B28E6);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_SKIN_BOX], 0x00000000);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_SKIN_BOX]);
 
-    gCSTD[playerid][CS_TD_SKIN_MINUS] = CreatePlayerTextDraw(playerid, baseX + 9.6, baseY + 130.8, "<<<");
+    gCSTD[playerid][CS_TD_SKIN_MINUS] = CreatePlayerTextDraw(playerid, baseX + 11.04, baseY + 150.42, "<<<");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], 0.132, 0.862);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], 0.148, 0.965);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], COLOR_CYAN);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], 0);
     PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS], 1);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_SKIN_MINUS]);
 
-    gCSTD[playerid][CS_TD_SKIN_VALUE] = CreatePlayerTextDraw(playerid, baseX + 93.6, baseY + 130.8, "1/49");
+    gCSTD[playerid][CS_TD_SKIN_VALUE] = CreatePlayerTextDraw(playerid, baseX + 107.64, baseY + 150.42, "1/49");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], 0.138, 0.862);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], 0.155, 0.965);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], COLOR_WHITE);
     PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], 2);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE], 0);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_SKIN_VALUE]);
 
-    gCSTD[playerid][CS_TD_SKIN_PLUS] = CreatePlayerTextDraw(playerid, baseX + 170.4, baseY + 130.8, ">>>");
+    gCSTD[playerid][CS_TD_SKIN_PLUS] = CreatePlayerTextDraw(playerid, baseX + 195.96, baseY + 150.42, ">>>");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], 0.132, 0.862);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], 0.148, 0.965);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], COLOR_CYAN);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], 0);
     PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS], 1);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_SKIN_PLUS]);
 
     // ================= CONFIRMER =================
-    gCSTD[playerid][CS_TD_CONFIRM_BORDER] = CreatePlayerTextDraw(playerid, baseX + 3.6, baseY + 158.4, "_");
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_CONFIRM_BORDER], baseX + 183.6, baseY + 181.2);
+    gCSTD[playerid][CS_TD_CONFIRM_BORDER] = CreatePlayerTextDraw(playerid, baseX + 4.14, baseY + 182.16, "_");
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_CONFIRM_BORDER], baseX + 211.14, baseY + 208.38);
     PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_CONFIRM_BORDER], 1);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_CONFIRM_BORDER], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_CONFIRM_BORDER], 0x33CC33FF);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_CONFIRM_BORDER], 0x00000000);
     PlayerTextDrawShow(playerid, gCSTD[playerid][CS_TD_CONFIRM_BORDER]);
 
-    gCSTD[playerid][CS_TD_CONFIRM_BTN] = CreatePlayerTextDraw(playerid, baseX + 6.0, baseY + 162.0, "CONFIRMER");
+    gCSTD[playerid][CS_TD_CONFIRM_BTN] = CreatePlayerTextDraw(playerid, baseX + 6.9, baseY + 186.3, "CONFIRMER");
     PlayerTextDrawFont(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 2);
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 1);
-    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 0.149, 0.92);
-    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], baseX + 181.2, baseY + 178.8);
+    PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 0.167, 1.03);
+    PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], baseX + 208.38, baseY + 205.62);
     PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 1);
     PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 0x0F260FE6);
     PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_CONFIRM_BTN], 0x33FF33FF);
