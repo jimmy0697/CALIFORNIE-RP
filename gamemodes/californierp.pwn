@@ -1436,9 +1436,11 @@ stock ShowCharacterSetupTD(playerid)
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 1);
     PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0.078, 0.75);
     PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_MALE_BTN], baseX + 74.0, baseY + 50.0);
-    PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 1);
-    PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0x1544AAFF);
-    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_MALE_BTN], COLOR_WHITE);
+    // Pas de UseBox/BoxColor ici : sur le client mobile, deux box textdraws
+    // cote a cote (BORDER + BTN) se dimensionnent mal et debordent. On
+    // garde uniquement le texte colore ; le cadre CS_TD_MALE_BORDER,
+    // lui, s'allume deja en blanc/sombre pour indiquer la selection.
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0x66AAFFFF);
     PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 2);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 0);
     PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_MALE_BTN], 1);
@@ -1458,9 +1460,8 @@ stock ShowCharacterSetupTD(playerid)
     PlayerTextDrawSetProportional(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 1);
     PlayerTextDrawLetterSize(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0.072, 0.75);
     PlayerTextDrawTextSize(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], baseX + 151.0, baseY + 50.0);
-    PlayerTextDrawUseBox(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 1);
-    PlayerTextDrawBoxColor(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0xCC1F8FFF);
-    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], COLOR_WHITE);
+    // Pas de UseBox/BoxColor ici, pour la meme raison que MALE_BTN.
+    PlayerTextDrawColor(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0xFF99DDFF);
     PlayerTextDrawAlignment(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 2);
     PlayerTextDrawSetShadow(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 0);
     PlayerTextDrawSetSelectable(playerid, gCSTD[playerid][CS_TD_FEMALE_BTN], 1);
