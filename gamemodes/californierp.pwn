@@ -301,7 +301,7 @@ enum pInfo
     pCash,
     pBank,               // Solde du compte bancaire
     pCarteBancaire,      // 0 = pas encore recuperee a la banque, 1 = recuperee
-    pFaction,            // Faction/metier actuel (voir FACTION_*)
+    pFaction,            // Faction actuelle (voir FACTION_*)
     pGrade,              // Grade 1 a 5 au sein de la faction
     pAdmin,
     pSkin,
@@ -435,7 +435,7 @@ stock ShowClimateMenu(playerid)
 //  Borne une valeur de besoin entre 0 et 100.
 // ------------------------------------------------------------
 // ------------------------------------------------------------
-//  Factions / metiers - identifiants, grades, salaires
+//  Factions - identifiants, grades, salaires
 // ------------------------------------------------------------
 #define FACTION_NONE          0
 #define FACTION_POLICE        1
@@ -2843,9 +2843,9 @@ public OnPlayerCommandText(playerid, cmdtext[])
         SendClientMessage(playerid, COLOR_WHITE, "/me /do /ooc - Roleplay");
         SendClientMessage(playerid, COLOR_WHITE, "/stats /cash /solde /poste - Informations personnelles");
         SendClientMessage(playerid, COLOR_WHITE, "/banque - Gerer votre compte bancaire (sur place)");
-        SendClientMessage(playerid, COLOR_WHITE, "Metiers : /soins /therapie (medecin), /honoraires (avocat), /reparer (mecano)");
-        SendClientMessage(playerid, COLOR_WHITE, "Metiers : /publier (journaliste), /surveiller (penitentiaire), /extinction (pompier)");
-        SendClientMessage(playerid, COLOR_WHITE, "Metiers : /engager /renvoyer /demission (garde du corps)");
+        SendClientMessage(playerid, COLOR_WHITE, "Factions : /soins /therapie (medecin), /honoraires (avocat), /reparer (mecano)");
+        SendClientMessage(playerid, COLOR_WHITE, "Factions : /publier (journaliste), /surveiller (penitentiaire), /extinction (pompier)");
+        SendClientMessage(playerid, COLOR_WHITE, "Factions : /engager /renvoyer /demission (garde du corps)");
         SendClientMessage(playerid, COLOR_WHITE, "/manger /boire /dormir - Gerer vos besoins vitaux");
         SendClientMessage(playerid, COLOR_WHITE, "/sethome - Enregistrer votre position comme domicile");
         SendClientMessage(playerid, COLOR_WHITE, "/car - Faire apparaitre un vehicule");
@@ -3060,7 +3060,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
             SendClientMessage(playerid, COLOR_RED, "Cette commande est reservee aux administrateurs.");
             return 1;
         }
-        SendClientMessage(playerid, COLOR_YELLOW, "== Factions disponibles (ID a utiliser avec /setjob) ==");
+        SendClientMessage(playerid, COLOR_YELLOW, "== Factions disponibles (ID a utiliser avec /setfaction) ==");
         for(new f = 0; f < MAX_FACTIONS; f++)
         {
             new str[96];
@@ -3071,7 +3071,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
         return 1;
     }
 
-    if(!strcmp(cmd, "/setjob", true))
+    if(!strcmp(cmd, "/setfaction", true))
     {
         if(PlayerInfo[playerid][pAdmin] < 3)
         {
@@ -3079,13 +3079,13 @@ public OnPlayerCommandText(playerid, cmdtext[])
             return 1;
         }
         tmp = strtok_(cmdtext, idx);
-        new tmp2[32] = "";
+        new tmp2[64] = "";
         tmp2 = strtok_(cmdtext, idx);
-        new tmp3[32] = "";
+        new tmp3[64] = "";
         tmp3 = strtok_(cmdtext, idx);
         if(!strlen(tmp) || !strlen(tmp2) || !strlen(tmp3))
         {
-            SendClientMessage(playerid, COLOR_RED, "Utilisation : /setjob [id joueur] [id faction] [grade 0-5]");
+            SendClientMessage(playerid, COLOR_RED, "Utilisation : /setfaction [id joueur] [id faction] [grade 0-5]");
             SendClientMessage(playerid, COLOR_YELLOW, "Tapez /listepostes pour voir les ID de faction.");
             return 1;
         }
@@ -3183,7 +3183,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
             return 1;
         }
         tmp = strtok_(cmdtext, idx);
-        new tmp2[32] = "";
+        new tmp2[64] = "";
         tmp2 = strtok_(cmdtext, idx);
         if(!strlen(tmp) || !strlen(tmp2))
         {
@@ -3230,7 +3230,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
             return 1;
         }
         tmp = strtok_(cmdtext, idx);
-        new tmp2[32] = "";
+        new tmp2[64] = "";
         tmp2 = strtok_(cmdtext, idx);
         if(!strlen(tmp) || !strlen(tmp2))
         {
@@ -3360,7 +3360,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
     if(!strcmp(cmd, "/engager", true))
     {
         tmp = strtok_(cmdtext, idx);
-        new tmp2[32] = "";
+        new tmp2[64] = "";
         tmp2 = strtok_(cmdtext, idx);
         if(!strlen(tmp) || !strlen(tmp2))
         {
@@ -4170,7 +4170,7 @@ stock ShowAdminHelp(playerid)
         SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /expulser, /gifler, /soigner, /armure, /allerA, /amener, /climat, /definirpermis, /definirport, /amende, /fourriere");
         SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /definirsexe, /definirage, /definirnaissance, /definirprofession, /definirarme");
     if(lvl >= ADMIN_LEVEL_ADMIN)
-        SendClientMessage(playerid, COLOR_WHITE, "[Admin] /bannir, /debannir, /apparence, /armes, /dieu, /setjob, /listepostes");
+        SendClientMessage(playerid, COLOR_WHITE, "[Admin] /bannir, /debannir, /apparence, /armes, /dieu, /setfaction, /listepostes");
     if(lvl >= ADMIN_LEVEL_SUPERIOR)
         SendClientMessage(playerid, COLOR_WHITE, "[Admin Sup.] /argent, /donnerargent, /vip, /niveau");
     if(lvl >= ADMIN_LEVEL_SUPERVISOR)
