@@ -2842,10 +2842,8 @@ public OnPlayerCommandText(playerid, cmdtext[])
         SendClientMessage(playerid, COLOR_YELLOW, "== Commandes Californie RP ==");
         SendClientMessage(playerid, COLOR_WHITE, "/me /do /ooc - Roleplay");
         SendClientMessage(playerid, COLOR_WHITE, "/stats /cash /solde /poste - Informations personnelles");
+        SendClientMessage(playerid, COLOR_WHITE, "/travail - Voir la liste des factions et des jobs disponibles");
         SendClientMessage(playerid, COLOR_WHITE, "/banque - Gerer votre compte bancaire (sur place)");
-        SendClientMessage(playerid, COLOR_WHITE, "Factions : /soins /therapie (medecin), /honoraires (avocat), /reparer (mecano)");
-        SendClientMessage(playerid, COLOR_WHITE, "Factions : /publier (journaliste), /surveiller (penitentiaire), /extinction (pompier)");
-        SendClientMessage(playerid, COLOR_WHITE, "Factions : /engager /renvoyer /demission (garde du corps)");
         SendClientMessage(playerid, COLOR_WHITE, "/manger /boire /dormir - Gerer vos besoins vitaux");
         SendClientMessage(playerid, COLOR_WHITE, "/sethome - Enregistrer votre position comme domicile");
         SendClientMessage(playerid, COLOR_WHITE, "/car - Faire apparaitre un vehicule");
@@ -3050,6 +3048,14 @@ public OnPlayerCommandText(playerid, cmdtext[])
         GetGradeName(faction, PlayerInfo[playerid][pGrade], gname, 32);
         format(str, sizeof(str), "Poste actuel : %s - %s", gFactionName[faction], gname);
         SendClientMessage(playerid, COLOR_YELLOW, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/travail", true))
+    {
+        SendClientMessage(playerid, COLOR_YELLOW, "== Factions et Jobs disponibles ==");
+        SendClientMessage(playerid, COLOR_WHITE, "Faction Service Public : Police, FBI, Administration Penitentiaire, Pompiers, Medecins, Gouvernement, Justice (Juges)");
+        SendClientMessage(playerid, COLOR_WHITE, "Faction Service Prive : Barreau (Avocats), Securite Privee, Presse, Mecanique");
         return 1;
     }
 
