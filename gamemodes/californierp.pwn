@@ -1375,7 +1375,7 @@ stock ShowCharacterSetupTD(playerid)
     TogglePlayerControllable(playerid, false);
     SetPlayerSkin(playerid, GetCurrentSkinForCharSetup(playerid));
 
-    new Float:baseX = 20.0;
+    new Float:baseX = 90.0;  // decale a droite pour eviter le HUD debug (FPS/MEM/ID) du client mobile, affiche en haut a gauche
     new Float:baseY = 230.0; // descendu pour eviter la zone des boutons tactiles ESC/ALT (client mobile) qui cachait MALE
 
     // --- Bordure exterieure du panneau (liseré bleu, style "Liberty State") ---
