@@ -81,6 +81,34 @@ stock udb_hash(buf[])
 #define BANK_POS_Y (-1750.1216)
 #define BANK_POS_Z (15.3746)
 #define BANK_RADIUS (6.0)
+
+// ------------------------------------------------------------
+//  Police Nationale (LSPD / Police de Los Santos)
+//  Commissariat central : accueil, bureaux et zone de detention
+// ------------------------------------------------------------
+// Entree exterieure (point d'acces public)
+#define PD_ENTRANCE_X (1553.3020)
+#define PD_ENTRANCE_Y (-1675.6410)
+#define PD_ENTRANCE_Z (16.1950)
+#define PD_RADIUS (6.0)
+
+// Interieur : spawn d'arrivee (halls, bureaux)
+#define PD_INTERIOR_X (288.7500)
+#define PD_INTERIOR_Y (169.1500)
+#define PD_INTERIOR_Z (1007.1800)
+#define PD_INTERIOR_INT (3)
+
+// Zone d'incarceration (prison de faction / cellules)
+#define PD_CELL_INT (6)
+#define PD_CELL1_X (264.6285)
+#define PD_CELL1_Y (77.5742)
+#define PD_CELL1_Z (1001.0391)
+#define PD_CELL2_X (264.1204)
+#define PD_CELL2_Y (82.1154)
+#define PD_CELL2_Z (1001.0391)
+#define PD_CELL3_X (264.2250)
+#define PD_CELL3_Y (86.8214)
+#define PD_CELL3_Z (1001.0391)
 #if !defined SERVER_SITE
     #define SERVER_SITE "www.californie-rp.fr"
 #endif
@@ -449,7 +477,8 @@ stock ShowClimateMenu(playerid)
 #define FACTION_GARDE         9
 #define FACTION_JOURNALISTE   10
 #define FACTION_MECANO        11
-#define MAX_FACTIONS          12
+#define FACTION_ARMES         12
+#define MAX_FACTIONS          13
 
 new gFactionName[MAX_FACTIONS][32] = {
     "Civil",
@@ -463,7 +492,8 @@ new gFactionName[MAX_FACTIONS][32] = {
     "Barreau (Avocats)",
     "Securite Privee",
     "Presse",
-    "Mecanique"
+    "Mecanique",
+    "Armes"
 };
 
 // Salaire fixe verse toutes les 30 minutes, par faction (0 = pas de salaire fixe).
@@ -479,7 +509,8 @@ new gFactionSalary[MAX_FACTIONS] = {
     0,      // Avocats (commission uniquement)
     0,      // Garde du corps (paye a la minute par le client)
     50000,  // Journalistes
-    0       // Mecaniciens (paye a la reparation)
+    0,      // Mecaniciens (paye a la reparation)
+    80000   // Armes
 };
 
 // Grades 1 a 5 pour chaque faction (index 0 = non utilise / "Aucun").
@@ -494,6 +525,7 @@ new gGradeAvocat[6][32]      = {"Aucun","Avocat Stagiaire","Avocat","Avocat Seni
 new gGradeGarde[6][32]       = {"Aucun","Recrue","Garde du Corps","Garde Senior","Chef d'Equipe","Responsable Securite"};
 new gGradeJournaliste[6][32] = {"Aucun","Stagiaire","Journaliste","Journaliste Senior","Redacteur","Redacteur en Chef"};
 new gGradeMecano[6][32]      = {"Aucun","Apprenti","Mecanicien","Mecanicien Confirme","Chef d'Atelier","Responsable Garage"};
+new gGradeArmes[6][32]       = {"Aucun","Recrue","Membre","Membre Confirme","Bras Droit","Chef"};
 
 // Pourcentage du Tresor de l'Etat verse au Gouverneur/Maire toutes les 30 min, par grade.
 new gGouverneurPercent[6] = {0, 5, 10, 15, 25, 35};
@@ -536,6 +568,7 @@ stock GetGradeName(faction, grade, dest[], destSize)
         case FACTION_GARDE: format(dest, destSize, "%s", gGradeGarde[grade]);
         case FACTION_JOURNALISTE: format(dest, destSize, "%s", gGradeJournaliste[grade]);
         case FACTION_MECANO: format(dest, destSize, "%s", gGradeMecano[grade]);
+        case FACTION_ARMES: format(dest, destSize, "%s", gGradeArmes[grade]);
         default: format(dest, destSize, "%s", "Civil");
     }
     return 1;
@@ -633,6 +666,28 @@ public GardeDuCorpsTimer()
 stock IsPlayerNearBank(playerid)
 {
     return IsPlayerInRangeOfPoint(playerid, BANK_RADIUS, BANK_POS_X, BANK_POS_Y, BANK_POS_Z);
+}
+
+// ------------------------------------------------------------
+//  Police Nationale (LSPD) : utilitaires
+// ------------------------------------------------------------
+stock IsPlayerNearPD(playerid)
+{
+    return IsPlayerInRangeOfPoint(playerid, PD_RADIUS, PD_ENTRANCE_X, PD_ENTRANCE_Y, PD_ENTRANCE_Z);
+}
+
+// Place un joueur dans une des 3 cellules de detention du commissariat
+stock JailPlayerAtPD(playerid, cellid = 0)
+{
+    switch(cellid)
+    {
+        case 2: SetPlayerPos(playerid, PD_CELL2_X, PD_CELL2_Y, PD_CELL2_Z);
+        case 3: SetPlayerPos(playerid, PD_CELL3_X, PD_CELL3_Y, PD_CELL3_Z);
+        default: SetPlayerPos(playerid, PD_CELL1_X, PD_CELL1_Y, PD_CELL1_Z);
+    }
+    SetPlayerInterior(playerid, PD_CELL_INT);
+    SetPlayerVirtualWorld(playerid, 0);
+    return 1;
 }
 
 // Utilisee par tout systeme (salaires de faction, virements, etc.) pour
@@ -773,6 +828,11 @@ public OnGameModeInit()
     CreatePickup(1274, 1, BANK_POS_X, BANK_POS_Y, BANK_POS_Z, -1);
     Create3DTextLabel("{33CC33}BANQUE\n{FFFFFF}/banque pour interagir", 0xFFFFFFFF, BANK_POS_X, BANK_POS_Y, BANK_POS_Z + 0.7, 15.0, 0, 0);
 
+    // --- Police Nationale (LSPD) : pickup + panneau 3D a l'entree du commissariat central ---
+    CreatePickup(1272, 1, PD_ENTRANCE_X, PD_ENTRANCE_Y, PD_ENTRANCE_Z, -1);
+    Create3DTextLabel("{3388FF}COMMISSARIAT CENTRAL\n{FFFFFF}Appuyez sur F pour entrer", 0xFFFFFFFF, PD_ENTRANCE_X, PD_ENTRANCE_Y, PD_ENTRANCE_Z + 0.7, 15.0, 0, 0);
+    Create3DTextLabel("{3388FF}SORTIE\n{FFFFFF}Appuyez sur F pour sortir", 0xFFFFFFFF, PD_INTERIOR_X, PD_INTERIOR_Y, PD_INTERIOR_Z + 0.7, 15.0, 0, 0);
+
     // Classes de selection de personnage (spawn Los Santos)
     AddPlayerClass(101, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Civil - Los Santos Gare (point d'apparition de depart)
     AddPlayerClass(280, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Police (skin par defaut, a changer via faction)
@@ -781,6 +841,37 @@ public OnGameModeInit()
     print("==============================================");
     print("   CALIFORNIE RP - Gamemode charge avec succes  ");
     print("==============================================");
+    return 1;
+}
+
+// ------------------------------------------------------------
+//  Touche F (KEY_SECONDARY_ATTACK) : entree/sortie des points
+//  d'interet exterieurs/interieurs (commissariat, etc.)
+// ------------------------------------------------------------
+public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
+{
+    if(newkeys & KEY_SECONDARY_ATTACK)
+    {
+        // Entree dans le commissariat depuis l'exterieur
+        if(GetPlayerInterior(playerid) == 0 && IsPlayerNearPD(playerid))
+        {
+            SetPlayerPos(playerid, PD_INTERIOR_X, PD_INTERIOR_Y, PD_INTERIOR_Z);
+            SetPlayerInterior(playerid, PD_INTERIOR_INT);
+            SetPlayerVirtualWorld(playerid, 0);
+            SendClientMessage(playerid, COLOR_GREEN, "Vous entrez dans le commissariat central.");
+            return 1;
+        }
+
+        // Sortie du commissariat vers l'entree exterieure
+        if(GetPlayerInterior(playerid) == PD_INTERIOR_INT && IsPlayerInRangeOfPoint(playerid, PD_RADIUS, PD_INTERIOR_X, PD_INTERIOR_Y, PD_INTERIOR_Z))
+        {
+            SetPlayerPos(playerid, PD_ENTRANCE_X, PD_ENTRANCE_Y, PD_ENTRANCE_Z);
+            SetPlayerInterior(playerid, 0);
+            SetPlayerVirtualWorld(playerid, 0);
+            SendClientMessage(playerid, COLOR_GREEN, "Vous sortez du commissariat.");
+            return 1;
+        }
+    }
     return 1;
 }
 
@@ -3055,7 +3146,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
     {
         SendClientMessage(playerid, COLOR_YELLOW, "== Factions et Jobs disponibles ==");
         SendClientMessage(playerid, COLOR_WHITE, "Faction Service Public : Police, FBI, Administration Penitentiaire, Pompiers, Medecins, Gouvernement, Justice (Juges)");
-        SendClientMessage(playerid, COLOR_WHITE, "Faction Service Prive : Barreau (Avocats), Securite Privee, Presse, Mecanique");
+        SendClientMessage(playerid, COLOR_WHITE, "Faction Service Prive : Barreau (Avocats), Securite Privee, Presse, Mecanique, Armes");
         return 1;
     }
 
@@ -3684,9 +3775,7 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         targetid = strval(tmp);
         if(!strlen(tmp) || !IsPlayerConnected(targetid)) return SendClientMessage(playerid, COLOR_RED, "Utilisation : /prison [id]");
         gJailed[targetid] = 1;
-        SetPlayerPos(targetid, 264.6, 77.4, 1001.0);
-        SetPlayerInterior(targetid, 6);
-        SetPlayerVirtualWorld(targetid, 0);
+        JailPlayerAtPD(targetid, 1 + random(3)); // repartit le detenu sur l'une des 3 cellules
         SendClientMessage(targetid, COLOR_RED, "Vous avez ete emprisonne.");
         SendClientMessage(playerid, COLOR_GREEN, "Joueur emprisonne.");
     }
