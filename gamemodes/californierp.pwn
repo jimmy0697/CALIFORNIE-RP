@@ -7,6 +7,8 @@
 #include "californie.inc"
 #include <sampvoice>
 #include <a_mysql>
+#include <streamer>
+#include "lyd2_locations.inc" // objets/pickups/panneaux/vehicules/zones + points d'interet recuperes de lyd2.pwn
 
 #define FILTERSCRIPT
 
@@ -393,6 +395,16 @@ new PlayerInfo[MAX_PLAYERS][pInfo];
 new IsLoggedIn[MAX_PLAYERS];
 new gPlayerTriedPass[MAX_PLAYERS];
 
+// ------------------------------------------------------------
+//  Besoins vitaux (V2 realiste) - etat annexe par joueur
+// ------------------------------------------------------------
+new gLastManger[MAX_PLAYERS];      // GetTickCount() du dernier repas (anti-spam)
+new gLastBoire[MAX_PLAYERS];       // GetTickCount() de la derniere boisson (anti-spam)
+new gLastDormir[MAX_PLAYERS];      // GetTickCount() du dernier sommeil (anti-spam)
+new bool:gPlayerOccupied[MAX_PLAYERS]; // true pendant une animation manger/boire/dormir (bloque le spam de commandes)
+new gStarvingTicks[MAX_PLAYERS];   // nb de ticks consecutifs a 0 de faim OU soif (mene a l'evanouissement)
+new gCritDangerLevel[MAX_PLAYERS]; // 0 = ok, 1 = fatigue lourde (etourdissements), 2 = evanoui recemment (cooldown)
+
 // Le systeme de proprietes (maisons/garages/commerces/meubles) a besoin de
 // PlayerInfo, ADMIN_LEVEL_DEV et des couleurs COLOR_* deja declares plus
 // haut : il doit donc etre inclus ici, pas avant.
@@ -408,6 +420,9 @@ forward SpawnPlayerAfterLogin(playerid);
 forward ShowSpawnSelectionDialog(playerid);
 forward FinalizeAccountCreation(playerid);
 forward NeedsUpdateTimer();
+forward FinishEatingTimer(playerid);
+forward FinishDrinkingTimer(playerid);
+forward FinishSleepingTimer(playerid);
 
 // ------------------------------------------------------------
 //  Systeme de besoins vitaux (soif / faim / stress / moral / fatigue)
@@ -418,8 +433,71 @@ forward NeedsUpdateTimer();
 #define NEEDS_SOIF_DECAY     3
 #define NEEDS_FATIGUE_GAIN   1
 #define NEEDS_SEUIL_CRITIQUE 25     // en dessous de ce seuil : impact stress/moral
+#define NEEDS_SEUIL_ALERTE   40     // seuil d'alerte precoce (avant le seuil critique)
 #define NEEDS_FATIGUE_HAUTE  75     // au dessus : impact stress
 #define NEEDS_DEGATS_CRITIQUE 3.0   // degats de sante par tick si faim ou soif a 0
+#define NEEDS_STARVING_MAX_TICKS 4  // nb de ticks a 0 avant evanouissement (~4 min)
+
+// --- Anti-spam : delais minimum entre deux actions (en millisecondes) ---
+#define MANGER_COOLDOWN   150000  // 2 min 30
+#define BOIRE_COOLDOWN    90000   // 1 min 30
+#define DORMIR_COOLDOWN   600000  // 10 min
+
+// --- Duree des animations (en secondes) : le joueur est immobilise pendant ce temps ---
+#define DUREE_ANIM_MANGER 4
+#define DUREE_ANIM_BOIRE  3
+#define DUREE_ANIM_DORMIR 8
+
+// --- Activite physique : la soif et la fatigue augmentent plus vite a l'effort ---
+#define NEEDS_SOIF_DECAY_COURSE   2  // supplement si le joueur sprinte/nage
+#define NEEDS_FATIGUE_GAIN_COURSE 1  // supplement si le joueur sprinte/nage
+
+// ------------------------------------------------------------
+//  Points de vente nourriture/boisson (echoppes, epiceries).
+//  A ajuster/completer selon les commerces deja presents sur
+//  la map ; portee d'interaction courte pour forcer le RP.
+// ------------------------------------------------------------
+#define SHOP_RADIUS 4.0
+#define SHOP_COUNT  4
+new Float:gShopPos[SHOP_COUNT][3] = {
+    {2100.6584, -1774.6511, 13.5510}, // Epicerie Idlewood
+    {2384.1013, -1798.7811, 13.5498}, // Snack Idlewood
+    {-1487.6293, 2586.6743, 55.9844}, // Epicerie Las Barrancas
+    {1704.5952, -1866.5024, 13.5751}  // Epicerie pres de la Banque
+};
+new gShopPickup[SHOP_COUNT];
+new Text3D:gShopLabel[SHOP_COUNT];
+
+// ------------------------------------------------------------
+//  Verifie que le joueur se trouve pres d'un des points de
+//  vente nourriture/boisson (obligatoire pour /manger et /boire).
+// ------------------------------------------------------------
+stock IsPlayerNearShop(playerid)
+{
+    for(new i = 0; i < SHOP_COUNT; i++)
+    {
+        if(IsPlayerInRangeOfPoint(playerid, SHOP_RADIUS, gShopPos[i][0], gShopPos[i][1], gShopPos[i][2]))
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// ------------------------------------------------------------
+//  Cree les pickups + panneaux 3D des points de vente. Appele
+//  une fois depuis OnGameModeInit.
+// ------------------------------------------------------------
+stock CreateShopPoints()
+{
+    for(new i = 0; i < SHOP_COUNT; i++)
+    {
+        gShopPickup[i] = CreatePickup(1550, 1, gShopPos[i][0], gShopPos[i][1], gShopPos[i][2], -1);
+        gShopLabel[i] = Create3DTextLabel("{33CC33}EPICERIE\n{FFFFFF}/manger ou /boire ici", 0xFFFFFFFF,
+            gShopPos[i][0], gShopPos[i][1], gShopPos[i][2] + 0.7, 10.0, 0, 0);
+    }
+    return 1;
+}
 
 // ------------------------------------------------------------
 //  Applique un climat donne : change la meteo et previent tout
@@ -740,6 +818,53 @@ stock ShowBanqueMenu(playerid)
 }
 
 // ------------------------------------------------------------
+//  Callbacks de fin d'action (appeles apres la duree de
+//  l'animation manger/boire/dormir) : appliquent l'effet reel
+//  et rendent le controle au joueur.
+// ------------------------------------------------------------
+public FinishEatingTimer(playerid)
+{
+    if(!IsPlayerConnected(playerid)) return 1;
+    gPlayerOccupied[playerid] = false;
+    TogglePlayerControllable(playerid, 1);
+    ClearAnimations(playerid, true);
+    if(!IsLoggedIn[playerid]) return 1;
+
+    PlayerInfo[playerid][pFaim] = ClampNeed(PlayerInfo[playerid][pFaim] + 40);
+    SendClientMessage(playerid, COLOR_GREEN, "Vous avez mange. Votre faim diminue. (-$50)");
+    return 1;
+}
+
+public FinishDrinkingTimer(playerid)
+{
+    if(!IsPlayerConnected(playerid)) return 1;
+    gPlayerOccupied[playerid] = false;
+    TogglePlayerControllable(playerid, 1);
+    ClearAnimations(playerid, true);
+    if(!IsLoggedIn[playerid]) return 1;
+
+    PlayerInfo[playerid][pSoif] = ClampNeed(PlayerInfo[playerid][pSoif] + 40);
+    SendClientMessage(playerid, COLOR_GREEN, "Vous avez bu. Votre soif diminue. (-$25)");
+    return 1;
+}
+
+public FinishSleepingTimer(playerid)
+{
+    if(!IsPlayerConnected(playerid)) return 1;
+    gPlayerOccupied[playerid] = false;
+    TogglePlayerControllable(playerid, 1);
+    ClearAnimations(playerid, true);
+    if(!IsLoggedIn[playerid]) return 1;
+
+    // Le sommeil reduit progressivement la fatigue plutot que de la remettre a
+    // zero instantanement : plus realiste (une courte sieste n'efface pas tout).
+    PlayerInfo[playerid][pFatigue] = ClampNeed(PlayerInfo[playerid][pFatigue] - 60);
+    PlayerInfo[playerid][pStress] = ClampNeed(PlayerInfo[playerid][pStress] - 20);
+    SendClientMessage(playerid, COLOR_GREEN, "Vous vous reveillez repose. Votre fatigue a bien diminue et votre stress a baisse.");
+    return 1;
+}
+
+// ------------------------------------------------------------
 //  Tick des besoins vitaux : appele toutes les NEEDS_INTERVAL ms.
 //  Fait baisser faim/soif, monter la fatigue, ajuste stress/moral,
 //  et inflige des degats de sante en cas de faim/soif a 0.
@@ -753,10 +878,26 @@ public NeedsUpdateTimer()
         new playerState = GetPlayerState(playerid);
         if(playerState == PLAYER_STATE_NONE || playerState == PLAYER_STATE_WASTED || playerState == PLAYER_STATE_SPECTATING) continue;
 
-        // --- Faim / Soif / Fatigue ---
-        PlayerInfo[playerid][pFaim] = ClampNeed(PlayerInfo[playerid][pFaim] - NEEDS_FAIM_DECAY);
-        PlayerInfo[playerid][pSoif] = ClampNeed(PlayerInfo[playerid][pSoif] - NEEDS_SOIF_DECAY);
-        PlayerInfo[playerid][pFatigue] = ClampNeed(PlayerInfo[playerid][pFatigue] + NEEDS_FATIGUE_GAIN);
+        // --- Effort physique : sprint (a pied) ou natation accelerent la deshydratation/fatigue ---
+        new bool:enEffort = false;
+        if(playerState == PLAYER_STATE_ONFOOT)
+        {
+            new keys, ud, lr;
+            GetPlayerKeys(playerid, keys, ud, lr);
+            if((keys & KEY_SPRINT) && ud != 0) enEffort = true;
+        }
+        else if(playerState == PLAYER_STATE_SWIMMING)
+        {
+            enEffort = true;
+        }
+
+        // --- Faim / Soif / Fatigue (legere variation aleatoire pour eviter l'effet mecanique) ---
+        new soifDecay = NEEDS_SOIF_DECAY + (enEffort ? NEEDS_SOIF_DECAY_COURSE : 0) + random(2);
+        new fatigueGain = NEEDS_FATIGUE_GAIN + (enEffort ? NEEDS_FATIGUE_GAIN_COURSE : 0);
+
+        PlayerInfo[playerid][pFaim] = ClampNeed(PlayerInfo[playerid][pFaim] - (NEEDS_FAIM_DECAY + random(2)));
+        PlayerInfo[playerid][pSoif] = ClampNeed(PlayerInfo[playerid][pSoif] - soifDecay);
+        PlayerInfo[playerid][pFatigue] = ClampNeed(PlayerInfo[playerid][pFatigue] + fatigueGain);
 
         new critique = (PlayerInfo[playerid][pFaim] <= NEEDS_SEUIL_CRITIQUE
                      || PlayerInfo[playerid][pSoif] <= NEEDS_SEUIL_CRITIQUE
@@ -782,23 +923,45 @@ public NeedsUpdateTimer()
             PlayerInfo[playerid][pMoral] = ClampNeed(PlayerInfo[playerid][pMoral] + 1);
         }
 
-        // --- Alertes au joueur ---
-        if(PlayerInfo[playerid][pFaim] == NEEDS_SEUIL_CRITIQUE)
+        // --- Alertes progressives : d'abord une alerte douce, puis une alerte critique ---
+        if(PlayerInfo[playerid][pFaim] == NEEDS_SEUIL_ALERTE)
         {
-            SendClientMessage(playerid, COLOR_YELLOW, "Vous commencez a avoir tres faim. Pensez a manger (/manger).");
+            SendClientMessage(playerid, COLOR_YELLOW, "Votre ventre gargouille. Il serait temps de manger bientot.");
         }
-        if(PlayerInfo[playerid][pSoif] == NEEDS_SEUIL_CRITIQUE)
+        else if(PlayerInfo[playerid][pFaim] == NEEDS_SEUIL_CRITIQUE)
         {
-            SendClientMessage(playerid, COLOR_YELLOW, "Vous commencez a avoir tres soif. Pensez a boire (/boire).");
+            SendClientMessage(playerid, COLOR_RED, "Vous avez tres faim. Rendez-vous a une epicerie (/manger).");
+        }
+        if(PlayerInfo[playerid][pSoif] == NEEDS_SEUIL_ALERTE)
+        {
+            SendClientMessage(playerid, COLOR_YELLOW, "Votre gorge est seche. Pensez a boire bientot.");
+        }
+        else if(PlayerInfo[playerid][pSoif] == NEEDS_SEUIL_CRITIQUE)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous avez tres soif. Rendez-vous a une epicerie (/boire).");
         }
         if(PlayerInfo[playerid][pFatigue] == NEEDS_FATIGUE_HAUTE)
         {
-            SendClientMessage(playerid, COLOR_YELLOW, "Vous etes epuise. Pensez a dormir (/dormir).");
+            SendClientMessage(playerid, COLOR_YELLOW, "Vous etes epuise et manquez de reflexes. Pensez a dormir (/dormir).");
         }
 
-        // --- Degats de sante si faim ou soif totalement a 0 ---
+        // --- Fatigue extreme : etourdissements visuels (camera secouee) au dela de 90 ---
+        if(PlayerInfo[playerid][pFatigue] >= 90 && gCritDangerLevel[playerid] < 1)
+        {
+            SetPlayerDrunkLevel(playerid, 2000); // effet visuel d'ecran instable, sans toucher aux commandes
+            gCritDangerLevel[playerid] = 1;
+        }
+        else if(PlayerInfo[playerid][pFatigue] < 90 && gCritDangerLevel[playerid] == 1)
+        {
+            SetPlayerDrunkLevel(playerid, 0);
+            gCritDangerLevel[playerid] = 0;
+        }
+
+        // --- Consequence realiste de la privation totale : la sante decline puis le joueur s'evanouit ---
         if(PlayerInfo[playerid][pFaim] == 0 || PlayerInfo[playerid][pSoif] == 0)
         {
+            gStarvingTicks[playerid]++;
+
             new Float:health;
             GetPlayerHealth(playerid, health);
             if(health > 1.0)
@@ -808,6 +971,19 @@ public NeedsUpdateTimer()
                 SetPlayerHealth(playerid, health);
                 SendClientMessage(playerid, COLOR_RED, "Votre sante decline : vous devez manger et boire d'urgence !");
             }
+
+            // Au bout de plusieurs minutes de privation totale, le personnage s'evanouit
+            // (comme un vrai malaise), plutot que de rester indefiniment bloque a 1 PV.
+            if(gStarvingTicks[playerid] >= NEEDS_STARVING_MAX_TICKS)
+            {
+                SendClientMessageToAll(-1, "* Le personnage s'effondre, visiblement epuise par le manque de nourriture/d'eau.");
+                SetPlayerHealth(playerid, 0.0); // deces RP -> geree par le systeme medical/hopital existant
+                gStarvingTicks[playerid] = 0;
+            }
+        }
+        else
+        {
+            gStarvingTicks[playerid] = 0;
         }
     }
     return 1;
@@ -843,6 +1019,12 @@ public OnGameModeInit()
     // --- Banque : pickup + panneau 3D sur place, carte bancaire a recuperer sur place ---
     CreatePickup(1274, 1, BANK_POS_X, BANK_POS_Y, BANK_POS_Z, -1);
     Create3DTextLabel("{33CC33}BANQUE\n{FFFFFF}/banque pour interagir", 0xFFFFFFFF, BANK_POS_X, BANK_POS_Y, BANK_POS_Z + 0.7, 15.0, 0, 0);
+
+    // --- Besoins vitaux : points de vente nourriture/boisson ---
+    CreateShopPoints();
+
+    // --- Elements recuperes de lyd2.pwn (objets, pickups, panneaux, vehicules statiques, zones) ---
+    Lyd2_LoadAll();
 
     // --- Police Nationale (LSPD) : pickup + panneau 3D a l'entree du commissariat central ---
     CreatePickup(1272, 1, PD_ENTRANCE_X, PD_ENTRANCE_Y, PD_ENTRANCE_Z, -1);
@@ -950,6 +1132,12 @@ public OnPlayerConnect(playerid)
     PlayerInfo[playerid][pFatigue] = 0;
     PlayerInfo[playerid][pStress] = 0;
     PlayerInfo[playerid][pMoral] = 100;
+    gLastManger[playerid] = 0;
+    gLastBoire[playerid] = 0;
+    gLastDormir[playerid] = 0;
+    gPlayerOccupied[playerid] = false;
+    gStarvingTicks[playerid] = 0;
+    gCritDangerLevel[playerid] = 0;
 
     // --- Systeme de connexion / inscription -----------------------------
     // IMPORTANT : ce bloc doit s'executer AVANT toute fonction qui appelle
@@ -3094,9 +3282,32 @@ public OnPlayerCommandText(playerid, cmdtext[])
 
     if(!strcmp(cmd, "/manger", true))
     {
+        if(gPlayerOccupied[playerid])
+        {
+            SendClientMessage(playerid, COLOR_YELLOW, "Vous etes deja occupe.");
+            return 1;
+        }
         if(PlayerInfo[playerid][pFaim] >= 100)
         {
             SendClientMessage(playerid, COLOR_YELLOW, "Vous n'avez pas faim.");
+            return 1;
+        }
+        if(!IsPlayerNearShop(playerid))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez etre pres d'une epicerie pour manger (voir la carte).");
+            return 1;
+        }
+        if(GetPlayerState(playerid) != PLAYER_STATE_ONFOOT)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez etre a pied pour manger.");
+            return 1;
+        }
+        if(GetTickCount() - gLastManger[playerid] < MANGER_COOLDOWN)
+        {
+            new resteSec = (MANGER_COOLDOWN - (GetTickCount() - gLastManger[playerid])) / 1000;
+            new str[80];
+            format(str, sizeof(str), "Vous n'avez pas encore assez faim pour remanger (%d sec).", resteSec);
+            SendClientMessage(playerid, COLOR_YELLOW, str);
             return 1;
         }
         new const PRIX_REPAS = 50;
@@ -3106,16 +3317,43 @@ public OnPlayerCommandText(playerid, cmdtext[])
             return 1;
         }
         GivePlayerMoney(playerid, -PRIX_REPAS);
-        PlayerInfo[playerid][pFaim] = ClampNeed(PlayerInfo[playerid][pFaim] + 40);
-        SendClientMessage(playerid, COLOR_GREEN, "Vous mangez un morceau. Votre faim diminue. (-$50)");
+        gLastManger[playerid] = GetTickCount();
+        gPlayerOccupied[playerid] = true;
+        ApplyAnimation(playerid, "FOOD", "EAT_BURGER", 4.1, true, false, false, false, 0, true);
+        TogglePlayerControllable(playerid, 0);
+        SendClientMessage(playerid, COLOR_GREEN, "Vous achetez de quoi manger et prenez le temps de vous restaurer...");
+        SetTimerEx("FinishEatingTimer", DUREE_ANIM_MANGER * 1000, false, "d", playerid);
         return 1;
     }
 
     if(!strcmp(cmd, "/boire", true))
     {
+        if(gPlayerOccupied[playerid])
+        {
+            SendClientMessage(playerid, COLOR_YELLOW, "Vous etes deja occupe.");
+            return 1;
+        }
         if(PlayerInfo[playerid][pSoif] >= 100)
         {
             SendClientMessage(playerid, COLOR_YELLOW, "Vous n'avez pas soif.");
+            return 1;
+        }
+        if(!IsPlayerNearShop(playerid))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez etre pres d'une epicerie pour boire (voir la carte).");
+            return 1;
+        }
+        if(GetPlayerState(playerid) != PLAYER_STATE_ONFOOT)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez etre a pied pour boire.");
+            return 1;
+        }
+        if(GetTickCount() - gLastBoire[playerid] < BOIRE_COOLDOWN)
+        {
+            new resteSec = (BOIRE_COOLDOWN - (GetTickCount() - gLastBoire[playerid])) / 1000;
+            new str[80];
+            format(str, sizeof(str), "Vous n'avez pas encore assez soif pour reboire (%d sec).", resteSec);
+            SendClientMessage(playerid, COLOR_YELLOW, str);
             return 1;
         }
         new const PRIX_BOISSON = 25;
@@ -3125,21 +3363,73 @@ public OnPlayerCommandText(playerid, cmdtext[])
             return 1;
         }
         GivePlayerMoney(playerid, -PRIX_BOISSON);
-        PlayerInfo[playerid][pSoif] = ClampNeed(PlayerInfo[playerid][pSoif] + 40);
-        SendClientMessage(playerid, COLOR_GREEN, "Vous buvez une gorgee. Votre soif diminue. (-$25)");
+        gLastBoire[playerid] = GetTickCount();
+        gPlayerOccupied[playerid] = true;
+        ApplyAnimation(playerid, "FOOD", "EAT_Drink_Beer", 4.1, true, false, false, false, 0, true);
+        TogglePlayerControllable(playerid, 0);
+        SendClientMessage(playerid, COLOR_GREEN, "Vous achetez a boire et prenez le temps de vous desalterer...");
+        SetTimerEx("FinishDrinkingTimer", DUREE_ANIM_BOIRE * 1000, false, "d", playerid);
         return 1;
     }
 
     if(!strcmp(cmd, "/dormir", true))
     {
+        if(gPlayerOccupied[playerid])
+        {
+            SendClientMessage(playerid, COLOR_YELLOW, "Vous etes deja occupe.");
+            return 1;
+        }
         if(PlayerInfo[playerid][pFatigue] <= 0)
         {
             SendClientMessage(playerid, COLOR_YELLOW, "Vous n'etes pas fatigue.");
             return 1;
         }
-        PlayerInfo[playerid][pFatigue] = 0;
-        PlayerInfo[playerid][pStress] = ClampNeed(PlayerInfo[playerid][pStress] - 20);
-        SendClientMessage(playerid, COLOR_GREEN, "Vous avez dormi. Votre fatigue est retombee et votre stress a diminue.");
+        if(GetPlayerState(playerid) != PLAYER_STATE_ONFOOT)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Vous devez etre a pied, dans un endroit sur, pour dormir.");
+            return 1;
+        }
+        if(GetTickCount() - gLastDormir[playerid] < DORMIR_COOLDOWN)
+        {
+            new resteMin = (DORMIR_COOLDOWN - (GetTickCount() - gLastDormir[playerid])) / 60000 + 1;
+            new str[80];
+            format(str, sizeof(str), "Vous ne pouvez pas redormir tout de suite (encore ~%d min).", resteMin);
+            SendClientMessage(playerid, COLOR_YELLOW, str);
+            return 1;
+        }
+        gLastDormir[playerid] = GetTickCount();
+        gPlayerOccupied[playerid] = true;
+        ApplyAnimation(playerid, "CRIB", "CRIB_Sleep_LOOP", 4.1, true, false, false, false, 0, true);
+        TogglePlayerControllable(playerid, 0);
+        SendClientMessage(playerid, COLOR_GREEN, "Vous vous installez et fermez les yeux...");
+        SetTimerEx("FinishSleepingTimer", DUREE_ANIM_DORMIR * 1000, false, "d", playerid);
+        return 1;
+    }
+
+    // Reservee aux admins : navigue/teleporte parmi les points d'interet recuperes de lyd2
+    // (anciens checkpoints/teleportations). Usage : /cord <numero>  (0 a LYD2_POI_COUNT-1)
+    if(!strcmp(cmd, "/cord", true))
+    {
+        if(PlayerInfo[playerid][pAdmin] < 1)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Commande reservee aux admins.");
+            return 1;
+        }
+        new str[128];
+        tmp = strtok_(cmdtext, idx);
+        if(!strlen(tmp))
+        {
+            format(str, sizeof(str), "Usage : /cord <0-%d>. %d points d'interet disponibles.", LYD2_POI_COUNT - 1, LYD2_POI_COUNT);
+            SendClientMessage(playerid, COLOR_YELLOW, str);
+            return 1;
+        }
+        new index = strval(tmp);
+        if(!Lyd2_GotoPOI(playerid, index))
+        {
+            SendClientMessage(playerid, COLOR_RED, "Numero invalide.");
+            return 1;
+        }
+        SendClientMessage(playerid, COLOR_GREEN, "Teleportation effectuee.");
         return 1;
     }
 
