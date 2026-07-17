@@ -4307,7 +4307,7 @@ stock ShowAdminHelp(playerid)
     if(lvl >= ADMIN_LEVEL_DEV)
     {
         SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /heure, /meteo, /donnerarme, /allercoord, /redemarrer, /cmdrcon (acces complet RCON), /devcarte");
-        SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /creermaison, /creergarage [prix] [capacite], /creercommerce, /interieur [maison/garage/commerce] [id], /suppmaison, /suppgarage, /suppcommerce, /garagecapacite [id] [1-3], /objetid [modelid]");
+        SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /creermaison, /creergarage [prix] [capacite], /creercommerce, /interieur [maison/garage/commerce] [id], /exterieur [maison/garage/commerce] [id], /suppmaison, /suppgarage, /suppcommerce, /garagecapacite [id] [1-3], /objetid [modelid]");
     }
     return 1;
 }
