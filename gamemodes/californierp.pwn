@@ -7,7 +7,6 @@
 #include "californie.inc"
 #include <sampvoice>
 #include <a_mysql>
-#include "proprietes.inc" // Maisons / Garages / Commerces / Meubles (voir ce fichier pour la config MySQL)
 
 #define FILTERSCRIPT
 
@@ -387,6 +386,11 @@ enum pInfo
 new PlayerInfo[MAX_PLAYERS][pInfo];
 new IsLoggedIn[MAX_PLAYERS];
 new gPlayerTriedPass[MAX_PLAYERS];
+
+// Le systeme de proprietes (maisons/garages/commerces/meubles) a besoin de
+// PlayerInfo, ADMIN_LEVEL_DEV et des couleurs COLOR_* deja declares plus
+// haut : il doit donc etre inclus ici, pas avant.
+#include "proprietes.inc" // voir ce fichier pour la config MySQL
 
 // ------------------------------------------------------------
 //  Forwards utilitaires
