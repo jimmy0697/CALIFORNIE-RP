@@ -25,6 +25,11 @@ jobs:
           git clone --depth 1 https://github.com/pawn-lang/samp-stdlib.git /tmp/samp-stdlib
           cp /tmp/samp-stdlib/*.inc pawno/include/
 
+      - name: Récupérer streamer.inc (plugin Streamer)
+        run: |
+          curl -L -o pawno/include/streamer.inc https://raw.githubusercontent.com/samp-incognito/samp-streamer-plugin/master/streamer.inc
+          test -s pawno/include/streamer.inc || (echo "Echec du telechargement de streamer.inc" >&2 && exit 1)
+
       - name: Télécharger le compilateur Pawn (dernière version Linux)
         run: |
           set -e
@@ -48,6 +53,9 @@ jobs:
           echo "---"
           echo "Contenu de pawno/include/ (recherche a_mysql) :"
           ls -la pawno/include/ | grep -i mysql || echo "AUCUN fichier contenant 'mysql' trouve dans pawno/include/"
+          echo "---"
+          echo "Contenu de pawno/include/ (recherche streamer) :"
+          ls -la pawno/include/ | grep -i streamer || echo "AUCUN fichier contenant 'streamer' trouve dans pawno/include/"
           echo "---"
           echo "Premieres lignes de a_mysql.inc si trouve :"
           head -10 pawno/include/a_mysql.inc 2>/dev/null || echo "Impossible de lire pawno/include/a_mysql.inc"
