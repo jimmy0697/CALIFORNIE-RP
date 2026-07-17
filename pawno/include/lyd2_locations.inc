@@ -435,7 +435,8 @@ stock Lyd2_LoadPickups()
 // ---- Panneaux 3D (102 elements) ----
 stock Lyd2_LoadLabels()
 {
-    CreateDynamic3DTextLabel(lagerstr, COLOR_WHITE, -38.4148, 56.1184, 3.1172, 10.0); // L6094 (lyd2)
+    // Panneau L6094 omis : le texte d'origine ("lagerstr") est genere dynamiquement dans lyd2
+    // (stock de pieces d'armes en temps reel) et ne peut pas etre reproduit tel quel ici.
     CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Waffenteile-Pakete\n"COLOR_HEX_WHITE"Tippe /WPakete um Pakete zu entnehmen", COLOR_WHITE, 1678.1671, 2358.7722, 10.8203, 15.0); // L6097 (lyd2)
     CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Waffenteile-Pakete\n"COLOR_HEX_WHITE"Tippe /Paketeinladen um Pakete zu entnehmen", COLOR_WHITE, 2348.1086, -2302.4243, 13.5469, 15.0); // L6099 (lyd2)
     CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Starterpack\n"COLOR_HEX_WHITE"Tippe /Starterpack", COLOR_WHITE, 808.8542, -1347.3077, 13.5416, 8.0); // L6443 (lyd2)
@@ -535,7 +536,8 @@ stock Lyd2_LoadLabels()
     CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Schwarzmarkt: Kennzeichen\n"COLOR_HEX_WHITE"Tippe /Schwarzmarkt", COLOR_WHITE, -1101.9292, -2854.2185, 61.1343, 5.0); // L6693 (lyd2)
     CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Schwarzmarkt: SIM-Karten\n"COLOR_HEX_WHITE"Tippe /Schwarzmarkt", COLOR_WHITE, -1105.0177, -2854.2180, 61.1343, 5.0); // L6694 (lyd2)
     CreateDynamic3DTextLabel("-> NEULING <-\nKILL-SCHUTZ", 0xFFFF00FF, 0.0, 0.0, 0.4, 12.0); // L7347 (lyd2)
-    CreateDynamic3DTextLabel(String, 0xFF8C00FF, 0.0, 0.0, 1.0, 25.0); // L45542 (lyd2)
+    // Panneau L45542 omis : le texte d'origine ("String") est genere dynamiquement dans lyd2
+    // et les coordonnees (0,0,1) suggerent un objet attache plutot qu'un emplacement fixe.
     CreateDynamic3DTextLabel(COLOR_HEX_GREEN"Bratwurst Tag, 21.08.2019\n"COLOR_HEX_RED"Mach ein Screen und poste ihn ins Forum!", COLOR_WHITE, -824.9174, 1915.1334, 22.9245, 10.0); // L6417 (lyd2)
     return 1;
 }
