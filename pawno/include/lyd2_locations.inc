@@ -666,8 +666,7 @@ stock Lyd2_LoadAll()
 //  ici comme repertoire consultable/teleportable pour les admins, a brancher
 //  sur votre propre logique (jobs, maisons, etc.) si vous le souhaitez.
 // ==============================================================================
-#define LYD2_POI_COUNT 297
-new Float:gLyd2POI[LYD2_POI_COUNT][3] = {
+new Float:gLyd2POI[][3] = {
     {-1650.4489, -157.8306, 15.4847}, // L13273 (SetPlayerCheckpointEx) - SetPlayerCheckpointEx(playerid, -1650.4489,-157.8306,15.4847, 7.0, CP_
     {1476.7418, 1694.5992, 12.1470}, // L13283 (SetPlayerCheckpointEx) - SetPlayerCheckpointEx(playerid, 1476.7418,1694.5992,12.1470, 7.0, CP_P
     {2045.5306, -2593.0469, 14.8793}, // L13293 (SetPlayerCheckpointEx) - SetPlayerCheckpointEx(playerid, 2045.5306,-2593.0469,14.8793, 7.0, CP_
@@ -966,6 +965,7 @@ new Float:gLyd2POI[LYD2_POI_COUNT][3] = {
     {1152.8165, -1341.2827, 13.9058}, // L9405 (SetPlayerPosEx) - SetPlayerPosEx(playerid, 1152.8165, -1341.2827, 13.9058, 0, 0);
     {960.7043, -1580.0457, 13.5469}, // L14369 (SetPlayerPosEx) - SetPlayerPosEx(playerid, 960.7043, -1580.0457, 13.5469, MAPS_LSPDEXTER
 };
+#define LYD2_POI_COUNT (sizeof(gLyd2POI))
 
 // /lyd2poi [numero] : (admin) teleporte vers le point d'interet numero, ou
 // liste les 10 plus proches si aucun numero n'est fourni.
