@@ -118,6 +118,80 @@ stock udb_hash(buf[])
 // Voir proprietes.inc : /creerbatiment, /interieur batiment [id],
 // /exterieur batiment [id], /suppbatiment [id], /batimentspublics.
 
+// ==============================================================
+//  Entrees/sorties (touche F) des batiments recuperes de lyd2
+//  ------------------------------------------------------------
+//  Ces 3 points avaient deja leur panneau "Entrer/Sortir avec 'F'"
+//  dans lyd2_locations.inc mais aucune logique de teleportation n'y
+//  etait raccordee. Le tableau ci-dessous centralise entree/sortie/
+//  nom pour chacun : pour AJOUTER un batiment, il suffit de rajouter
+//  une ligne au tableau gBatimentsLyd2 ci-dessous (meme format).
+//  Pour RENOMMER un batiment, changez simplement le texte entre
+//  guillemets en derniere colonne.
+//
+//  IMPORTANT - A VERIFIER EN JEU : l'identifiant d'interieur SA-MP
+//  (colonne bInt) n'etait pas present dans les donnees recuperees de
+//  lyd2 (seules les coordonnees X/Y/Z l'etaient). La valeur 3 est
+//  l'interieur generique le plus courant sur SA-MP pour ce type de
+//  local, utilisee ici par defaut. Entrez dans le batiment en jeu et
+//  verifiez avec la commande /pos (deja presente dans le gamemode,
+//  elle affiche "Interieur: X") que le decor correspond bien a un
+//  interieur coherent ; sinon, changez juste le chiffre "3" concerne
+//  ci-dessous.
+// ==============================================================
+enum e_batiment_lyd2
+{
+    Float:bExtX, Float:bExtY, Float:bExtZ, // position exterieure (entree, interieur 0)
+    Float:bIntX, Float:bIntY, Float:bIntZ, // position interieure (sortie)
+    bInt,                                   // ID d'interieur SA-MP - A VERIFIER (voir note ci-dessus)
+    Float:bRadius,                          // rayon de detection de la touche F
+    bNom[64]                                // nom du lieu utilise dans les messages (MODIFIABLE ICI)
+};
+
+new const gBatimentsLyd2[][e_batiment_lyd2] = {
+    // Auto-ecole de Los Santos (ex "Fahrschule") - panneaux L6597 (entree) / L6617 (interieur)
+    {1489.0573, -1771.7749, 18.7958,    -2033.1216, -117.4597, 1035.1719,   3, 3.0, "l'auto-ecole"},
+    // Complexe de Paintball (ex "Paintball - Anlage") - panneaux L6598 (entree) / L6618 (sortie)
+    {1738.5869, -1586.3961, 13.5555,    2169.8208, 1618.7504, 999.9766,     3, 3.0, "le complexe de paintball"},
+    // Bureau de poste (ex "POSTHAUS") - panneaux L6606 (entree) / L6607 (interieur)
+    {914.3174, -1004.0942, 37.9902,     822.3183, 1.8747, 1004.1797,       3, 3.0, "le bureau de poste"}
+};
+
+// Parcourt gBatimentsLyd2 et gere l'entree/la sortie du batiment le plus proche
+// du joueur (appelee depuis OnPlayerKeyStateChange sur la touche F). Renvoie
+// true si le joueur a bien ete teleporte (entree ou sortie geree).
+stock bool:Batiment_Lyd2_TryToggle(playerid)
+{
+    new nb = sizeof(gBatimentsLyd2);
+    new msg[128];
+
+    for(new i = 0; i < nb; i++)
+    {
+        // Entree : le joueur est dehors (interieur 0) et pres du point d'entree exterieur
+        if(GetPlayerInterior(playerid) == 0 && IsPlayerInRangeOfPoint(playerid, gBatimentsLyd2[i][bRadius], gBatimentsLyd2[i][bExtX], gBatimentsLyd2[i][bExtY], gBatimentsLyd2[i][bExtZ]))
+        {
+            SetPlayerPos(playerid, gBatimentsLyd2[i][bIntX], gBatimentsLyd2[i][bIntY], gBatimentsLyd2[i][bIntZ]);
+            SetPlayerInterior(playerid, gBatimentsLyd2[i][bInt]);
+            SetPlayerVirtualWorld(playerid, 0);
+            format(msg, sizeof(msg), "Vous entrez dans %s.", gBatimentsLyd2[i][bNom]);
+            SendClientMessage(playerid, COLOR_GREEN, msg);
+            return true;
+        }
+
+        // Sortie : le joueur est dans l'interieur correspondant et pres du point de sortie
+        if(GetPlayerInterior(playerid) == gBatimentsLyd2[i][bInt] && IsPlayerInRangeOfPoint(playerid, gBatimentsLyd2[i][bRadius], gBatimentsLyd2[i][bIntX], gBatimentsLyd2[i][bIntY], gBatimentsLyd2[i][bIntZ]))
+        {
+            SetPlayerPos(playerid, gBatimentsLyd2[i][bExtX], gBatimentsLyd2[i][bExtY], gBatimentsLyd2[i][bExtZ]);
+            SetPlayerInterior(playerid, 0);
+            SetPlayerVirtualWorld(playerid, 0);
+            format(msg, sizeof(msg), "Vous sortez de %s.", gBatimentsLyd2[i][bNom]);
+            SendClientMessage(playerid, COLOR_GREEN, msg);
+            return true;
+        }
+    }
+    return false;
+}
+
 #if !defined SERVER_SITE
     #define SERVER_SITE "www.californie-rp.fr"
 #endif
@@ -1071,6 +1145,12 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
             SetPlayerInterior(playerid, 0);
             SetPlayerVirtualWorld(playerid, 0);
             SendClientMessage(playerid, COLOR_GREEN, "Vous sortez du commissariat.");
+            return 1;
+        }
+
+        // Entree/sortie des batiments recuperes de lyd2 (auto-ecole, paintball, poste...)
+        if(Batiment_Lyd2_TryToggle(playerid))
+        {
             return 1;
         }
 
