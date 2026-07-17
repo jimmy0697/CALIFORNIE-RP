@@ -878,17 +878,15 @@ public NeedsUpdateTimer()
         new playerState = GetPlayerState(playerid);
         if(playerState == PLAYER_STATE_NONE || playerState == PLAYER_STATE_WASTED || playerState == PLAYER_STATE_SPECTATING) continue;
 
-        // --- Effort physique : sprint (a pied) ou natation accelerent la deshydratation/fatigue ---
+        // --- Effort physique : le sprint a pied accelere la deshydratation/fatigue ---
+        // (SA-MP ne fournit pas d'etat "natation" distinct : les nageurs restent
+        // PLAYER_STATE_ONFOOT, donc on se limite au sprint detectable via les touches).
         new bool:enEffort = false;
         if(playerState == PLAYER_STATE_ONFOOT)
         {
             new keys, ud, lr;
             GetPlayerKeys(playerid, keys, ud, lr);
             if((keys & KEY_SPRINT) && ud != 0) enEffort = true;
-        }
-        else if(playerState == PLAYER_STATE_SWIMMING)
-        {
-            enEffort = true;
         }
 
         // --- Faim / Soif / Fatigue (legere variation aleatoire pour eviter l'effet mecanique) ---
