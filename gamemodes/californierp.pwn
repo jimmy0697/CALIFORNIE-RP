@@ -110,6 +110,12 @@ stock udb_hash(buf[])
 #define PD_CELL3_X (264.2250)
 #define PD_CELL3_Y (86.8214)
 #define PD_CELL3_Z (1001.0391)
+
+// NOTE : les batiments publics de faction (hopital, FBI, caserne de
+// pompiers...) sont geres entierement en jeu, sans toucher a ce fichier.
+// Voir proprietes.inc : /creerbatiment, /interieur batiment [id],
+// /exterieur batiment [id], /suppbatiment [id], /batimentspublics.
+
 #if !defined SERVER_SITE
     #define SERVER_SITE "www.californie-rp.fr"
 #endif
@@ -682,6 +688,10 @@ stock IsPlayerNearPD(playerid)
     return IsPlayerInRangeOfPoint(playerid, PD_RADIUS, PD_ENTRANCE_X, PD_ENTRANCE_Y, PD_ENTRANCE_Z);
 }
 
+// ------------------------------------------------------------
+//  Batiments publics de faction : creation des pickups/panneaux
+//  et gestion generique de l'entree/sortie via la touche F.
+// ------------------------------------------------------------
 // Place un joueur dans une des 3 cellules de detention du commissariat
 stock JailPlayerAtPD(playerid, cellid = 0)
 {
@@ -839,6 +849,9 @@ public OnGameModeInit()
     Create3DTextLabel("{3388FF}COMMISSARIAT CENTRAL\n{FFFFFF}Appuyez sur F pour entrer", 0xFFFFFFFF, PD_ENTRANCE_X, PD_ENTRANCE_Y, PD_ENTRANCE_Z + 0.7, 15.0, 0, 0);
     Create3DTextLabel("{3388FF}SORTIE\n{FFFFFF}Appuyez sur F pour sortir", 0xFFFFFFFF, PD_INTERIOR_X, PD_INTERIOR_Y, PD_INTERIOR_Z + 0.7, 15.0, 0, 0);
 
+    // Note : les batiments publics de faction sont charges automatiquement
+    // depuis la base de donnees par Prop_Init() ci-dessous.
+
     // Classes de selection de personnage (spawn Los Santos)
     AddPlayerClass(101, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Civil - Los Santos Gare (point d'apparition de depart)
     AddPlayerClass(280, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Police (skin par defaut, a changer via faction)
@@ -881,7 +894,7 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
             return 1;
         }
 
-        // Entree/sortie des maisons, garages et commerces
+        // Entree/sortie des maisons, garages, commerces et batiments publics
         if(Prop_OnKeyStateChange(playerid, newkeys))
         {
             return 1;
@@ -2969,6 +2982,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
         SendClientMessage(playerid, COLOR_WHITE, "/engine /lock - Interagir avec un vehicule");
         SendClientMessage(playerid, COLOR_WHITE, "/papiers - Voir votre carte d'identite, permis, port d'armes et recus");
         SendClientMessage(playerid, COLOR_WHITE, "/maisons /garages /commerces - Voir les proprietes disponibles a l'achat");
+        SendClientMessage(playerid, COLOR_WHITE, "/batimentspublics - Voir les batiments publics (hopital, FBI, pompiers...)");
         SendClientMessage(playerid, COLOR_WHITE, "A l'entree d'une propriete que vous possedez, appuyez sur F pour entrer/sortir");
         SendClientMessage(playerid, COLOR_WHITE, "/acheter /vendre /fermer /ouvrir - Gerer une propriete (a son entree)");
         SendClientMessage(playerid, COLOR_WHITE, "/rentrer /sortir - Ranger/sortir un vehicule de votre garage");
@@ -3721,6 +3735,7 @@ stock ResolveAdminCmd(cmd[], canon[24], &level)
     if(!strcmp(cmd, "/meteo", true)) { canon = "SETWEATHER"; level = ADMIN_LEVEL_DEV; return 1; }
     if(!strcmp(cmd, "/donnerarme", true)) { canon = "GIVEWEAPON"; level = ADMIN_LEVEL_DEV; return 1; }
     if(!strcmp(cmd, "/allercoord", true)) { canon = "GOTOXYZ"; level = ADMIN_LEVEL_DEV; return 1; }
+    if(!strcmp(cmd, "/mapos", true)) { canon = "MYPOS"; level = ADMIN_LEVEL_DEV; return 1; }
     if(!strcmp(cmd, "/redemarrer", true)) { canon = "GMX"; level = ADMIN_LEVEL_DEV; return 1; }
     if(!strcmp(cmd, "/cmdrcon", true)) { canon = "RCONCMD"; level = ADMIN_LEVEL_DEV; return 1; }
     if(!strcmp(cmd, "/devcarte", true)) { canon = "DEVCARTE"; level = ADMIN_LEVEL_DEV; return 1; }
@@ -4222,6 +4237,14 @@ stock ExecuteAdminCmd(playerid, canon[], cmdtext[], idx)
         SetPlayerPos(playerid, floatstr(sx), floatstr(sy), floatstr(sz));
         SendClientMessage(playerid, COLOR_GREEN, "Teleportation effectuee.");
     }
+    else if(!strcmp(canon, "MYPOS"))
+    {
+        new Float:x, Float:y, Float:z, Float:a, str[144];
+        GetPlayerPos(playerid, x, y, z);
+        GetPlayerFacingAngle(playerid, a);
+        format(str, sizeof(str), "Pos: %f, %f, %f, %f | Interieur: %d | Monde: %d", x, y, z, a, GetPlayerInterior(playerid), GetPlayerVirtualWorld(playerid));
+        SendClientMessage(playerid, COLOR_GREEN, str);
+    }
     else if(!strcmp(canon, "GMX"))
     {
         SendClientMessageToAll(COLOR_ADMIN, "(( Redemarrage du gamemode en cours... ))");
@@ -4306,8 +4329,8 @@ stock ShowAdminHelp(playerid)
         SendClientMessage(playerid, COLOR_WHITE, "[Superviseur] /definiradmin, /annonce");
     if(lvl >= ADMIN_LEVEL_DEV)
     {
-        SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /heure, /meteo, /donnerarme, /allercoord, /redemarrer, /cmdrcon (acces complet RCON), /devcarte");
-        SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /creermaison, /creergarage [prix] [capacite], /creercommerce, /interieur [maison/garage/commerce] [id], /exterieur [maison/garage/commerce] [id], /suppmaison, /suppgarage, /suppcommerce, /garagecapacite [id] [1-3], /objetid [modelid]");
+        SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /heure, /meteo, /donnerarme, /allercoord, /mapos, /redemarrer, /cmdrcon (acces complet RCON), /devcarte");
+        SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /creermaison, /creergarage [prix] [capacite], /creercommerce, /creerbatiment [nom], /interieur [maison/garage/commerce/batiment] [id], /exterieur [maison/garage/commerce/batiment] [id], /suppmaison, /suppgarage, /suppcommerce, /suppbatiment, /garagecapacite [id] [1-3], /objetid [modelid]");
     }
     return 1;
 }
