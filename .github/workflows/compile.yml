@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - "gamemodes/**"
+      - "pawno/**"
       - ".github/workflows/compile.yml"
   pull_request:
     paths:
       - "gamemodes/**"
+      - "pawno/**"
   workflow_dispatch:
 
 jobs:
@@ -43,6 +45,12 @@ jobs:
         run: |
           echo "Contenu de gamemodes/ :"
           ls -la gamemodes/ || echo "Le dossier gamemodes/ n'existe pas !"
+          echo "---"
+          echo "Contenu de pawno/include/ (recherche a_mysql) :"
+          ls -la pawno/include/ | grep -i mysql || echo "AUCUN fichier contenant 'mysql' trouve dans pawno/include/"
+          echo "---"
+          echo "Premieres lignes de a_mysql.inc si trouve :"
+          head -10 pawno/include/a_mysql.inc 2>/dev/null || echo "Impossible de lire pawno/include/a_mysql.inc"
 
       - name: Compiler californierp.pwn
         run: |
