@@ -963,7 +963,7 @@ new Float:gLyd2POI[][3] = {
     {264.7464, 109.6102, 1004.6172}, // L9240 (SetPlayerPosEx) - SetPlayerPosEx(playerid, 264.7464, 109.6102, 1004.6172, 10, 0);
     {2162.6523, -102.3127, 2.7500}, // L9247 (SetPlayerPosEx) - SetPlayerPosEx(playerid, 2162.6523, -102.3127, 2.7500, 0, 0);
     {1152.8165, -1341.2827, 13.9058}, // L9405 (SetPlayerPosEx) - SetPlayerPosEx(playerid, 1152.8165, -1341.2827, 13.9058, 0, 0);
-    {960.7043, -1580.0457, 13.5469}, // L14369 (SetPlayerPosEx) - SetPlayerPosEx(playerid, 960.7043, -1580.0457, 13.5469, MAPS_LSPDEXTER
+    {960.7043, -1580.0457, 13.5469} // L14369 (SetPlayerPosEx) - SetPlayerPosEx(playerid, 960.7043, -1580.0457, 13.5469, MAPS_LSPDEXTER
 };
 #define LYD2_POI_COUNT (sizeof(gLyd2POI))
 
