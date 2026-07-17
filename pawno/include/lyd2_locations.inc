@@ -51,6 +51,91 @@
     #define COLOR_BLUE 0x3592D7FF
 #endif
 
+// ==============================================================================
+//  NOMS DES LIEUX (FRANCAIS) -- MODIFIABLE ICI
+//  Pour renommer un lieu affiche sur un panneau 3D, il suffit de changer le
+//  texte entre guillemets ci-dessous. Le reste du script utilise ces macros,
+//  donc un seul changement ici suffit a mettre a jour tous les panneaux.
+// ==============================================================================
+#define NOM_PAKETS_ARMES            "Colis de pieces d'armes"
+#define NOM_STARTERPACK             "Kit de demarrage"
+#define NOM_ASSERVATENKAMMER        "Chambre des scelles - Objets illegaux"
+#define NOM_GUICHET_BANQUE          "Guichet bancaire"
+#define NOM_REPARATION_ETAT         "Reparation d'Etat"
+#define NOM_MANEGE_TOUR_CHUTE       "Attraction : Tour de chute"
+#define NOM_MANEGE_AUTOS_TAMP       "Attraction : Autos tamponneuses"
+#define NOM_MANEGE_BREAKDANCER      "Attraction : Breakdancer"
+#define NOM_MANEGE_BATEAU           "Attraction : Bateau a bascule"
+#define NOM_MANEGE_TOBOGGAN         "Attraction : Toboggan aquatique"
+#define NOM_TOUR_DE_SAUT            "Tour de saut"
+#define NOM_TENUE_FERMIER           "Tenue de travail : Fermier"
+#define NOM_TENUE_BALAYEUR          "Tenue de travail : Balayeur de rue"
+#define NOM_TENUE_EBOUEUR           "Tenue de travail : Eboueur"
+#define NOM_TENUE_OUVRIER           "Tenue de travail : Ouvrier du batiment"
+#define NOM_TENUE_CONVOYEUR         "Tenue de travail : Convoyeur de fonds"
+#define NOM_TENUE_GLACIER           "Tenue de travail : Marchand de glaces"
+#define NOM_TENUE_LIVREUR_PIZZA     "Tenue de travail : Livreur de pizza"
+#define NOM_TENUE_ESCORTE           "Tenue de travail : Escorte"
+#define NOM_TENUE_CONDUCTEUR_TRAIN  "Tenue de travail : Conducteur de train"
+#define NOM_TENUE_VENDEUR_HOTDOG    "Tenue de travail : Vendeur de hot-dogs"
+#define NOM_TENUE_MECANICIEN        "Tenue de travail : Mecanicien"
+#define NOM_OUVRIER_BTP             "Ouvrier du batiment"
+#define NOM_DISTRIB_MARCHANDISES    "Distribution de marchandises - Las Venturas"
+#define NOM_RAFFINERIE_LV           "Raffinerie de petrole - Las Venturas"
+#define NOM_SPAWN_TERRORISTE        "Point d'apparition terroriste"
+#define NOM_AUTO_ECOLE              "Auto-ecole"
+#define NOM_PAINTBALL               "Complexe de Paintball"
+#define NOM_DEPOT_CARBURANT_ND      "Depot de carburant des Nine Demons"
+#define NOM_SERVEUR_EXPERT          "STATUT SERVEUR - EXPERT"
+#define NOM_PROMO_PAQUES            "PROMO DE PAQUES a la boutique LyD"
+#define NOM_POSTE_ENTREE            "BUREAU DE POSTE - Entree"
+#define NOM_POSTE                   "BUREAU DE POSTE"
+#define NOM_FORGERON                "Forgeron (liberation des menottes)"
+#define NOM_AGENCE_PUB              "Agence de publicite"
+#define NOM_PEINTURE_MOTO           "Atelier de peinture moto"
+#define NOM_PEINTURE_AUTO           "Atelier de peinture auto"
+#define NOM_ATELIER_DEMONTAGE       "Atelier de demontage - Tuning auto/moto"
+#define NOM_POINT_DECHARGEMENT      "Point de dechargement"
+#define NOM_AUTO_ECOLE_LS           "Auto-ecole de Los Santos"
+#define NOM_GANGJAIL                "Prison de gang"
+#define NOM_CLUBVILLA               "La Villa du Club"
+#define NOM_INFO_MAIRIE             "Informations sur la mairie"
+#define NOM_HOTEL_4_ETOILES         "Hotel 4 etoiles de Los Santos"
+#define NOM_IMMATRICULATION         "Bureau d'immatriculation des vehicules"
+#define NOM_BUREAU_RESIDENTS        "Bureau des residents"
+#define NOM_PANNEAU_AUTO_ECOLE_LS   "LOS SANTOS - AUTO-ECOLE"
+#define NOM_GARE_LV_NORD            "Las Venturas - Gare NORD"
+#define NOM_GARE_LV_EST             "Las Venturas - Gare EST"
+#define NOM_GARE_SF_CENTRALE        "San Fierro - Gare centrale"
+#define NOM_GARE_LS_NORD            "Los Santos - Gare NORD"
+#define NOM_GARE_LS_CENTRALE        "Los Santos - Gare centrale"
+#define NOM_BAR_CLUBVILLA           "Bar de la Villa du Club"
+#define NOM_STAND_BOISSONS          "Stand de boissons"
+#define NOM_ARMURERIE_CLUB         "Armurerie du club"
+#define NOM_CUISINE_CLUB           "Cuisine du club"
+#define NOM_ASSURANCE_VEHICULE     "Assurance vehicule"
+#define NOM_VENTE_AVIONS_LV        "Vente d'avions - Las Venturas"
+#define NOM_BOUTIQUE_VETEMENTS     "Boutique de vetements"
+#define NOM_ARMURERIE              "Armurerie"
+#define NOM_SUPERMARCHE            "Supermarche"
+#define NOM_PIZZA_STACK            "Pizza Stack"
+#define NOM_CLUCKIN_BELL           "Cluckin Bell"
+#define NOM_BURGER_SHOT            "Burger Shot"
+#define NOM_SUBWAY                 "Subway"
+#define NOM_PAQUETS_GRAINES        "Colis de graines"
+#define NOM_VENTE_BALISE           "Vente de balise GPS"
+#define NOM_MARCHE_NOIR_PIECES     "Marche noir : pieces d'armes"
+#define NOM_MARCHE_NOIR_DROGUE     "Marche noir : drogue"
+#define NOM_MARCHE_NOIR_SPICE      "Marche noir : Spice"
+#define NOM_MARCHE_NOIR_CODES      "Marche noir : codes recherches"
+#define NOM_MARCHE_NOIR_ARMES      "Marche noir : armes"
+#define NOM_MARCHE_NOIR_OBJETS     "Marche noir : objets illegaux"
+#define NOM_MARCHE_NOIR_PLAQUES    "Marche noir : plaques d'immatriculation"
+#define NOM_MARCHE_NOIR_SIM        "Marche noir : cartes SIM"
+#define NOM_PROTECTION_NOUVEAU     "-> NOUVEAU <-\nPROTECTION ANTI-KILL"
+#define NOM_JOURNEE_SAUCISSE       "Journee de la saucisse, 21.08.2019"
+
+
 // ---- Objets de decor (283 elements) ----
 stock Lyd2_LoadObjects()
 {
@@ -437,108 +522,108 @@ stock Lyd2_LoadLabels()
 {
     // Panneau L6094 omis : le texte d'origine ("lagerstr") est genere dynamiquement dans lyd2
     // (stock de pieces d'armes en temps reel) et ne peut pas etre reproduit tel quel ici.
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Waffenteile-Pakete\n"COLOR_HEX_WHITE"Tippe /WPakete um Pakete zu entnehmen", COLOR_WHITE, 1678.1671, 2358.7722, 10.8203, 15.0); // L6097 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Waffenteile-Pakete\n"COLOR_HEX_WHITE"Tippe /Paketeinladen um Pakete zu entnehmen", COLOR_WHITE, 2348.1086, -2302.4243, 13.5469, 15.0); // L6099 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Starterpack\n"COLOR_HEX_WHITE"Tippe /Starterpack", COLOR_WHITE, 808.8542, -1347.3077, 13.5416, 8.0); // L6443 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Asservatenkammer - Illegale Gegenstände abgeben\n"COLOR_HEX_WHITE"Tippe /Abgeben [Waffenteile/Spice/Drogen/WCodes]", COLOR_WHITE, 1754.412963, -1592.894897, 13.532833, 8.0); // L6446 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Bankschalter\n"COLOR_HEX_WHITE"Tippe /Bank\nTippe /Kredit\nTippe /Ueberweisen", COLOR_WHITE, 1683.024658, -1022.939270, 1340.750854, 8.0); // L6449 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Staats-Reparatur\n"COLOR_HEX_WHITE"Tippe /Staatrepair", COLOR_WHITE, 2288.5466, 2444.9841, 3.2734, 10.0); // L6554 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Staats-Reparatur\n"COLOR_HEX_WHITE"Tippe /Staatrepair", COLOR_WHITE, 621.3207, -584.6555, 17.2330, 10.0); // L6555 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Staats-Reparatur\n"COLOR_HEX_WHITE"Tippe /Staatrepair", COLOR_WHITE, 1248.3843, -1833.8750, 13.3930, 10.0); // L6556 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Staats-Reparatur\n"COLOR_HEX_WHITE"Tippe /Staatrepair", COLOR_WHITE, 1138.9730, -1820.9103, 33.6354, 10.0); // L6557 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Staats-Reparatur\n"COLOR_HEX_WHITE"Tippe /Staatrepair", COLOR_WHITE, 1.5613, -2510.2061, 36.6555, 10.0); // L6558 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Fahrgeschäft: Fallturm\n"COLOR_HEX_WHITE"Tippe /Ticketkaufen\n"COLOR_HEX_BLUE"Ticketpreis: 300$", COLOR_WHITE, 374.6658, -2121.6416, 7.8820, 10.0); // L6562 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Fahrgeschäft: Autosscooter\n"COLOR_HEX_WHITE"Tippe /Ticketkaufen\n"COLOR_HEX_BLUE"Ticketpreis: 300$", COLOR_WHITE, 373.8057, -2056.3586, 7.9260, 10.0); // L6563 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Fahrgeschäft:  Breakdancer\n"COLOR_HEX_WHITE"Tippe /Ticketkaufen\n"COLOR_HEX_BLUE"Ticketpreis: 300$", COLOR_WHITE, 356.7114, -2149.5613, 7.8779, 10.0); // L6564 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Fahrgeschäft: Schaukelschiff\n"COLOR_HEX_WHITE"Tippe /Ticketkaufen\n"COLOR_HEX_BLUE"Ticketpreis: 300$", COLOR_WHITE, 382.0282, -2165.8818, 7.8511, 10.0); // L6565 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Fahrgeschäft: Wasserbahn\n"COLOR_HEX_WHITE"Tippe /Ticketkaufen\n"COLOR_HEX_BLUE"Ticketpreis: 300$", COLOR_WHITE, 396.3516, -2152.5928, 7.8399, 10.0); // L6566 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Sprungturm\n"COLOR_HEX_BLUE"Drück 'Enter'\n", COLOR_WHITE, 361.7136, -2107.5913, 7.8340, 10.0); // L6567 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Bauern\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, -90.4999, -10.3628, 3.1094, 25.0); // L6570 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Straßenreiniger\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 2046.2723, -1913.2064, 13.5469, 25.0); // L6571 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Müllmann\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 2118.6157, -2085.0828, 13.5544, 25.0); // L6572 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Bauarbeiter\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 831.2045, 865.6005, 12.5911, 25.0); // L6573 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Geldtransportfahrer\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 1551.5492, -1005.0830, 24.0781, 25.0); // L6574 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Eisverkäufer\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 1021.9334, -1371.0099, 13.5585, 25.0); // L6575 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Pizzalieferrant\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 2117.3662, -1790.0100, 13.5547, 25.0); // L6576 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Prostituierte\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 2417.1555, -1220.1472, 25.3914, 25.0); // L6577 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Zugfahrer\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 1735.0045, -1944.0450, 13.5681, 25.0); // L6578 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Hotdog Verkäufer\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 2384.0181, -1915.5509, 13.5469, 25.0); // L6579 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Mechaniker\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 980.6174, -933.2461, 41.3419, 25.0); // L6580 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Mechaniker\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 1945.9237, -1793.6355, 13.5469, 25.0); // L6581 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Mechaniker\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, 662.6830, -579.0665, 16.3359, 25.0); // L6582 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Arbeitskleidung für Mechaniker\n"COLOR_HEX_WHITE"Tippe /Jobkleidung", COLOR_WHITE, -93.9144, -1196.9713, 2.4775, 25.0); // L6583 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Bauarbeiter\n"COLOR_HEX_WHITE"Tippe /Steineladen", COLOR_WHITE, 635.8752, 862.5970, -42.6892, 10.0); // L6588 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Bauarbeiter\n"COLOR_HEX_WHITE"Tippe /Steineladen", COLOR_WHITE, 607.7939, 863.4465, -42.0452, 10.0); // L6589 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Bauarbeiter\n"COLOR_HEX_WHITE"Tippe /Steineentladen", COLOR_WHITE, 382.3929, 871.6203, 21.9523, 10.0); // L6590 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Waren-Vergabe Las Venturas\n"COLOR_HEX_WHITE"Tippe /Loadwaren", COLOR_WHITE, 577.4390, 1221.7273, 11.2689, 20.0); // L6591 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Öl-Raffinerie Las Venturas\n"COLOR_HEX_WHITE"Tippe /Loadbenzin", COLOR_WHITE, 268.9609, 1384.2981, 10.1610, 20.0); // L6592 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Terroristen Spawn\n"COLOR_HEX_WHITE"Tippe /Terrorwaffen zum Ausrüsten\nTippe /Gheilen zum heilen", COLOR_WHITE, 969.3871, 2056.1943, 10.8203, 15.0); // L6594 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Fahrschule\n"COLOR_HEX_WHITE"Gebäude betreten mit 'Enter'", COLOR_WHITE, 1489.0573, -1771.7749, 18.7958, 20.0); // L6597 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Paintball - Anlage\n"COLOR_HEX_WHITE"Gebäude betreten mit 'Enter'", COLOR_WHITE, 1738.5869, -1586.3961, 13.5555, 8.0); // L6598 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Spritlager der Nine Demons\n"COLOR_HEX_WHITE"Tippe /Spritlager", COLOR_WHITE, 764.9532, 347.7378, 20.0458, 8.0); // L6601 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"SERVER - EXPERTE\nFreischalten mit:"COLOR_HEX_WHITE"/Experte", COLOR_WHITE, 808.7208, -1350.4906, 13.5418, 15.0); // L6604 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"OSTER-AKTION im LyD-Shop\n"COLOR_HEX_GREEN"Es erwarten dich tolle Preise!\n"COLOR_HEX_WHITE"Weitere Informationen im Forum!", COLOR_WHITE, 1480.9296, -1613.7988, 14.0979, 25.0); // L6605 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"POSTHAUS - Eingang\n"COLOR_HEX_WHITE"Betreten mit 'Enter'", COLOR_WHITE, 914.3174, -1004.0942, 37.9902, 25.0); // L6606 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"POSTHAUS\n"COLOR_HEX_WHITE"Tippe /Post", COLOR_WHITE, 822.3183, 1.8747, 1004.1797, 15.0); // L6607 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Schmied (Befreit von Handschellen)\n"COLOR_HEX_WHITE"Tippe /Zerbrechen\n"COLOR_HEX_ORANGE"Preis: 500$", COLOR_WHITE, -382.0342, -1426.4521, 26.0822, 25.0); // L6608 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_GREENA"Werbeagentur\n"COLOR_HEX_WHITE"Tippe /Werbung", COLOR_WHITE, 1412.1915, -1700.3817, 13.5395, 15.0); // L6609 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_GREENA"Werbeagentur\n"COLOR_HEX_WHITE"Tippe /Werbung", COLOR_WHITE, 2008.1722, 1169.3364, 10.8203, 15.0); // L6610 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Motorradlackiererei\n"COLOR_HEX_ORANGE"Preis: 2.000$\n"COLOR_HEX_WHITE"Tippe /Bikefarbe", COLOR_WHITE, 1702.9427, -1470.3704, 13.5469, 20.0); // L6611 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Autolackiererei\n"COLOR_HEX_ORANGE"Preis: 1.500$\n"COLOR_HEX_WHITE"Tippe /Autofarbe", COLOR_WHITE, 1763.4915, 2080.2959, 10.8203, 20.0); // L6612 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Abbauwerkstatt\nfür Auto- u. Motorradtuning\n"COLOR_HEX_ORANGE"Preis: 3.000$\n"COLOR_HEX_WHITE"Tippe /Tuningabbauen", COLOR_WHITE, 1782.8275, -1702.7240, 13.5096, 20.0); // L6613 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Entladungspunkt\n"COLOR_HEX_WHITE"Tippe /Paketentladen", COLOR_WHITE, -1857.7711, -1616.8975, 21.8372, 10.0); // L6615 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Entladungspunkt\n"COLOR_HEX_WHITE"Tippe /Samenpaketentladen", COLOR_WHITE, -258.9534, -2181.9905, 29.0150, 10.0); // L6616 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Fahrschule Los Santos\n"COLOR_HEX_WHITE"Tippe /Fahrpruefung\nTippe /Sperrefreikaufen", COLOR_WHITE, -2033.1216, -117.4597, 1035.1719, 40.0); // L6617 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Paintball - Anlage\nGebäude verlassen mit 'Enter'", COLOR_BLUE, 2169.8208, 1618.7504, 999.9766, 15.0); // L6618 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Gangjail\n"COLOR_HEX_WHITE"Tippe /Gangjail um einzusperren\nTippe /Aufbrechen um zu befreien", COLOR_WHITE, 2160.4111, -98.0815, 2.8239, 13.0); // L6620 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_GREENA"Die Clubvilla\n"COLOR_HEX_WHITE"Zutritt nur für Clubmitglieder", COLOR_WHITE, 2127.5486, 2378.9626, 10.8203, 20.0); // L6621 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Informationen zum Stadtamt\n"COLOR_HEX_WHITE"Tippe /Stadtamtinfo", COLOR_WHITE, 1481.7039, -1740.6183, 13.5469, 30.0); // L6623 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Los Santos 4 Sterne Hotel\n"COLOR_HEX_WHITE"Miete Dir günstig ein schönes Hotelzimmer", COLOR_WHITE, 1722.5425, -1650.1168, 20.2289, 20.0); // L6624 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Fahrzeug Zulassungsstelle\n"COLOR_HEX_WHITE"Schalter 1\nTippe /Zulassungsstelle", COLOR_WHITE, 2316.4529, -12.6540, 26.7422, 15.0); // L6625 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Fahrzeug Zulassungsstelle\n"COLOR_HEX_WHITE"Schalter 2\nTippe /Zulassungsstelle", COLOR_WHITE, 2316.3318, -9.9532, 26.7422, 15.0); // L6626 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Einwohnermeldeamt\n"COLOR_HEX_WHITE"Schalter 1", COLOR_WHITE, 359.0863, 210.2258, 1008.3828, 15.0); // L6627 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Einwohnermeldeamt\n"COLOR_HEX_WHITE"Schalter 2", COLOR_WHITE, 358.2361, 184.5094, 1008.3828, 15.0); // L6628 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"LOS SANTOS - FAHRSCHULE", COLOR_WHITE, 1270.0138, -1846.0366, 13.3906, 20.0); // L6629 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Las Venturas - Bahnhof NORD\n"COLOR_HEX_WHITE"Bitte halten Sie Abstand von der Bahnsteigkante und\n"COLOR_HEX_WHITE"betreten Sie erst den Bahnsteig nach Halt des Zuges!", COLOR_WHITE, 1433.3264, 2640.8018, 11.3926, 18.0); // L6630 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Las Venturas - Bahnhof OST\n"COLOR_HEX_WHITE"Bitte halten Sie Abstand von der Bahnsteigkante und\n"COLOR_HEX_WHITE"betreten Sie erst den Bahnsteig nach Halt des Zuges!", COLOR_WHITE, 2859.5542, 1290.5511, 11.3906, 18.0); // L6631 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"San Fierro - Hauptbahnhof\n"COLOR_HEX_WHITE"Bitte halten Sie Abstand von der Bahnsteigkante und\n"COLOR_HEX_WHITE"betreten Sie erst den Bahnsteig nach Halt des Zuges!", COLOR_WHITE, -1952.0848, 137.6278, 26.2813, 18.0); // L6632 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Los Santos - Bahnhof NORD\n"COLOR_HEX_WHITE"Bitte halten Sie Abstand von der Bahnsteigkante und\n"COLOR_HEX_WHITE"betreten Sie erst den Bahnsteig nach Halt des Zuges!", COLOR_WHITE, 816.9464, -1362.2501, -0.5078, 18.0); // L6633 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Los Santos - Hauptbahnhof\n"COLOR_HEX_WHITE"Bitte halten Sie Abstand von der Bahnsteigkante und\n"COLOR_HEX_WHITE"betreten Sie erst den Bahnsteig nach Halt des Zuges!", COLOR_WHITE, 1738.0658, -1949.8571, 14.1172, 18.0); // L6634 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Clubvilla Bar\n"COLOR_HEX_WHITE"Tippe /Getraenk", COLOR_WHITE, -2653.6023, 1407.0844, 906.2734, 10.0); // L6637 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Getränkestand\n"COLOR_HEX_WHITE"Tippe /Getraenk", COLOR_WHITE, 1455.8802, -1741.8704, 13.5469, 10.0); // L6639 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Club Waffenshop\n"COLOR_HEX_WHITE"Tippe /Clubwaffen", COLOR_WHITE, -2656.1047, 1416.0248, 906.2734, 8.0); // L6640 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Club Kueche\n"COLOR_HEX_WHITE"Tippe /Clubheal", COLOR_WHITE, -2653.5183, 1413.5085, 906.2734, 8.0); // L6641 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"KFZ-Versicherung\n"COLOR_HEX_WHITE"Keine Reparaturkosten für 7 Tage! Preis: $50.000\nTippe /Kfzversicherung", COLOR_WHITE, 2309.3276, -8.2968, 26.7422, 25.0); // L6642 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Flugzeugverkauf - Las Venturas\n"COLOR_HEX_WHITE"Steige in ein beliebiges Flugzeug deiner Wahl ein!", COLOR_WHITE, 1310.9393, 1342.6803, 10.8203, 30.0); // L6643 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Kleidungs Shop\n"COLOR_HEX_WHITE"Tippe /Kleidung", COLOR_WHITE, 206.3740, -8.2494, 1001.2109, 11.0); // L6646 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Kleidungs Shop\n"COLOR_HEX_WHITE"Tippe /Kleidung", COLOR_WHITE, 161.4726, -83.2517, 1001.8047, 11.0); // L6647 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Kleidungs Shop\n"COLOR_HEX_WHITE"Tippe /Kleidung", COLOR_WHITE, 207.7187, -100.5032, 1005.2578, 11.0); // L6648 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"CLUB Waffenshop\n"COLOR_HEX_WHITE"Tippe /Cwmenu", COLOR_WHITE, -2165.6643, 646.1125, 1052.3750, 10.0); // L6649 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Waffen Laden\n"COLOR_HEX_WHITE"Tippe /Wmenu", COLOR_WHITE, 313.3604, -139.3339, 1004.0625, 10.0); // L6650 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Waffen Laden\n"COLOR_HEX_WHITE"Tippe /Wmenu", COLOR_WHITE, 296.4476, -37.9833, 1001.5156, 10.0); // L6651 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Waffen Laden\n"COLOR_HEX_WHITE"Tippe /Wmenu", COLOR_WHITE, 312.1370, -165.9137, 999.6010, 10.0); // L6652 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Waffen Laden\n"COLOR_HEX_WHITE"Tippe /Wmenu", COLOR_WHITE, 295.5200, -80.3668, 1001.5156, 10.0); // L6653 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"CLUB Küche\n"COLOR_HEX_WHITE"Tippe /Cheilen", COLOR_WHITE, -2160.3027, 638.3347, 1057.5861, 10.0); // L6654 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Super Markt\n"COLOR_HEX_WHITE"Tippe /Supermarkt", COLOR_WHITE, 2.2396, -29.0123, 1003.5494, 10.0); // L6655 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Pizza Stack\n"COLOR_HEX_WHITE"Tippe /Essen\n"COLOR_HEX_ORANGE"Preis: 50$", COLOR_WHITE, 373.7167, -119.1190, 1001.4922, 10.0); // L6661 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Cluckin Bell\n"COLOR_HEX_WHITE"Tippe /Essen\n"COLOR_HEX_ORANGE"Preis: 50$", COLOR_WHITE, 368.1664, -6.0193, 1001.8516, 10.0); // L6666 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Burger Shot\n"COLOR_HEX_WHITE"Tippe /Essen\n"COLOR_HEX_ORANGE"Preis: 50$", COLOR_WHITE, 376.5080, -67.6393, 1001.5151, 10.0); // L6671 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Subway\n"COLOR_HEX_WHITE"Tippe /Essen\n"COLOR_HEX_ORANGE"Preis: 50$", COLOR_WHITE, 376.5080, -67.6393, 1001.5151, 10.0); // L6676 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Samen-Pakete\n"COLOR_HEX_WHITE"Tippe /Paketeinladen um Pakete zu entnehmen", COLOR_WHITE, -111.0688, 1133.3749, 19.7422, 15.0); // L6680 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Samen-Pakete\n"COLOR_HEX_WHITE"Tippe /Paketentladen um Pakete auszuladen", COLOR_WHITE, -66.3187, -1121.1329, 0.6501, 15.0); // L6682 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"Peilsender-Verkauf\n"COLOR_HEX_WHITE"Tippe /Peilsender", COLOR_WHITE, 1151.7448, -1203.0283, 19.5159, 25.0); // L6684 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Schwarzmarkt: Waffenteile\n"COLOR_HEX_WHITE"Tippe /Schwarzmarkt", COLOR_WHITE, -1101.9084, -2861.1260, 61.1270, 5.0); // L6687 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Schwarzmarkt: Drogen\n"COLOR_HEX_WHITE"Tippe /Schwarzmarkt", COLOR_WHITE, -1104.9402, -2861.1267, 61.1270, 5.0); // L6688 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Schwarzmarkt: Spice\n"COLOR_HEX_WHITE"Tippe /Schwarzmarkt", COLOR_WHITE, -1098.8091, -2861.1267, 61.1270, 5.0); // L6689 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Schwarzmarkt: Wantedcodes\n"COLOR_HEX_WHITE"Tippe /Schwarzmarkt", COLOR_WHITE, -1098.1770, -2858.3450, 61.1270, 5.0); // L6690 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Schwarzmarkt: Waffen\n"COLOR_HEX_WHITE"Tippe /Schwarzmarkt", COLOR_WHITE, -1098.1770, -2855.7100, 61.1270, 5.0); // L6691 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Schwarzmarkt: Illegale Gegenstände\n"COLOR_HEX_WHITE"Tippe /Schwarzmarkt", COLOR_WHITE, -1098.7355, -2854.2180, 61.1343, 5.0); // L6692 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Schwarzmarkt: Kennzeichen\n"COLOR_HEX_WHITE"Tippe /Schwarzmarkt", COLOR_WHITE, -1101.9292, -2854.2185, 61.1343, 5.0); // L6693 (lyd2)
-    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW"Schwarzmarkt: SIM-Karten\n"COLOR_HEX_WHITE"Tippe /Schwarzmarkt", COLOR_WHITE, -1105.0177, -2854.2180, 61.1343, 5.0); // L6694 (lyd2)
-    CreateDynamic3DTextLabel("-> NEULING <-\nKILL-SCHUTZ", 0xFFFF00FF, 0.0, 0.0, 0.4, 12.0); // L7347 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_PAKETS_ARMES"\n"COLOR_HEX_WHITE"Tape /WPakete pour retirer les colis", COLOR_WHITE, 1678.1671, 2358.7722, 10.8203, 15.0); // L6097 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_PAKETS_ARMES"\n"COLOR_HEX_WHITE"Tape /Paketeinladen pour retirer les colis", COLOR_WHITE, 2348.1086, -2302.4243, 13.5469, 15.0); // L6099 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_STARTERPACK"\n"COLOR_HEX_WHITE"Tape /Starterpack", COLOR_WHITE, 808.8542, -1347.3077, 13.5416, 8.0); // L6443 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_ASSERVATENKAMMER"\n"COLOR_HEX_WHITE"Tape /Abgeben [Pieces d'armes/Spice/Drogue/WCodes]", COLOR_WHITE, 1754.412963, -1592.894897, 13.532833, 8.0); // L6446 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_GUICHET_BANQUE"\n"COLOR_HEX_WHITE"Tape /Bank\nTape /Kredit\nTape /Ueberweisen", COLOR_WHITE, 1683.024658, -1022.939270, 1340.750854, 8.0); // L6449 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_REPARATION_ETAT"\n"COLOR_HEX_WHITE"Tape /Staatrepair", COLOR_WHITE, 2288.5466, 2444.9841, 3.2734, 10.0); // L6554 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_REPARATION_ETAT"\n"COLOR_HEX_WHITE"Tape /Staatrepair", COLOR_WHITE, 621.3207, -584.6555, 17.2330, 10.0); // L6555 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_REPARATION_ETAT"\n"COLOR_HEX_WHITE"Tape /Staatrepair", COLOR_WHITE, 1248.3843, -1833.8750, 13.3930, 10.0); // L6556 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_REPARATION_ETAT"\n"COLOR_HEX_WHITE"Tape /Staatrepair", COLOR_WHITE, 1138.9730, -1820.9103, 33.6354, 10.0); // L6557 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_REPARATION_ETAT"\n"COLOR_HEX_WHITE"Tape /Staatrepair", COLOR_WHITE, 1.5613, -2510.2061, 36.6555, 10.0); // L6558 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MANEGE_TOUR_CHUTE"\n"COLOR_HEX_WHITE"Tape /Ticketkaufen\n"COLOR_HEX_BLUE"Prix du ticket : 300$", COLOR_WHITE, 374.6658, -2121.6416, 7.8820, 10.0); // L6562 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MANEGE_AUTOS_TAMP"\n"COLOR_HEX_WHITE"Tape /Ticketkaufen\n"COLOR_HEX_BLUE"Prix du ticket : 300$", COLOR_WHITE, 373.8057, -2056.3586, 7.9260, 10.0); // L6563 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MANEGE_BREAKDANCER"\n"COLOR_HEX_WHITE"Tape /Ticketkaufen\n"COLOR_HEX_BLUE"Prix du ticket : 300$", COLOR_WHITE, 356.7114, -2149.5613, 7.8779, 10.0); // L6564 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MANEGE_BATEAU"\n"COLOR_HEX_WHITE"Tape /Ticketkaufen\n"COLOR_HEX_BLUE"Prix du ticket : 300$", COLOR_WHITE, 382.0282, -2165.8818, 7.8511, 10.0); // L6565 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MANEGE_TOBOGGAN"\n"COLOR_HEX_WHITE"Tape /Ticketkaufen\n"COLOR_HEX_BLUE"Prix du ticket : 300$", COLOR_WHITE, 396.3516, -2152.5928, 7.8399, 10.0); // L6566 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TOUR_DE_SAUT"\n"COLOR_HEX_BLUE"Appuie sur 'F'\n", COLOR_WHITE, 361.7136, -2107.5913, 7.8340, 10.0); // L6567 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_FERMIER"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, -90.4999, -10.3628, 3.1094, 25.0); // L6570 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_BALAYEUR"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 2046.2723, -1913.2064, 13.5469, 25.0); // L6571 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_EBOUEUR"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 2118.6157, -2085.0828, 13.5544, 25.0); // L6572 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_OUVRIER"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 831.2045, 865.6005, 12.5911, 25.0); // L6573 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_CONVOYEUR"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 1551.5492, -1005.0830, 24.0781, 25.0); // L6574 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_GLACIER"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 1021.9334, -1371.0099, 13.5585, 25.0); // L6575 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_LIVREUR_PIZZA"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 2117.3662, -1790.0100, 13.5547, 25.0); // L6576 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_ESCORTE"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 2417.1555, -1220.1472, 25.3914, 25.0); // L6577 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_CONDUCTEUR_TRAIN"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 1735.0045, -1944.0450, 13.5681, 25.0); // L6578 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_VENDEUR_HOTDOG"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 2384.0181, -1915.5509, 13.5469, 25.0); // L6579 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_MECANICIEN"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 980.6174, -933.2461, 41.3419, 25.0); // L6580 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_MECANICIEN"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 1945.9237, -1793.6355, 13.5469, 25.0); // L6581 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_MECANICIEN"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, 662.6830, -579.0665, 16.3359, 25.0); // L6582 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_TENUE_MECANICIEN"\n"COLOR_HEX_WHITE"Tape /Jobkleidung", COLOR_WHITE, -93.9144, -1196.9713, 2.4775, 25.0); // L6583 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_OUVRIER_BTP"\n"COLOR_HEX_WHITE"Tape /Steineladen", COLOR_WHITE, 635.8752, 862.5970, -42.6892, 10.0); // L6588 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_OUVRIER_BTP"\n"COLOR_HEX_WHITE"Tape /Steineladen", COLOR_WHITE, 607.7939, 863.4465, -42.0452, 10.0); // L6589 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_OUVRIER_BTP"\n"COLOR_HEX_WHITE"Tape /Steineentladen", COLOR_WHITE, 382.3929, 871.6203, 21.9523, 10.0); // L6590 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_DISTRIB_MARCHANDISES"\n"COLOR_HEX_WHITE"Tape /Loadwaren", COLOR_WHITE, 577.4390, 1221.7273, 11.2689, 20.0); // L6591 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_RAFFINERIE_LV"\n"COLOR_HEX_WHITE"Tape /Loadbenzin", COLOR_WHITE, 268.9609, 1384.2981, 10.1610, 20.0); // L6592 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_SPAWN_TERRORISTE"\n"COLOR_HEX_WHITE"Tape /Terrorwaffen pour t'equiper\nTape /Gheilen pour te soigner", COLOR_WHITE, 969.3871, 2056.1943, 10.8203, 15.0); // L6594 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_AUTO_ECOLE"\n"COLOR_HEX_WHITE"Entrer dans le batiment avec 'F'", COLOR_WHITE, 1489.0573, -1771.7749, 18.7958, 20.0); // L6597 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_PAINTBALL"\n"COLOR_HEX_WHITE"Entrer dans le batiment avec 'F'", COLOR_WHITE, 1738.5869, -1586.3961, 13.5555, 8.0); // L6598 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_DEPOT_CARBURANT_ND"\n"COLOR_HEX_WHITE"Tape /Spritlager", COLOR_WHITE, 764.9532, 347.7378, 20.0458, 8.0); // L6601 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_SERVEUR_EXPERT"\nDeverrouiller avec :"COLOR_HEX_WHITE"/Experte", COLOR_WHITE, 808.7208, -1350.4906, 13.5418, 15.0); // L6604 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_PROMO_PAQUES"\n"COLOR_HEX_GREEN"De superbes prix t'attendent !\n"COLOR_HEX_WHITE"Plus d'informations sur le forum !", COLOR_WHITE, 1480.9296, -1613.7988, 14.0979, 25.0); // L6605 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_POSTE_ENTREE"\n"COLOR_HEX_WHITE"Entrer avec 'F'", COLOR_WHITE, 914.3174, -1004.0942, 37.9902, 25.0); // L6606 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_POSTE"\n"COLOR_HEX_WHITE"Tape /Post", COLOR_WHITE, 822.3183, 1.8747, 1004.1797, 15.0); // L6607 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_FORGERON"\n"COLOR_HEX_WHITE"Tape /Zerbrechen\n"COLOR_HEX_ORANGE"Prix : 500$", COLOR_WHITE, -382.0342, -1426.4521, 26.0822, 25.0); // L6608 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_GREENA NOM_AGENCE_PUB"\n"COLOR_HEX_WHITE"Tape /Werbung", COLOR_WHITE, 1412.1915, -1700.3817, 13.5395, 15.0); // L6609 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_GREENA NOM_AGENCE_PUB"\n"COLOR_HEX_WHITE"Tape /Werbung", COLOR_WHITE, 2008.1722, 1169.3364, 10.8203, 15.0); // L6610 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_PEINTURE_MOTO"\n"COLOR_HEX_ORANGE"Prix : 2.000$\n"COLOR_HEX_WHITE"Tape /Bikefarbe", COLOR_WHITE, 1702.9427, -1470.3704, 13.5469, 20.0); // L6611 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_PEINTURE_AUTO"\n"COLOR_HEX_ORANGE"Prix : 1.500$\n"COLOR_HEX_WHITE"Tape /Autofarbe", COLOR_WHITE, 1763.4915, 2080.2959, 10.8203, 20.0); // L6612 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_ATELIER_DEMONTAGE"\n"COLOR_HEX_ORANGE"Prix : 3.000$\n"COLOR_HEX_WHITE"Tape /Tuningabbauen", COLOR_WHITE, 1782.8275, -1702.7240, 13.5096, 20.0); // L6613 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_POINT_DECHARGEMENT"\n"COLOR_HEX_WHITE"Tape /Paketentladen", COLOR_WHITE, -1857.7711, -1616.8975, 21.8372, 10.0); // L6615 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_POINT_DECHARGEMENT"\n"COLOR_HEX_WHITE"Tape /Samenpaketentladen", COLOR_WHITE, -258.9534, -2181.9905, 29.0150, 10.0); // L6616 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_AUTO_ECOLE_LS"\n"COLOR_HEX_WHITE"Tape /Fahrpruefung\nTape /Sperrefreikaufen", COLOR_WHITE, -2033.1216, -117.4597, 1035.1719, 40.0); // L6617 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_PAINTBALL"\nSortir du batiment avec 'F'", COLOR_BLUE, 2169.8208, 1618.7504, 999.9766, 15.0); // L6618 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_GANGJAIL"\n"COLOR_HEX_WHITE"Tape /Gangjail pour enfermer\nTape /Aufbrechen pour liberer", COLOR_WHITE, 2160.4111, -98.0815, 2.8239, 13.0); // L6620 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_GREENA NOM_CLUBVILLA"\n"COLOR_HEX_WHITE"Acces reserve aux membres du club", COLOR_WHITE, 2127.5486, 2378.9626, 10.8203, 20.0); // L6621 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_INFO_MAIRIE"\n"COLOR_HEX_WHITE"Tape /Stadtamtinfo", COLOR_WHITE, 1481.7039, -1740.6183, 13.5469, 30.0); // L6623 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_HOTEL_4_ETOILES"\n"COLOR_HEX_WHITE"Loue une belle chambre d'hotel a petit prix", COLOR_WHITE, 1722.5425, -1650.1168, 20.2289, 20.0); // L6624 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_IMMATRICULATION"\n"COLOR_HEX_WHITE"Guichet 1\nTape /Zulassungsstelle", COLOR_WHITE, 2316.4529, -12.6540, 26.7422, 15.0); // L6625 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_IMMATRICULATION"\n"COLOR_HEX_WHITE"Guichet 2\nTape /Zulassungsstelle", COLOR_WHITE, 2316.3318, -9.9532, 26.7422, 15.0); // L6626 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_BUREAU_RESIDENTS"\n"COLOR_HEX_WHITE"Guichet 1", COLOR_WHITE, 359.0863, 210.2258, 1008.3828, 15.0); // L6627 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_BUREAU_RESIDENTS"\n"COLOR_HEX_WHITE"Guichet 2", COLOR_WHITE, 358.2361, 184.5094, 1008.3828, 15.0); // L6628 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_PANNEAU_AUTO_ECOLE_LS, COLOR_WHITE, 1270.0138, -1846.0366, 13.3906, 20.0); // L6629 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_GARE_LV_NORD"\n"COLOR_HEX_WHITE"Merci de vous tenir a distance du bord du quai et\n"COLOR_HEX_WHITE"de n'acceder au quai qu'apres l'arret du train !", COLOR_WHITE, 1433.3264, 2640.8018, 11.3926, 18.0); // L6630 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_GARE_LV_EST"\n"COLOR_HEX_WHITE"Merci de vous tenir a distance du bord du quai et\n"COLOR_HEX_WHITE"de n'acceder au quai qu'apres l'arret du train !", COLOR_WHITE, 2859.5542, 1290.5511, 11.3906, 18.0); // L6631 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_GARE_SF_CENTRALE"\n"COLOR_HEX_WHITE"Merci de vous tenir a distance du bord du quai et\n"COLOR_HEX_WHITE"de n'acceder au quai qu'apres l'arret du train !", COLOR_WHITE, -1952.0848, 137.6278, 26.2813, 18.0); // L6632 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_GARE_LS_NORD"\n"COLOR_HEX_WHITE"Merci de vous tenir a distance du bord du quai et\n"COLOR_HEX_WHITE"de n'acceder au quai qu'apres l'arret du train !", COLOR_WHITE, 816.9464, -1362.2501, -0.5078, 18.0); // L6633 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_GARE_LS_CENTRALE"\n"COLOR_HEX_WHITE"Merci de vous tenir a distance du bord du quai et\n"COLOR_HEX_WHITE"de n'acceder au quai qu'apres l'arret du train !", COLOR_WHITE, 1738.0658, -1949.8571, 14.1172, 18.0); // L6634 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_BAR_CLUBVILLA"\n"COLOR_HEX_WHITE"Tape /Getraenk", COLOR_WHITE, -2653.6023, 1407.0844, 906.2734, 10.0); // L6637 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_STAND_BOISSONS"\n"COLOR_HEX_WHITE"Tape /Getraenk", COLOR_WHITE, 1455.8802, -1741.8704, 13.5469, 10.0); // L6639 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_ARMURERIE_CLUB"\n"COLOR_HEX_WHITE"Tape /Clubwaffen", COLOR_WHITE, -2656.1047, 1416.0248, 906.2734, 8.0); // L6640 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_CUISINE_CLUB"\n"COLOR_HEX_WHITE"Tape /Clubheal", COLOR_WHITE, -2653.5183, 1413.5085, 906.2734, 8.0); // L6641 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_ASSURANCE_VEHICULE"\n"COLOR_HEX_WHITE"Aucun frais de reparation pendant 7 jours ! Prix : $50.000\nTape /Kfzversicherung", COLOR_WHITE, 2309.3276, -8.2968, 26.7422, 25.0); // L6642 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_VENTE_AVIONS_LV"\n"COLOR_HEX_WHITE"Monte dans l'avion de ton choix !", COLOR_WHITE, 1310.9393, 1342.6803, 10.8203, 30.0); // L6643 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_BOUTIQUE_VETEMENTS"\n"COLOR_HEX_WHITE"Tape /Kleidung", COLOR_WHITE, 206.3740, -8.2494, 1001.2109, 11.0); // L6646 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_BOUTIQUE_VETEMENTS"\n"COLOR_HEX_WHITE"Tape /Kleidung", COLOR_WHITE, 161.4726, -83.2517, 1001.8047, 11.0); // L6647 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_BOUTIQUE_VETEMENTS"\n"COLOR_HEX_WHITE"Tape /Kleidung", COLOR_WHITE, 207.7187, -100.5032, 1005.2578, 11.0); // L6648 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"CLUB - "NOM_ARMURERIE"\n"COLOR_HEX_WHITE"Tape /Cwmenu", COLOR_WHITE, -2165.6643, 646.1125, 1052.3750, 10.0); // L6649 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_ARMURERIE"\n"COLOR_HEX_WHITE"Tape /Wmenu", COLOR_WHITE, 313.3604, -139.3339, 1004.0625, 10.0); // L6650 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_ARMURERIE"\n"COLOR_HEX_WHITE"Tape /Wmenu", COLOR_WHITE, 296.4476, -37.9833, 1001.5156, 10.0); // L6651 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_ARMURERIE"\n"COLOR_HEX_WHITE"Tape /Wmenu", COLOR_WHITE, 312.1370, -165.9137, 999.6010, 10.0); // L6652 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_ARMURERIE"\n"COLOR_HEX_WHITE"Tape /Wmenu", COLOR_WHITE, 295.5200, -80.3668, 1001.5156, 10.0); // L6653 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE"CLUB - "NOM_CUISINE_CLUB"\n"COLOR_HEX_WHITE"Tape /Cheilen", COLOR_WHITE, -2160.3027, 638.3347, 1057.5861, 10.0); // L6654 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_SUPERMARCHE"\n"COLOR_HEX_WHITE"Tape /Supermarkt", COLOR_WHITE, 2.2396, -29.0123, 1003.5494, 10.0); // L6655 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_PIZZA_STACK"\n"COLOR_HEX_WHITE"Tape /Essen\n"COLOR_HEX_ORANGE"Prix : 50$", COLOR_WHITE, 373.7167, -119.1190, 1001.4922, 10.0); // L6661 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_CLUCKIN_BELL"\n"COLOR_HEX_WHITE"Tape /Essen\n"COLOR_HEX_ORANGE"Prix : 50$", COLOR_WHITE, 368.1664, -6.0193, 1001.8516, 10.0); // L6666 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_BURGER_SHOT"\n"COLOR_HEX_WHITE"Tape /Essen\n"COLOR_HEX_ORANGE"Prix : 50$", COLOR_WHITE, 376.5080, -67.6393, 1001.5151, 10.0); // L6671 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_SUBWAY"\n"COLOR_HEX_WHITE"Tape /Essen\n"COLOR_HEX_ORANGE"Prix : 50$", COLOR_WHITE, 376.5080, -67.6393, 1001.5151, 10.0); // L6676 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_PAQUETS_GRAINES"\n"COLOR_HEX_WHITE"Tape /Paketeinladen pour retirer les colis", COLOR_WHITE, -111.0688, 1133.3749, 19.7422, 15.0); // L6680 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_PAQUETS_GRAINES"\n"COLOR_HEX_WHITE"Tape /Paketentladen pour decharger les colis", COLOR_WHITE, -66.3187, -1121.1329, 0.6501, 15.0); // L6682 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_BLUE NOM_VENTE_BALISE"\n"COLOR_HEX_WHITE"Tape /Peilsender", COLOR_WHITE, 1151.7448, -1203.0283, 19.5159, 25.0); // L6684 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MARCHE_NOIR_PIECES"\n"COLOR_HEX_WHITE"Tape /Schwarzmarkt", COLOR_WHITE, -1101.9084, -2861.1260, 61.1270, 5.0); // L6687 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MARCHE_NOIR_DROGUE"\n"COLOR_HEX_WHITE"Tape /Schwarzmarkt", COLOR_WHITE, -1104.9402, -2861.1267, 61.1270, 5.0); // L6688 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MARCHE_NOIR_SPICE"\n"COLOR_HEX_WHITE"Tape /Schwarzmarkt", COLOR_WHITE, -1098.8091, -2861.1267, 61.1270, 5.0); // L6689 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MARCHE_NOIR_CODES"\n"COLOR_HEX_WHITE"Tape /Schwarzmarkt", COLOR_WHITE, -1098.1770, -2858.3450, 61.1270, 5.0); // L6690 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MARCHE_NOIR_ARMES"\n"COLOR_HEX_WHITE"Tape /Schwarzmarkt", COLOR_WHITE, -1098.1770, -2855.7100, 61.1270, 5.0); // L6691 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MARCHE_NOIR_OBJETS"\n"COLOR_HEX_WHITE"Tape /Schwarzmarkt", COLOR_WHITE, -1098.7355, -2854.2180, 61.1343, 5.0); // L6692 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MARCHE_NOIR_PLAQUES"\n"COLOR_HEX_WHITE"Tape /Schwarzmarkt", COLOR_WHITE, -1101.9292, -2854.2185, 61.1343, 5.0); // L6693 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_YELLOW NOM_MARCHE_NOIR_SIM"\n"COLOR_HEX_WHITE"Tape /Schwarzmarkt", COLOR_WHITE, -1105.0177, -2854.2180, 61.1343, 5.0); // L6694 (lyd2)
+    CreateDynamic3DTextLabel(NOM_PROTECTION_NOUVEAU, 0xFFFF00FF, 0.0, 0.0, 0.4, 12.0); // L7347 (lyd2)
     // Panneau L45542 omis : le texte d'origine ("String") est genere dynamiquement dans lyd2
     // et les coordonnees (0,0,1) suggerent un objet attache plutot qu'un emplacement fixe.
-    CreateDynamic3DTextLabel(COLOR_HEX_GREEN"Bratwurst Tag, 21.08.2019\n"COLOR_HEX_RED"Mach ein Screen und poste ihn ins Forum!", COLOR_WHITE, -824.9174, 1915.1334, 22.9245, 10.0); // L6417 (lyd2)
+    CreateDynamic3DTextLabel(COLOR_HEX_GREEN NOM_JOURNEE_SAUCISSE"\n"COLOR_HEX_RED"Fais une capture d'ecran et poste-la sur le forum !", COLOR_WHITE, -824.9174, 1915.1334, 22.9245, 10.0); // L6417 (lyd2)
     return 1;
 }
 
