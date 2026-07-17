@@ -6,6 +6,8 @@
 #include <a_samp>
 #include "californie.inc"
 #include <sampvoice>
+#include <a_mysql>
+#include "proprietes.inc" // Maisons / Garages / Commerces / Meubles (voir ce fichier pour la config MySQL)
 
 #define FILTERSCRIPT
 
@@ -838,6 +840,9 @@ public OnGameModeInit()
     AddPlayerClass(280, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // Police (skin par defaut, a changer via faction)
     AddPlayerClass(274, 1569.2711, -2348.7114, 13.5547, 0.0, 0,0,0,0,0,0); // EMS
 
+    // --- Systeme de proprietes : maisons / garages / commerces / meubles ---
+    Prop_Init();
+
     print("==============================================");
     print("   CALIFORNIE RP - Gamemode charge avec succes  ");
     print("==============================================");
@@ -871,6 +876,12 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
             SendClientMessage(playerid, COLOR_GREEN, "Vous sortez du commissariat.");
             return 1;
         }
+
+        // Entree/sortie des maisons, garages et commerces
+        if(Prop_OnKeyStateChange(playerid, newkeys))
+        {
+            return 1;
+        }
     }
     return 1;
 }
@@ -884,6 +895,7 @@ public OnGameModeExit()
             SaveUserData(i);
         }
     }
+    Prop_Exit();
     return 1;
 }
 
@@ -2206,6 +2218,12 @@ public FinalizeAccountCreation(playerid)
 
 public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 {
+    // --- Systeme de proprietes : maisons / garages / commerces / meubles ---
+    if(Prop_OnDialogResponse(playerid, dialogid, response, listitem, inputtext))
+    {
+        return 1;
+    }
+
     if(dialogid == DIALOG_PASSWORD_INPUT)
     {
         if(response)
@@ -2928,6 +2946,12 @@ public OnPlayerCommandText(playerid, cmdtext[])
         return 1;
     }
 
+    // --- Systeme de proprietes : maisons / garages / commerces / meubles ---
+    if(Prop_OnCommand(playerid, cmd, cmdtext, idx))
+    {
+        return 1;
+    }
+
     if(!strcmp(cmd, "/aide", true))
     {
         SendClientMessage(playerid, COLOR_YELLOW, "== Commandes Californie RP ==");
@@ -2940,6 +2964,12 @@ public OnPlayerCommandText(playerid, cmdtext[])
         SendClientMessage(playerid, COLOR_WHITE, "/car - Faire apparaitre un vehicule");
         SendClientMessage(playerid, COLOR_WHITE, "/engine /lock - Interagir avec un vehicule");
         SendClientMessage(playerid, COLOR_WHITE, "/papiers - Voir votre carte d'identite, permis, port d'armes et recus");
+        SendClientMessage(playerid, COLOR_WHITE, "/maisons /garages /commerces - Voir les proprietes disponibles a l'achat");
+        SendClientMessage(playerid, COLOR_WHITE, "A l'entree d'une propriete que vous possedez, appuyez sur F pour entrer/sortir");
+        SendClientMessage(playerid, COLOR_WHITE, "/acheter /vendre /fermer /ouvrir - Gerer une propriete (a son entree)");
+        SendClientMessage(playerid, COLOR_WHITE, "/rentrer /sortir - Ranger/sortir un vehicule de votre garage");
+        SendClientMessage(playerid, COLOR_WHITE, "/caisse - Gerer la caisse de votre commerce");
+        SendClientMessage(playerid, COLOR_WHITE, "/meubles /enlevermeuble - Decorer l'interieur de votre maison");
         if(PlayerInfo[playerid][pAdmin] > 0)
         {
             SendClientMessage(playerid, COLOR_ADMIN, "Tapez /aideadmin pour la liste des commandes admin/dev.");
@@ -4271,7 +4301,10 @@ stock ShowAdminHelp(playerid)
     if(lvl >= ADMIN_LEVEL_SUPERVISOR)
         SendClientMessage(playerid, COLOR_WHITE, "[Superviseur] /definiradmin, /annonce");
     if(lvl >= ADMIN_LEVEL_DEV)
+    {
         SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /heure, /meteo, /donnerarme, /allercoord, /redemarrer, /cmdrcon (acces complet RCON), /devcarte");
+        SendClientMessage(playerid, COLOR_ADMIN, "[Developpeur] /creermaison, /creergarage [prix] [capacite], /creercommerce, /interieur [maison/garage/commerce] [id], /suppmaison, /suppgarage, /suppcommerce, /garagecapacite [id] [1-3], /objetid [modelid]");
+    }
     return 1;
 }
 
