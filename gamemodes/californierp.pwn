@@ -404,6 +404,7 @@ new gCharGender[MAX_PLAYERS];     // 0 = Homme, 1 = Femme
 new gCharAge[MAX_PLAYERS];
 new gCharSkinIndex[MAX_PLAYERS];
 new gPendingPassHash[MAX_PLAYERS];
+new gPlayerPassHash[MAX_PLAYERS]; // Hash du mot de passe garde en memoire pendant la session (voir SaveUserData : on ne relit plus jamais le mot de passe depuis le disque, pour eviter de l'ecraser a 0 si la lecture echoue)
 new gCharDOB[MAX_PLAYERS][11];
 new gCharMarital[MAX_PLAYERS][16];
 new gCharBirthplace[MAX_PLAYERS][32];
@@ -1249,6 +1250,7 @@ public OnPlayerConnect(playerid)
     gCharAge[playerid] = 18;
     gCharSkinIndex[playerid] = 0;
     gPendingPassHash[playerid] = 0;
+    gPlayerPassHash[playerid] = 0;
     gCharDOB[playerid][0] = EOS;
     gCharMarital[playerid][0] = EOS;
     gCharBirthplace[playerid][0] = EOS;
@@ -2427,7 +2429,8 @@ public FinalizeAccountCreation(playerid)
         new chosenSkin = GetCurrentSkinForCharSetup(playerid);
         new line[128];
 
-        format(line, sizeof(line), "Password=%d\r\n", gPendingPassHash[playerid]);
+        gPlayerPassHash[playerid] = gPendingPassHash[playerid];
+        format(line, sizeof(line), "Password=%d\r\n", gPlayerPassHash[playerid]);
         fwrite(f, line);
         format(line, sizeof(line), "Cash=100000\r\n");
         fwrite(f, line);
@@ -2668,6 +2671,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
         if(udb_hash(inputtext) == storedHash)
         {
             SendClientMessage(playerid, COLOR_GREEN, "Connexion reussie ! Bienvenue sur Californie RP.");
+            gPlayerPassHash[playerid] = storedHash;
             IsLoggedIn[playerid] = 1;
             LoadUserData(playerid);
             TogglePlayerControllable(playerid, true);
@@ -3179,27 +3183,17 @@ public SaveUserData(playerid)
     GetPlayerPos(playerid, x, y, z);
     GetPlayerFacingAngle(playerid, a);
 
-    new File:f = fopen(UserPathStr(playerid), io_read);
-    new storedHash = 0;
-    if(f)
-    {
-        new line[128];
-        while(fread(f, line))
-        {
-            new key[32], val[64];
-            if(sscanf_simple(line, key, val))
-            {
-                if(!strcmp(key, "Password")) storedHash = strval(val);
-            }
-        }
-        fclose(f);
-    }
-
+    // On n'essaie plus de relire le mot de passe depuis le fichier avant de
+    // reecrire par-dessus : si cette lecture echouait (ne serait-ce qu'une
+    // fois, ex. reouverture du fichier juste apres ecriture), storedHash
+    // restait a 0 et ce 0 etait sauvegarde a la place du vrai mot de passe,
+    // cassant definitivement la connexion du joueur. On utilise desormais
+    // le hash garde en memoire depuis la connexion/inscription.
     new File:fw = fopen(UserPathStr(playerid), io_write);
     if(fw)
     {
         new outLine[128];
-        format(outLine, sizeof(outLine), "Password=%d\r\n", storedHash); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "Password=%d\r\n", gPlayerPassHash[playerid]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "Cash=%d\r\n", GetPlayerMoney(playerid)); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "Bank=%d\r\n", PlayerInfo[playerid][pBank]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "CarteBancaire=%d\r\n", PlayerInfo[playerid][pCarteBancaire]); fwrite(fw, outLine);
