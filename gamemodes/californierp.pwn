@@ -34,10 +34,10 @@ main() {}
 //  Connexion MySQL (systeme de spawn multi-villes, porte de LVRP)
 //  A adapter avec les identifiants reels de la base californierp.
 // ------------------------------------------------------------
-#define MYSQL_HOST   "127.0.0.1"
-#define MYSQL_USER   "root"
-#define MYSQL_PASS   ""
-#define MYSQL_DB     "californierp"
+#define MYSQL_HOST   "51.38.205.167"
+#define MYSQL_USER   "u240874_b2Fj52yTOt"
+#define MYSQL_PASS   "TH.z9D@aRL+EGEQKYm@Bpimp"
+#define MYSQL_DB     "s240874_Californie1"
 
 new MySQL:g_SQL;
 
