@@ -8,7 +8,7 @@
 #include <sampvoice>
 #include <a_mysql>
 #include <streamer>
-#include "lyd2_locations.inc" // objets/pickups/panneaux/vehicules/zones + points d'interet recuperes de lyd2.pwn
+
 
 #define FILTERSCRIPT
 
@@ -29,6 +29,128 @@ new SV_DLSTREAM:gVoiceStream[MAX_PLAYERS]; // stream local dynamique de proximit
 new bool:gVoiceReady[MAX_PLAYERS];        // true si plugin + micro detectes pour ce joueur
 
 main() {}
+
+// ------------------------------------------------------------
+//  Connexion MySQL (systeme de spawn multi-villes, porte de LVRP)
+//  A adapter avec les identifiants reels de la base californierp.
+// ------------------------------------------------------------
+#define MYSQL_HOST   "127.0.0.1"
+#define MYSQL_USER   "root"
+#define MYSQL_PASS   ""
+#define MYSQL_DB     "californierp"
+
+new MySQL:g_SQL;
+
+stock MySQLConnect(sqlhost[], sqluser[], sqlpass[], sqldb[])
+{
+    g_SQL = mysql_connect(sqlhost, sqluser, sqlpass, sqldb);
+    if(mysql_errno(g_SQL) == 0)
+    {
+        print("[MYSQL] Connexion reussie.");
+        return 1;
+    }
+    print("[MYSQL] Connexion echouee, verifiez MYSQL_HOST/USER/PASS/DB.");
+    return 0;
+}
+
+// ------------------------------------------------------------
+//  Systeme de spawn multi-villes (porte de LVRP.pwn)
+//  13 villes de San Andreas, positions chargees depuis la table
+//  MySQL "spawn_villes" (id, Pos_x, Pos_y, Pos_z, Pos_a).
+// ------------------------------------------------------------
+#define MAX_CITY 13
+
+enum e_Spawn
+{
+    Float:pos[4], // x, y, z, angle
+    icon,
+};
+new spawn[MAX_CITY][e_Spawn];
+
+stock GetCityName(id)
+{
+    new name[32];
+    switch(id)
+    {
+        case 0:  name = "Los Santos";
+        case 1:  name = "San Fierro";
+        case 2:  name = "Las Venturas";
+        case 3:  name = "Fort Carson";
+        case 4:  name = "Bayside";
+        case 5:  name = "Angel Pine";
+        case 6:  name = "Dillimore";
+        case 7:  name = "Blueberry";
+        case 8:  name = "Montgomery";
+        case 9:  name = "Palomino Creek";
+        case 10: name = "Las Payasadas";
+        case 11: name = "Las Barbancas";
+        case 12: name = "El Quebrados";
+        default: name = "San Andreas";
+    }
+    return name;
+}
+
+stock spawn_Update(id)
+{
+    new string[64];
+    format(string, sizeof(string), "[Spawn - %s]", GetCityName(id));
+    spawn[id][icon] = CreateDynamicMapIcon(spawn[id][pos][0], spawn[id][pos][1], spawn[id][pos][2], 38, 0xFFFFFFFF, -1, -1, -1, 500.0);
+    Create3DTextLabel(string, 0xFFFFFFEE, spawn[id][pos][0], spawn[id][pos][1], spawn[id][pos][2] + 0.4, 20.0, 0, 0);
+    return 1;
+}
+
+forward spawn_Load();
+public spawn_Load()
+{
+    for(new i = 0; i < MAX_CITY; i++)
+    {
+        cache_get_value_name_float(i, "Pos_x", spawn[i][pos][0]);
+        cache_get_value_name_float(i, "Pos_y", spawn[i][pos][1]);
+        cache_get_value_name_float(i, "Pos_z", spawn[i][pos][2]);
+        cache_get_value_name_float(i, "Pos_a", spawn[i][pos][3]);
+        spawn_Update(i);
+    }
+    print("[Californie RP] Spawns des villes charges depuis la base de donnees.");
+    return 1;
+}
+
+stock spawn_Save(id)
+{
+    new query[256];
+    format(query, sizeof(query), "UPDATE spawn_villes SET Pos_x=%f, Pos_y=%f, Pos_z=%f, Pos_a=%f WHERE id=%d",
+        spawn[id][pos][0], spawn[id][pos][1], spawn[id][pos][2], spawn[id][pos][3], id);
+    mysql_pquery(g_SQL, query);
+    return 1;
+}
+
+// Cree la table spawn_villes si elle n'existe pas encore et l'initialise avec
+// les 13 villes (toutes sur le spawn Los Santos par defaut). Appelee une fois
+// depuis OnGameModeInit, avant spawn_Load(). Remplace le besoin d'executer un
+// fichier .sql a part : tout se fait automatiquement au demarrage du serveur.
+stock SpawnVilles_Setup()
+{
+    mysql_tquery(g_SQL,
+        "CREATE TABLE IF NOT EXISTS `spawn_villes` (\
+`id` INT NOT NULL, \
+`Pos_x` FLOAT NOT NULL DEFAULT 1569.2711, \
+`Pos_y` FLOAT NOT NULL DEFAULT -2348.7114, \
+`Pos_z` FLOAT NOT NULL DEFAULT 13.5547, \
+`Pos_a` FLOAT NOT NULL DEFAULT 0.0, \
+PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    new query[900];
+    format(query, sizeof(query),
+        "INSERT IGNORE INTO `spawn_villes` (`id`, `Pos_x`, `Pos_y`, `Pos_z`, `Pos_a`) VALUES \
+(0,1569.2711,-2348.7114,13.5547,0.0),(1,1569.2711,-2348.7114,13.5547,0.0),\
+(2,1569.2711,-2348.7114,13.5547,0.0),(3,1569.2711,-2348.7114,13.5547,0.0),\
+(4,1569.2711,-2348.7114,13.5547,0.0),(5,1569.2711,-2348.7114,13.5547,0.0),\
+(6,1569.2711,-2348.7114,13.5547,0.0),(7,1569.2711,-2348.7114,13.5547,0.0),\
+(8,1569.2711,-2348.7114,13.5547,0.0),(9,1569.2711,-2348.7114,13.5547,0.0),\
+(10,1569.2711,-2348.7114,13.5547,0.0),(11,1569.2711,-2348.7114,13.5547,0.0),\
+(12,1569.2711,-2348.7114,13.5547,0.0)");
+    mysql_tquery(g_SQL, query);
+    return 1;
+}
 
 
 // ------------------------------------------------------------
@@ -76,6 +198,9 @@ stock udb_hash(buf[])
 #if !defined DIALOG_BANQUE_SOLDE
     #define DIALOG_BANQUE_SOLDE 9013
 #endif
+#if !defined DIALOG_VILLE
+    #define DIALOG_VILLE 9014
+#endif
 
 // ------------------------------------------------------------
 //  Banque - position et parametres
@@ -117,80 +242,6 @@ stock udb_hash(buf[])
 // pompiers...) sont geres entierement en jeu, sans toucher a ce fichier.
 // Voir proprietes.inc : /creerbatiment, /interieur batiment [id],
 // /exterieur batiment [id], /suppbatiment [id], /batimentspublics.
-
-// ==============================================================
-//  Entrees/sorties (touche F) des batiments recuperes de lyd2
-//  ------------------------------------------------------------
-//  Ces 3 points avaient deja leur panneau "Entrer/Sortir avec 'F'"
-//  dans lyd2_locations.inc mais aucune logique de teleportation n'y
-//  etait raccordee. Le tableau ci-dessous centralise entree/sortie/
-//  nom pour chacun : pour AJOUTER un batiment, il suffit de rajouter
-//  une ligne au tableau gBatimentsLyd2 ci-dessous (meme format).
-//  Pour RENOMMER un batiment, changez simplement le texte entre
-//  guillemets en derniere colonne.
-//
-//  IMPORTANT - A VERIFIER EN JEU : l'identifiant d'interieur SA-MP
-//  (colonne bInt) n'etait pas present dans les donnees recuperees de
-//  lyd2 (seules les coordonnees X/Y/Z l'etaient). La valeur 3 est
-//  l'interieur generique le plus courant sur SA-MP pour ce type de
-//  local, utilisee ici par defaut. Entrez dans le batiment en jeu et
-//  verifiez avec la commande /pos (deja presente dans le gamemode,
-//  elle affiche "Interieur: X") que le decor correspond bien a un
-//  interieur coherent ; sinon, changez juste le chiffre "3" concerne
-//  ci-dessous.
-// ==============================================================
-enum e_batiment_lyd2
-{
-    Float:bExtX, Float:bExtY, Float:bExtZ, // position exterieure (entree, interieur 0)
-    Float:bIntX, Float:bIntY, Float:bIntZ, // position interieure (sortie)
-    bInt,                                   // ID d'interieur SA-MP - A VERIFIER (voir note ci-dessus)
-    Float:bRadius,                          // rayon de detection de la touche F
-    bNom[64]                                // nom du lieu utilise dans les messages (MODIFIABLE ICI)
-};
-
-new const gBatimentsLyd2[][e_batiment_lyd2] = {
-    // Auto-ecole de Los Santos (ex "Fahrschule") - panneaux L6597 (entree) / L6617 (interieur)
-    {1489.0573, -1771.7749, 18.7958,    -2033.1216, -117.4597, 1035.1719,   3, 3.0, "l'auto-ecole"},
-    // Complexe de Paintball (ex "Paintball - Anlage") - panneaux L6598 (entree) / L6618 (sortie)
-    {1738.5869, -1586.3961, 13.5555,    2169.8208, 1618.7504, 999.9766,     3, 3.0, "le complexe de paintball"},
-    // Bureau de poste (ex "POSTHAUS") - panneaux L6606 (entree) / L6607 (interieur)
-    {914.3174, -1004.0942, 37.9902,     822.3183, 1.8747, 1004.1797,       3, 3.0, "le bureau de poste"}
-};
-
-// Parcourt gBatimentsLyd2 et gere l'entree/la sortie du batiment le plus proche
-// du joueur (appelee depuis OnPlayerKeyStateChange sur la touche F). Renvoie
-// true si le joueur a bien ete teleporte (entree ou sortie geree).
-stock bool:Batiment_Lyd2_TryToggle(playerid)
-{
-    new nb = sizeof(gBatimentsLyd2);
-    new msg[128];
-
-    for(new i = 0; i < nb; i++)
-    {
-        // Entree : le joueur est dehors (interieur 0) et pres du point d'entree exterieur
-        if(GetPlayerInterior(playerid) == 0 && IsPlayerInRangeOfPoint(playerid, gBatimentsLyd2[i][bRadius], gBatimentsLyd2[i][bExtX], gBatimentsLyd2[i][bExtY], gBatimentsLyd2[i][bExtZ]))
-        {
-            SetPlayerPos(playerid, gBatimentsLyd2[i][bIntX], gBatimentsLyd2[i][bIntY], gBatimentsLyd2[i][bIntZ]);
-            SetPlayerInterior(playerid, gBatimentsLyd2[i][bInt]);
-            SetPlayerVirtualWorld(playerid, 0);
-            format(msg, sizeof(msg), "Vous entrez dans %s.", gBatimentsLyd2[i][bNom]);
-            SendClientMessage(playerid, COLOR_GREEN, msg);
-            return true;
-        }
-
-        // Sortie : le joueur est dans l'interieur correspondant et pres du point de sortie
-        if(GetPlayerInterior(playerid) == gBatimentsLyd2[i][bInt] && IsPlayerInRangeOfPoint(playerid, gBatimentsLyd2[i][bRadius], gBatimentsLyd2[i][bIntX], gBatimentsLyd2[i][bIntY], gBatimentsLyd2[i][bIntZ]))
-        {
-            SetPlayerPos(playerid, gBatimentsLyd2[i][bExtX], gBatimentsLyd2[i][bExtY], gBatimentsLyd2[i][bExtZ]);
-            SetPlayerInterior(playerid, 0);
-            SetPlayerVirtualWorld(playerid, 0);
-            format(msg, sizeof(msg), "Vous sortez de %s.", gBatimentsLyd2[i][bNom]);
-            SendClientMessage(playerid, COLOR_GREEN, msg);
-            return true;
-        }
-    }
-    return false;
-}
 
 #if !defined SERVER_SITE
     #define SERVER_SITE "www.californie-rp.fr"
@@ -409,6 +460,7 @@ enum pInfo
     Float:pPosA,
     pInt,
     pWorld,
+    pCity,               // Ville de spawn (voir spawn[MAX_CITY], 0 = Los Santos)
     pCash,
     pBank,               // Solde du compte bancaire
     pCarteBancaire,      // 0 = pas encore recuperee a la banque, 1 = recuperee
@@ -1066,6 +1118,11 @@ public NeedsUpdateTimer()
 // ==============================================================
 public OnGameModeInit()
 {
+    // --- Connexion MySQL + initialisation du systeme de spawn multi-villes (porte de LVRP) ---
+    MySQLConnect(MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DB);
+    SpawnVilles_Setup();
+    mysql_pquery(g_SQL, "SELECT * FROM spawn_villes ORDER BY id ASC", "spawn_Load");
+
     SetGameModeText("Californie RP");
     ShowPlayerMarkers(PLAYER_MARKERS_MODE_GLOBAL);
     ShowNameTags(1);
@@ -1095,8 +1152,6 @@ public OnGameModeInit()
     // --- Besoins vitaux : points de vente nourriture/boisson ---
     CreateShopPoints();
 
-    // --- Elements recuperes de lyd2.pwn (objets, pickups, panneaux, vehicules statiques, zones) ---
-    Lyd2_LoadAll();
 
     // --- Police Nationale (LSPD) : pickup + panneau 3D a l'entree du commissariat central ---
     CreatePickup(1272, 1, PD_ENTRANCE_X, PD_ENTRANCE_Y, PD_ENTRANCE_Z, -1);
@@ -1145,12 +1200,6 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
             SetPlayerInterior(playerid, 0);
             SetPlayerVirtualWorld(playerid, 0);
             SendClientMessage(playerid, COLOR_GREEN, "Vous sortez du commissariat.");
-            return 1;
-        }
-
-        // Entree/sortie des batiments recuperes de lyd2 (auto-ecole, paintball, poste...)
-        if(Batiment_Lyd2_TryToggle(playerid))
-        {
             return 1;
         }
 
@@ -1210,6 +1259,7 @@ public OnPlayerConnect(playerid)
     PlayerInfo[playerid][pFatigue] = 0;
     PlayerInfo[playerid][pStress] = 0;
     PlayerInfo[playerid][pMoral] = 100;
+    PlayerInfo[playerid][pCity] = 0; // Los Santos par defaut (ecrase par LoadUserData si present)
     gLastManger[playerid] = 0;
     gLastBoire[playerid] = 0;
     gLastDormir[playerid] = 0;
@@ -2679,12 +2729,27 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             {
                 // Rien a faire : pPosX/Y/Z/A/Int/World contiennent deja la derniere position sauvegardee
             }
-            case 2: // Spawn par defaut
+            case 2: // Spawn par defaut -> choix de la ville
             {
-                SetDefaultSpawnPos(playerid);
+                ShowVilleChoiceDialog(playerid);
+                return 1;
             }
         }
 
+        SpawnPlayerAfterLogin(playerid);
+        return 1;
+    }
+
+    if(dialogid == DIALOG_VILLE)
+    {
+        if(!response)
+        {
+            ShowSpawnSelectionDialog(playerid);
+            return 1;
+        }
+
+        PlayerInfo[playerid][pCity] = listitem;
+        SetDefaultSpawnPos(playerid);
         SpawnPlayerAfterLogin(playerid);
         return 1;
     }
@@ -2969,13 +3034,32 @@ Spawn par defaut",
     return 1;
 }
 
-// Coordonnees de spawn par defaut du serveur (ex : Aeroport / Gare Californie RP)
+// Liste des 13 villes de San Andreas (systeme de spawn multi-villes, porte de LVRP)
+public ShowVilleChoiceDialog(playerid)
+{
+    new items[256], tmp[36];
+    items[0] = EOS;
+    for(new i = 0; i < MAX_CITY; i++)
+    {
+        format(tmp, sizeof(tmp), "%s\n", GetCityName(i));
+        strcat(items, tmp, sizeof(items));
+    }
+    ShowPlayerDialog(playerid, DIALOG_VILLE, DIALOG_STYLE_LIST, "Choisissez votre ville de spawn", items, "Choisir", "Retour");
+    return 1;
+}
+
+// Coordonnees de spawn par defaut : desormais celles de la ville du joueur
+// (PlayerInfo[playerid][pCity]), chargees depuis la table MySQL spawn_villes
+// via spawn[MAX_CITY] (systeme porte de LVRP.pwn).
 stock SetDefaultSpawnPos(playerid)
 {
-    PlayerInfo[playerid][pPosX] = 1569.2711;
-    PlayerInfo[playerid][pPosY] = -2348.7114;
-    PlayerInfo[playerid][pPosZ] = 13.5547;
-    PlayerInfo[playerid][pPosA] = 0.0;
+    new city = PlayerInfo[playerid][pCity];
+    if(city < 0 || city >= MAX_CITY) city = 0;
+
+    PlayerInfo[playerid][pPosX] = spawn[city][pos][0];
+    PlayerInfo[playerid][pPosY] = spawn[city][pos][1];
+    PlayerInfo[playerid][pPosZ] = spawn[city][pos][2];
+    PlayerInfo[playerid][pPosA] = spawn[city][pos][3];
     PlayerInfo[playerid][pInt] = 0;
     PlayerInfo[playerid][pWorld] = 0;
     return 1;
@@ -3048,6 +3132,7 @@ public LoadUserData(playerid)
             else if(!strcmp(key, "PosA")) PlayerInfo[playerid][pPosA] = floatstr(val);
             else if(!strcmp(key, "Int")) PlayerInfo[playerid][pInt] = strval(val);
             else if(!strcmp(key, "World")) PlayerInfo[playerid][pWorld] = strval(val);
+            else if(!strcmp(key, "City")) PlayerInfo[playerid][pCity] = strval(val);
             else if(!strcmp(key, "HomeSet")) PlayerInfo[playerid][pHomeSet] = strval(val);
             else if(!strcmp(key, "HomeX")) PlayerInfo[playerid][pHomeX] = floatstr(val);
             else if(!strcmp(key, "HomeY")) PlayerInfo[playerid][pHomeY] = floatstr(val);
@@ -3128,6 +3213,7 @@ public SaveUserData(playerid)
         format(outLine, sizeof(outLine), "PosA=%f\r\n", a); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "Int=%d\r\n", GetPlayerInterior(playerid)); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "World=%d\r\n", GetPlayerVirtualWorld(playerid)); fwrite(fw, outLine);
+        format(outLine, sizeof(outLine), "City=%d\r\n", PlayerInfo[playerid][pCity]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "HomeSet=%d\r\n", PlayerInfo[playerid][pHomeSet]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "HomeX=%f\r\n", PlayerInfo[playerid][pHomeX]); fwrite(fw, outLine);
         format(outLine, sizeof(outLine), "HomeY=%f\r\n", PlayerInfo[playerid][pHomeY]); fwrite(fw, outLine);
@@ -3258,6 +3344,56 @@ public OnPlayerCommandText(playerid, cmdtext[])
         {
             SendClientMessage(playerid, COLOR_ADMIN, "Tapez /aideadmin pour la liste des commandes admin/dev.");
         }
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/savepos", true))
+    {
+        if(PlayerInfo[playerid][pAdmin] <= 0)
+        {
+            SendClientMessage(playerid, COLOR_RED, "Cette commande est reservee aux administrateurs.");
+            return 1;
+        }
+        tmp = strtok_(cmdtext, idx);
+        if(!tmp[0])
+        {
+            SendClientMessage(playerid, COLOR_WHITE, "Usage: /savepos [id 0-12] (0=Los Santos ... 12=El Quebrados, voir /listevilles)");
+            return 1;
+        }
+        new city = strval(tmp);
+        if(city < 0 || city >= MAX_CITY)
+        {
+            SendClientMessage(playerid, COLOR_RED, "ID de ville invalide (0 a 12).");
+            return 1;
+        }
+        new Float:x, Float:y, Float:z, Float:a;
+        GetPlayerPos(playerid, x, y, z);
+        GetPlayerFacingAngle(playerid, a);
+        spawn[city][pos][0] = x;
+        spawn[city][pos][1] = y;
+        spawn[city][pos][2] = z;
+        spawn[city][pos][3] = a;
+        spawn_Save(city);
+        spawn_Update(city);
+
+        new str[96];
+        format(str, sizeof(str), "Spawn de %s mis a jour a votre position actuelle.", GetCityName(city));
+        SendClientMessage(playerid, COLOR_GREEN, str);
+        return 1;
+    }
+
+    if(!strcmp(cmd, "/listevilles", true))
+    {
+        new str[512];
+        str[0] = EOS;
+        for(new i = 0; i < MAX_CITY; i++)
+        {
+            new line[40];
+            format(line, sizeof(line), "%d - %s\n", i, GetCityName(i));
+            strcat(str, line, sizeof(str));
+        }
+        SendClientMessage(playerid, COLOR_YELLOW, "== Villes disponibles (id - nom) ==");
+        ShowPlayerDialog(playerid, DIALOG_VILLE + 1000, DIALOG_STYLE_MSGBOX, "Liste des villes", str, "OK", "");
         return 1;
     }
 
@@ -3481,33 +3617,6 @@ public OnPlayerCommandText(playerid, cmdtext[])
         TogglePlayerControllable(playerid, 0);
         SendClientMessage(playerid, COLOR_GREEN, "Vous vous installez et fermez les yeux...");
         SetTimerEx("FinishSleepingTimer", DUREE_ANIM_DORMIR * 1000, false, "d", playerid);
-        return 1;
-    }
-
-    // Reservee aux admins : navigue/teleporte parmi les points d'interet recuperes de lyd2
-    // (anciens checkpoints/teleportations). Usage : /cord <numero>  (0 a LYD2_POI_COUNT-1)
-    if(!strcmp(cmd, "/cord", true))
-    {
-        if(PlayerInfo[playerid][pAdmin] < 1)
-        {
-            SendClientMessage(playerid, COLOR_RED, "Commande reservee aux admins.");
-            return 1;
-        }
-        new str[128];
-        tmp = strtok_(cmdtext, idx);
-        if(!strlen(tmp))
-        {
-            format(str, sizeof(str), "Usage : /cord <0-%d>. %d points d'interet disponibles.", LYD2_POI_COUNT - 1, LYD2_POI_COUNT);
-            SendClientMessage(playerid, COLOR_YELLOW, str);
-            return 1;
-        }
-        new index = strval(tmp);
-        if(!Lyd2_GotoPOI(playerid, index))
-        {
-            SendClientMessage(playerid, COLOR_RED, "Numero invalide.");
-            return 1;
-        }
-        SendClientMessage(playerid, COLOR_GREEN, "Teleportation effectuee.");
         return 1;
     }
 
@@ -4691,6 +4800,8 @@ stock ShowAdminHelp(playerid)
         SendClientMessage(playerid, COLOR_WHITE, "[Moderateur] /definirsexe, /definirage, /definirnaissance, /definirprofession, /definirarme");
     if(lvl >= ADMIN_LEVEL_ADMIN)
         SendClientMessage(playerid, COLOR_WHITE, "[Admin] /bannir, /debannir, /apparence, /armes, /dieu, /setfaction, /listepostes");
+    if(lvl >= ADMIN_LEVEL_ADMIN)
+        SendClientMessage(playerid, COLOR_WHITE, "[Admin] /savepos [id], /listevilles - Configurer les spawns du systeme multi-villes");
     if(lvl >= ADMIN_LEVEL_SUPERIOR)
         SendClientMessage(playerid, COLOR_WHITE, "[Admin Sup.] /argent, /donnerargent, /vip, /niveau");
     if(lvl >= ADMIN_LEVEL_SUPERVISOR)
